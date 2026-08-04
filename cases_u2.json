@@ -1,0 +1,1148 @@
+[
+  {
+    "id": "U2-01",
+    "title": "The Overload Impostor",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Investigation.java",
+    "description": "Invalid method overloading by only changing the return type.",
+    "bannerSnippet": "<span class=\"text-crimson\">int</span> investigate(int evidence)",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">void</span> <span class=\"method\">investigate</span>(<span class=\"type\">int</span> evidence) {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"comment\">// Analyze evidence</span>",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"type\">int</span> <span class=\"method\">investigate</span>(<span class=\"type\">int</span> evidence) {",
+        "bug": true
+      },
+      {
+        "text": "    <span class=\"keyword\">return</span> evidence;",
+        "bug": true
+      },
+      {
+        "text": "}",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "Both methods share the same name 'investigate'.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "Both methods have the exact same parameter list: (int evidence).",
+        "icon": "\u2696\ufe0f"
+      },
+      {
+        "text": "The return types are different, but Java method signatures only care about the name and parameter list.",
+        "icon": "\ud83d\udcdd"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Variable shadowing",
+        "icon": "\ud83d\udc65",
+        "correct": false
+      },
+      {
+        "name": "Compilation Error (Duplicate Method)",
+        "icon": "\u274c",
+        "correct": true
+      },
+      {
+        "name": "Missing inheritance",
+        "icon": "\ud83e\uddec",
+        "correct": false
+      },
+      {
+        "name": "Runtime Polymorphism",
+        "icon": "\ud83c\udfad",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "Java allows overloading only if the return type is different",
+        "correct": false
+      },
+      {
+        "text": "Changing only the return type does not create an overloaded method",
+        "correct": true
+      },
+      {
+        "text": "Methods cannot take ints as parameters",
+        "correct": false
+      },
+      {
+        "text": "One method must be marked as static",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "int investigate(int evidence, boolean detailed) { return evidence; }",
+        "correct": true
+      },
+      {
+        "text": "int Investigate(int evidence) { return evidence; }",
+        "correct": false
+      },
+      {
+        "text": "void investigate(int evidence) { return evidence; }",
+        "correct": false
+      },
+      {
+        "text": "double investigate(int evidence) { return evidence; }",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Method signatures are like fingerprints: name + parameters. The return type is NOT part of the fingerprint.",
+    "criminal": "Duplicate Method Signature"
+  },
+  {
+    "id": "U2-02",
+    "title": "The Altered Evidence",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Lab.java",
+    "description": "Understanding object references as method parameters.",
+    "bannerSnippet": "tamperEvidence(<span class=\"text-cyan\">suspect</span>);",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Student</span> { <span class=\"type\">String</span> name = <span class=\"string\">\"Innocent\"</span>; }",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"keyword\">static void</span> <span class=\"method\">tamperEvidence</span>(<span class=\"class-name\">Student</span> s) {",
+        "bug": false
+      },
+      {
+        "text": "    s.name = <span class=\"string\">\"Guilty\"</span>;",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">Student</span> suspect = <span class=\"keyword\">new</span> <span class=\"class-name\">Student</span>();",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"method\">tamperEvidence</span>(suspect);",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(suspect.name);",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The object 'suspect' is created with the name 'Innocent'.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "It is passed into the 'tamperEvidence' method.",
+        "icon": "\ud83e\uddea"
+      },
+      {
+        "text": "Java passes object references by value. The method gets a copy of the reference pointing to the SAME object in memory.",
+        "icon": "\ud83d\udd17"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "\"Innocent\"",
+        "icon": "\ud83d\ude07",
+        "correct": false
+      },
+      {
+        "name": "\"Guilty\"",
+        "icon": "\ud83d\ude08",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "The method creates a completely new copy of the Student object",
+        "correct": false
+      },
+      {
+        "text": "The reference points to the original object, so modifying its fields modifies the original object",
+        "correct": true
+      },
+      {
+        "text": "Strings are immutable, so the name cannot change",
+        "correct": false
+      },
+      {
+        "text": "The suspect variable is out of scope",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "The output is: Guilty",
+        "correct": true
+      },
+      {
+        "text": "The output is: Innocent",
+        "correct": false
+      },
+      {
+        "text": "Throws exception.",
+        "correct": false
+      },
+      {
+        "text": "Compile error.",
+        "correct": false
+      }
+    ],
+    "detectorNote": "When passing objects to methods, you are passing the keys to the house. The method can go in and change the furniture!",
+    "criminal": "Reference Mutation"
+  },
+  {
+    "id": "U2-03",
+    "title": "The Returning Witness",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Station.java",
+    "description": "Returning objects from a method.",
+    "bannerSnippet": "<span class=\"text-crimson\">________;</span>",
+    "code": [
+      {
+        "text": "<span class=\"class-name\">Student</span> <span class=\"method\">createStudent</span>() {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"class-name\">Student</span> s = <span class=\"keyword\">new</span> <span class=\"class-name\">Student</span>();",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">________</span>;",
+        "bug": true
+      },
+      {
+        "text": "}",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "The method signature specifies the return type is 'Student'.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "A new 'Student' object is instantiated and assigned to 's'.",
+        "icon": "\ud83d\udc64"
+      },
+      {
+        "text": "The method ends abruptly. It must return the created object to satisfy the contract.",
+        "icon": "\ud83d\udce4"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Missing Return",
+        "icon": "\ud83d\udce4",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "Abstract Instantiation",
+        "icon": "\ud83d\udc7b",
+        "correct": false
+      },
+      {
+        "name": "Encapsulation Violation",
+        "icon": "\ud83d\udd12",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "The method promises to output a Student but fails to return one",
+        "correct": true
+      },
+      {
+        "text": "The 's' object is a String",
+        "correct": false
+      },
+      {
+        "text": "Constructors don't need return types",
+        "correct": false
+      },
+      {
+        "text": "The new keyword is missing",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "return s;",
+        "correct": true
+      },
+      {
+        "text": "return new Object();",
+        "correct": false
+      },
+      {
+        "text": "System.out.println(s);",
+        "correct": false
+      },
+      {
+        "text": "break;",
+        "correct": false
+      }
+    ],
+    "detectorNote": "If the method says it gives you a Student, you better return the Student!",
+    "criminal": "Missing Return"
+  },
+  {
+    "id": "U2-04",
+    "title": "The Hidden Room",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Senior Investigator",
+    "difficultyColor": "crimson",
+    "xpReward": 250,
+    "filename": "Building.java",
+    "description": "Constructing an inner class object.",
+    "bannerSnippet": "Outer.Inner inner = <span class=\"text-crimson\">new Inner()</span>;",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Outer</span> {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">class</span> <span class=\"class-name\">Inner</span> {",
+        "bug": false
+      },
+      {
+        "text": "        <span class=\"keyword\">void</span> <span class=\"method\">hide</span>() { }",
+        "bug": false
+      },
+      {
+        "text": "    }",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">Outer</span> outer = <span class=\"keyword\">new</span> <span class=\"class-name\">Outer</span>();",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">Outer</span>.<span class=\"class-name\">Inner</span> inner = <span class=\"keyword\">new</span> <span class=\"class-name\">Inner</span>();",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The Inner class is NOT marked static. It is a non-static nested class.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "A non-static inner class belongs to an INSTANCE of the outer class.",
+        "icon": "\ud83c\udfe0"
+      },
+      {
+        "text": "You cannot instantiate Inner directly without going through an Outer object.",
+        "icon": "\ud83d\udeab"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Invalid inner class instantiation",
+        "icon": "\u274c",
+        "correct": true
+      },
+      {
+        "name": "Abstract Instantiation",
+        "icon": "\ud83d\udc7b",
+        "correct": false
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "Variable shadowing",
+        "icon": "\ud83d\udc65",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "A non-static inner class requires an instance of its enclosing class to be instantiated",
+        "correct": true
+      },
+      {
+        "text": "Inner is a protected class",
+        "correct": false
+      },
+      {
+        "text": "You must use extends to access Inner",
+        "correct": false
+      },
+      {
+        "text": "The hide method is private",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "Outer.Inner inner = outer.new Inner();",
+        "correct": true
+      },
+      {
+        "text": "Outer.Inner inner = Outer.new Inner();",
+        "correct": false
+      },
+      {
+        "text": "Outer.Inner inner = new outer.Inner();",
+        "correct": false
+      },
+      {
+        "text": "Outer.Inner inner = new Outer.Inner();",
+        "correct": false
+      }
+    ],
+    "detectorNote": "You can't enter a room inside a house unless you enter the house first. Use 'outer.new Inner()'.",
+    "criminal": "Invalid Inner Instantiation"
+  },
+  {
+    "id": "U2-05",
+    "title": "The Inheritance Impostor",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Rookie",
+    "difficultyColor": "green",
+    "xpReward": 100,
+    "filename": "Dog.java",
+    "description": "Missing inheritance relationship.",
+    "bannerSnippet": "Dog d = new Dog(); <span class=\"text-crimson\">d.eat();</span>",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Animal</span> {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">void</span> <span class=\"method\">eat</span>() { }",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Dog</span> {",
+        "bug": true
+      },
+      {
+        "text": "    <span class=\"keyword\">void</span> <span class=\"method\">bark</span>() { }",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">Dog</span> d = <span class=\"keyword\">new</span> <span class=\"class-name\">Dog</span>();",
+        "bug": false
+      },
+      {
+        "text": "d.<span class=\"method\">eat</span>();",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The `eat()` method is defined inside the Animal class.",
+        "icon": "\ud83e\uddb4"
+      },
+      {
+        "text": "The `Dog` class is completely separate from `Animal`.",
+        "icon": "\ud83d\udeab"
+      },
+      {
+        "text": "A class must use `extends` to inherit methods from another class.",
+        "icon": "\ud83e\uddec"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Variable shadowing",
+        "icon": "\ud83d\udc65",
+        "correct": false
+      },
+      {
+        "name": "Missing inheritance relationship",
+        "icon": "\ud83e\uddec",
+        "correct": true
+      },
+      {
+        "name": "Incorrect method override",
+        "icon": "\ud83d\udd00",
+        "correct": false
+      },
+      {
+        "name": "Abstract class instantiation",
+        "icon": "\ud83d\udc7b",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "The Dog class lacks the extends keyword to inherit from Animal",
+        "correct": true
+      },
+      {
+        "text": "The eat() method is private in Animal",
+        "correct": false
+      },
+      {
+        "text": "Dog cannot have its own methods like bark()",
+        "correct": false
+      },
+      {
+        "text": "Animal is not an interface",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "class Dog extends Animal {",
+        "correct": true
+      },
+      {
+        "text": "class Dog implements Animal {",
+        "correct": false
+      },
+      {
+        "text": "class Dog uses Animal {",
+        "correct": false
+      },
+      {
+        "text": "class Dog inherits Animal {",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Look at the class declaration of Dog. Is it linked to Animal in any way?",
+    "criminal": "Missing Inheritance"
+  },
+  {
+    "id": "U2-06",
+    "title": "The Parent Constructor Mystery",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Student.java",
+    "description": "Subclass fails to invoke the parent constructor properly.",
+    "bannerSnippet": "Student() { <span class=\"text-crimson\">// empty</span> }",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Person</span> {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"class-name\">Person</span>(<span class=\"type\">String</span> name) {}",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Student</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Person</span> {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"class-name\">Student</span>() {}",
+        "bug": true
+      },
+      {
+        "text": "}",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "Person has no default constructor, only a parameterized one.",
+        "icon": "\ud83d\udc64"
+      },
+      {
+        "text": "Java automatically inserts a call to super() (default parent constructor) in the child constructor.",
+        "icon": "\ud83c\udfd7\ufe0f"
+      },
+      {
+        "text": "The default parent constructor does not exist, causing an error.",
+        "icon": "\u274c"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Constructor mismatch",
+        "icon": "\ud83c\udfd7\ufe0f",
+        "correct": false
+      },
+      {
+        "name": "Parent constructor mismatch",
+        "icon": "\ud83e\uddec",
+        "correct": true
+      },
+      {
+        "name": "Variable shadowing",
+        "icon": "\ud83d\udc65",
+        "correct": false
+      },
+      {
+        "name": "Incorrect method override",
+        "icon": "\ud83d\udd00",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "The subclass constructor must explicitly call the matching parent constructor using super(...)",
+        "correct": true
+      },
+      {
+        "text": "The Student class must be abstract",
+        "correct": false
+      },
+      {
+        "text": "The rollNo variable is not accessible in Person",
+        "correct": false
+      },
+      {
+        "text": "The name variable is private",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "Student() { super(\"Unknown\"); }",
+        "correct": true
+      },
+      {
+        "text": "Student() { super(); }",
+        "correct": false
+      },
+      {
+        "text": "Student() { Person.name = \"Unknown\"; }",
+        "correct": false
+      },
+      {
+        "text": "Student() { this.name = \"Unknown\"; }",
+        "correct": false
+      }
+    ],
+    "detectorNote": "If the parent has a specific constructor, the child MUST call it. How do we invoke a parent constructor?",
+    "criminal": "Parent constructor mismatch"
+  },
+  {
+    "id": "U2-07",
+    "title": "The Silent Override",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Animal.java",
+    "description": "A method override fails silently due to a typo in the method signature.",
+    "bannerSnippet": "void <span class=\"text-crimson\">Sound()</span> { }",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Animal</span> {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">void</span> <span class=\"method\">sound</span>() { }",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Dog</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Animal</span> {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">void</span> <span class=\"method\">Sound</span>() { }",
+        "bug": true
+      },
+      {
+        "text": "}",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "The parent method is `sound()`.",
+        "icon": "\ud83d\udd0a"
+      },
+      {
+        "text": "The child method is `Sound()`.",
+        "icon": "\ud83d\udd20"
+      },
+      {
+        "text": "Java is case-sensitive, so these are treated as completely different methods.",
+        "icon": "\u2696\ufe0f"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Missing inheritance relationship",
+        "icon": "\ud83e\uddec",
+        "correct": false
+      },
+      {
+        "name": "Incorrect method override",
+        "icon": "\ud83d\udd00",
+        "correct": true
+      },
+      {
+        "name": "Variable shadowing",
+        "icon": "\ud83d\udc65",
+        "correct": false
+      },
+      {
+        "name": "Runtime polymorphism error",
+        "icon": "\ud83c\udfad",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "The method names do not match exactly, so it is overloading, not overriding",
+        "correct": true
+      },
+      {
+        "text": "The Dog class needs to be abstract",
+        "correct": false
+      },
+      {
+        "text": "You cannot call methods using parent references",
+        "correct": false
+      },
+      {
+        "text": "The sound method is not declared as virtual",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "@Override void sound() { }",
+        "correct": true
+      },
+      {
+        "text": "void override sound() { }",
+        "correct": false
+      },
+      {
+        "text": "void sound(String s) { }",
+        "correct": false
+      },
+      {
+        "text": "public void Sound() { }",
+        "correct": false
+      }
+    ],
+    "detectorNote": "What annotation can we use to ensure a method is genuinely overriding a parent method?",
+    "criminal": "Incorrect method override"
+  },
+  {
+    "id": "U2-08",
+    "title": "The Identity Switch",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Senior Investigator",
+    "difficultyColor": "crimson",
+    "xpReward": 250,
+    "filename": "Polymorphism.java",
+    "description": "Understanding runtime polymorphism and method dispatch.",
+    "bannerSnippet": "Animal suspect = <span class=\"text-cyan\">new Dog()</span>; suspect.sound();",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Animal</span> { <span class=\"keyword\">void</span> <span class=\"method\">sound</span>() { <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Animal\"</span>); } }",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Dog</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Animal</span> { <span class=\"keyword\">@Override</span> <span class=\"keyword\">void</span> <span class=\"method\">sound</span>() { <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Dog\"</span>); } }",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">Animal</span> suspect = <span class=\"keyword\">new</span> <span class=\"class-name\">Dog</span>();",
+        "bug": true
+      },
+      {
+        "text": "suspect.<span class=\"method\">sound</span>();",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The reference type is Animal, but the actual object type in memory is Dog.",
+        "icon": "\ud83c\udff7\ufe0f"
+      },
+      {
+        "text": "Java uses dynamic method dispatch for overridden instance methods.",
+        "icon": "\u26a1"
+      },
+      {
+        "text": "The method execution is determined by the actual object type at runtime.",
+        "icon": "\ud83c\udfc3"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": false
+      },
+      {
+        "name": "\"Animal\"",
+        "icon": "\ud83d\udc3e",
+        "correct": false
+      },
+      {
+        "name": "\"Dog\"",
+        "icon": "\ud83d\udc15",
+        "correct": true
+      },
+      {
+        "name": "Nothing",
+        "icon": "\ud83d\udd73\ufe0f",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "The compiler looks at the reference type, but runtime executes the actual object type\\'s method",
+        "correct": true
+      },
+      {
+        "text": "The Animal class method takes precedence",
+        "correct": false
+      },
+      {
+        "text": "The Dog class cannot be assigned to an Animal reference",
+        "correct": false
+      },
+      {
+        "text": "The program crashes because types don\\'t match",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "Output is: \"Dog\" (Runtime Polymorphism)",
+        "correct": true
+      },
+      {
+        "text": "Output is: \"Animal\"",
+        "correct": false
+      },
+      {
+        "text": "Throws ClassCastException",
+        "correct": false
+      },
+      {
+        "text": "Compile time error",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Reference Type vs Actual Object Type. Which one decides which method body executes?",
+    "criminal": "Runtime Polymorphism"
+  },
+  {
+    "id": "U2-09",
+    "title": "The Abstract Fugitive",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Senior Investigator",
+    "difficultyColor": "crimson",
+    "xpReward": 250,
+    "filename": "Shape.java",
+    "description": "An attempt to instantiate an abstract class.",
+    "bannerSnippet": "Shape s = <span class=\"text-crimson\">new Shape()</span>;",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">abstract class</span> <span class=\"class-name\">Shape</span> {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">abstract void</span> <span class=\"method\">draw</span>();",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">Shape</span> s = <span class=\"keyword\">new</span> <span class=\"class-name\">Shape</span>();",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The Shape class is marked with the abstract keyword.",
+        "icon": "\ud83d\udc7b"
+      },
+      {
+        "text": "Abstract classes are incomplete templates.",
+        "icon": "\ud83d\udcdd"
+      },
+      {
+        "text": "You cannot instantiate an abstract class directly.",
+        "icon": "\ud83d\udeab"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Abstract Instantiation",
+        "icon": "\ud83d\udc7b",
+        "correct": true
+      },
+      {
+        "name": "Missing interface method",
+        "icon": "\ud83d\udcc4",
+        "correct": false
+      },
+      {
+        "name": "Constructor mismatch",
+        "icon": "\ud83c\udfd7\ufe0f",
+        "correct": false
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "Abstract classes cannot be instantiated because they may contain abstract methods",
+        "correct": true
+      },
+      {
+        "text": "The shape class is missing a main method",
+        "correct": false
+      },
+      {
+        "text": "The new keyword is spelled incorrectly",
+        "correct": false
+      },
+      {
+        "text": "Abstract classes cannot have reference variables",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "Shape s = new Circle(); // Assuming Circle extends Shape",
+        "correct": true
+      },
+      {
+        "text": "Shape s = new abstract Shape();",
+        "correct": false
+      },
+      {
+        "text": "abstract Shape s = new Shape();",
+        "correct": false
+      },
+      {
+        "text": "Shape s = null;",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Abstract classes are like blueprints without walls; you can\\'t live in them until a concrete subclass builds them.",
+    "criminal": "Abstract Instantiation"
+  },
+  {
+    "id": "U2-10",
+    "title": "The Package Contract",
+    "topic": "OOP_DIVISION",
+    "difficulty": "Senior Investigator",
+    "difficultyColor": "crimson",
+    "xpReward": 300,
+    "filename": "Card.java",
+    "description": "Mini-Boss: Interfaces and Implementations.",
+    "bannerSnippet": "class Card <span class=\"text-crimson\">implements Payment</span>",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">interface</span> <span class=\"class-name\">Payment</span> {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">void</span> <span class=\"method\">pay</span>();",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Card</span> <span class=\"keyword\">implements</span> <span class=\"class-name\">Payment</span> {",
+        "bug": true
+      },
+      {
+        "text": "    <span class=\"comment\">// I will implement later...</span>",
+        "bug": true
+      },
+      {
+        "text": "}",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "Payment is an interface that specifies a pay() method.",
+        "icon": "\ud83d\udcdc"
+      },
+      {
+        "text": "Card implements Payment but does not provide a body for pay().",
+        "icon": "\u274c"
+      },
+      {
+        "text": "Implementing an interface is a strict contract to provide all its methods.",
+        "icon": "\ud83e\udd1d"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Unimplemented Interface",
+        "icon": "\ud83e\udd1d",
+        "correct": true
+      },
+      {
+        "name": "Abstract Instantiation",
+        "icon": "\ud83d\udc7b",
+        "correct": false
+      },
+      {
+        "name": "Missing inheritance",
+        "icon": "\ud83e\uddec",
+        "correct": false
+      },
+      {
+        "name": "Variable shadowing",
+        "icon": "\ud83d\udc65",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "A concrete class must implement all methods of its interfaces",
+        "correct": true
+      },
+      {
+        "text": "Interfaces cannot have methods",
+        "correct": false
+      },
+      {
+        "text": "Card should use extends instead of implements",
+        "correct": false
+      },
+      {
+        "text": "The pay() method should be private",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "@Override public void pay() { System.out.println(\"Payment made\"); }",
+        "correct": true
+      },
+      {
+        "text": "void pay() {}",
+        "correct": false
+      },
+      {
+        "text": "abstract class Card implements Payment",
+        "correct": false
+      },
+      {
+        "text": "public void display(Payment p) {}",
+        "correct": false
+      }
+    ],
+    "detectorNote": "What method does the Payment interface require? Does Card have it?",
+    "criminal": "Unimplemented Interface"
+  }
+]

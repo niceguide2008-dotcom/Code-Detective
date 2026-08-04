@@ -1,0 +1,17 @@
+{
+  "name": "code-detective",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && powershell -ExecutionPolicy Bypass -File ./scripts/prepare-netlify.ps1",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
+  }
+}

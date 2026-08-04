@@ -1,0 +1,1080 @@
+CASES.push(...[
+  {
+    "id": "U5-01",
+    "title": "The Dead Button",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Rookie",
+    "difficultyColor": "green",
+    "xpReward": 100,
+    "filename": "UI.java",
+    "description": "Event Handling Basics.",
+    "bannerSnippet": "Button btn = new Button(\"Scan Evidence\"); <span class=\"text-crimson\">// Nothing happens on click</span>",
+    "code": [
+      {
+        "text": "<span class=\"class-name\">Button</span> btn = <span class=\"keyword\">new</span> <span class=\"class-name\">Button</span>(<span class=\"string\">\"Scan Evidence\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"comment\">// Add button to layout...</span>",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">VBox</span> layout = <span class=\"keyword\">new</span> <span class=\"class-name\">VBox</span>(btn);",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "The button is created and added to the layout.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "It is visible on the screen and can be clicked physically.",
+        "icon": "\ud83d\udc41\ufe0f"
+      },
+      {
+        "text": "However, there is no code telling the application what to do when a click occurs.",
+        "icon": "\ud83d\udd0c"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Missing Action Handler",
+        "icon": "\ud83d\udd0c",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "Button Not Enabled",
+        "icon": "\ud83d\udd12",
+        "correct": false
+      },
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "JavaFX controls need an EventHandler attached to them to respond to interactions",
+        "correct": true
+      },
+      {
+        "text": "The Button class must be overridden",
+        "correct": false
+      },
+      {
+        "text": "VBox layouts disable buttons by default",
+        "correct": false
+      },
+      {
+        "text": "The button's text is invalid",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "btn.setOnAction(event -> { System.out.println(\"Scanning...\"); });",
+        "correct": true
+      },
+      {
+        "text": "btn.setClickable(true);",
+        "correct": false
+      },
+      {
+        "text": "btn.start();",
+        "correct": false
+      },
+      {
+        "text": "layout.enable(btn);",
+        "correct": false
+      }
+    ],
+    "detectorNote": "A button without an action handler is like a doorbell not connected to a bell.",
+    "criminal": "Missing Event Handler"
+  },
+  {
+    "id": "U5-02",
+    "title": "The Missing Click",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "ImagePanel.java",
+    "description": "Mouse Events on generic nodes.",
+    "bannerSnippet": "imageView.<span class=\"text-crimson\">setOnAction</span>(e -> zoom());",
+    "code": [
+      {
+        "text": "<span class=\"class-name\">ImageView</span> imageView = <span class=\"keyword\">new</span> <span class=\"class-name\">ImageView</span>(evidencePhoto);",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"comment\">// We want to zoom when the user clicks the photo</span>",
+        "bug": false
+      },
+      {
+        "text": "imageView.<span class=\"method\">setOnAction</span>(e -> <span class=\"method\">zoom</span>());",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The code attempts to attach an action to an ImageView.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "Buttons use setOnAction() for standard clicks.",
+        "icon": "\ud83d\udd18"
+      },
+      {
+        "text": "ImageView is not a Button. It does not have an 'Action' event natively.",
+        "icon": "\ud83d\udeab"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "Missing inheritance",
+        "icon": "\ud83e\uddec",
+        "correct": false
+      },
+      {
+        "name": "TypeMismatch",
+        "icon": "\ud83c\udfad",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "ImageView does not have a setOnAction method; you must use mouse events",
+        "correct": true
+      },
+      {
+        "text": "ImageView cannot be clicked",
+        "correct": false
+      },
+      {
+        "text": "The zoom method requires parameters",
+        "correct": false
+      },
+      {
+        "text": "Images must be wrapped in Buttons first",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "imageView.setOnMouseClicked(e -> zoom());",
+        "correct": true
+      },
+      {
+        "text": "imageView.setClickable(true);",
+        "correct": false
+      },
+      {
+        "text": "imageView.addEventHandler(ActionEvent.ACTION, e -> zoom());",
+        "correct": false
+      },
+      {
+        "text": "imageView.addEventFilter(KeyEvent.KEY_PRESSED, e -> zoom());",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Not everything has an 'Action'. For generic nodes like images, you listen for raw MouseEvents.",
+    "criminal": "Invalid Event Type"
+  },
+  {
+    "id": "U5-03",
+    "title": "The Silent Keyboard",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Terminal.java",
+    "description": "Key Event handling.",
+    "bannerSnippet": "scene.<span class=\"text-crimson\">setOnKeyTyped</span>(e -> { ... });",
+    "code": [
+      {
+        "text": "<span class=\"class-name\">Scene</span> scene = <span class=\"keyword\">new</span> <span class=\"class-name\">Scene</span>(root);",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"comment\">// We want to detect if the user holds down the SHIFT key</span>",
+        "bug": false
+      },
+      {
+        "text": "scene.<span class=\"method\">setOnKeyTyped</span>(e -> {",
+        "bug": true
+      },
+      {
+        "text": "    <span class=\"keyword\">if</span> (e.<span class=\"method\">isShiftDown</span>()) {",
+        "bug": false
+      },
+      {
+        "text": "        <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Shift held\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "    }",
+        "bug": false
+      },
+      {
+        "text": "});",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The developer wants to detect when the SHIFT key is held down.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "KEY_TYPED events are only fired for printable characters (like 'A', '1', '?').",
+        "icon": "\ud83d\udd24"
+      },
+      {
+        "text": "Modifier keys like SHIFT, CTRL, and ALT do not produce a typed character.",
+        "icon": "\ud83d\udd07"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Invalid Event Type",
+        "icon": "\ud83d\udeab",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": false
+      },
+      {
+        "name": "Missing Focus",
+        "icon": "\ud83c\udfaf",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "Modifier keys don't fire KeyTyped events; you must use KeyPressed",
+        "correct": true
+      },
+      {
+        "text": "You cannot detect modifier keys in JavaFX",
+        "correct": false
+      },
+      {
+        "text": "The scene cannot listen to keyboard events",
+        "correct": false
+      },
+      {
+        "text": "isShiftDown is not a valid method",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "scene.setOnKeyPressed(e -> { if (e.isShiftDown()) ... });",
+        "correct": true
+      },
+      {
+        "text": "scene.setOnKeyReleased(...);",
+        "correct": false
+      },
+      {
+        "text": "scene.addEventHandler(MouseEvent.MOUSE_CLICKED, ...);",
+        "correct": false
+      },
+      {
+        "text": "e.getCharacter().equals(\"SHIFT\")",
+        "correct": false
+      }
+    ],
+    "detectorNote": "If you want to catch invisible keys (like Shift or Arrows), you must listen for them being *pressed*, not typed.",
+    "criminal": "Incorrect Key Event"
+  },
+  {
+    "id": "U5-04",
+    "title": "The Checkbox Alibi",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Rookie",
+    "difficultyColor": "green",
+    "xpReward": 100,
+    "filename": "SuspectForm.java",
+    "description": "Checkbox vs RadioButton mechanics.",
+    "bannerSnippet": "Has Tattoo: \u25cb Has Scar: \u25cb <span class=\"text-crimson\">// (Mutually exclusive)</span>",
+    "code": [
+      {
+        "text": "<span class=\"comment\">// We need to record multiple identifying marks</span>",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">RadioButton</span> rb1 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Has Tattoo\"</span>);",
+        "bug": true
+      },
+      {
+        "text": "<span class=\"class-name\">RadioButton</span> rb2 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Has Scar\"</span>);",
+        "bug": true
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">ToggleGroup</span> group = <span class=\"keyword\">new</span> <span class=\"class-name\">ToggleGroup</span>();",
+        "bug": true
+      },
+      {
+        "text": "rb1.<span class=\"method\">setToggleGroup</span>(group);",
+        "bug": true
+      },
+      {
+        "text": "rb2.<span class=\"method\">setToggleGroup</span>(group);",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The UI asks the detective to check identifying marks (Tattoo, Scar).",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "A suspect can have BOTH a tattoo and a scar.",
+        "icon": "\ud83d\udc65"
+      },
+      {
+        "text": "RadioButtons in a ToggleGroup enforce mutually exclusive choices (only ONE can be selected).",
+        "icon": "\u2696\ufe0f"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Incorrect UI Control",
+        "icon": "\ud83c\udf9b\ufe0f",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": false
+      },
+      {
+        "name": "Missing Event Handler",
+        "icon": "\ud83d\udd0c",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "RadioButtons force single-selection. For multiple selections, CheckBoxes must be used",
+        "correct": true
+      },
+      {
+        "text": "ToggleGroups are deprecated in JavaFX",
+        "correct": false
+      },
+      {
+        "text": "The ToggleGroup is not added to the layout",
+        "correct": false
+      },
+      {
+        "text": "RadioButtons cannot have text labels",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "Use CheckBox instead: CheckBox cb1 = new CheckBox(\"Has Tattoo\"); CheckBox cb2 = new CheckBox(\"Has Scar\");",
+        "correct": true
+      },
+      {
+        "text": "Remove the ToggleGroup entirely.",
+        "correct": false
+      },
+      {
+        "text": "Set RadioButtons to multiSelect = true",
+        "correct": false
+      },
+      {
+        "text": "Use a ChoiceBox",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Circles (Radio) mean 'Pick ONE'. Squares (Checkbox) mean 'Pick ANY'.",
+    "criminal": "Incorrect UI Control"
+  },
+  {
+    "id": "U5-05",
+    "title": "The Toggle Conflict",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Rookie",
+    "difficultyColor": "green",
+    "xpReward": 100,
+    "filename": "Settings.java",
+    "description": "Radio Buttons missing a ToggleGroup.",
+    "bannerSnippet": "Difficulty: \u25c9 Easy \u25c9 Medium \u25c9 Hard <span class=\"text-crimson\">// Wait, all are selected?!</span>",
+    "code": [
+      {
+        "text": "<span class=\"class-name\">RadioButton</span> r1 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Easy\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">RadioButton</span> r2 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Medium\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">RadioButton</span> r3 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Hard\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">VBox</span> layout = <span class=\"keyword\">new</span> <span class=\"class-name\">VBox</span>(r1, r2, r3);",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The user is supposed to select ONLY ONE difficulty level.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "RadioButtons are used, which is correct for single choices.",
+        "icon": "\ud83d\udd18"
+      },
+      {
+        "text": "However, they currently act independently, allowing all three to be selected simultaneously.",
+        "icon": "\u26a0\ufe0f"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Missing Event Handler",
+        "icon": "\ud83d\udd0c",
+        "correct": false
+      },
+      {
+        "name": "Missing ToggleGroup",
+        "icon": "\ud83d\udd17",
+        "correct": true
+      },
+      {
+        "name": "Incorrect UI Control",
+        "icon": "\ud83c\udf9b\ufe0f",
+        "correct": false
+      },
+      {
+        "name": "Layout Error",
+        "icon": "\ud83d\udcd0",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "RadioButtons do not know they belong together unless assigned to the same ToggleGroup",
+        "correct": true
+      },
+      {
+        "text": "They should be CheckBoxes",
+        "correct": false
+      },
+      {
+        "text": "You must write an if-statement in the Event Handler to uncheck the others",
+        "correct": false
+      },
+      {
+        "text": "They are placed in a VBox instead of an HBox",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "ToggleGroup g = new ToggleGroup(); r1.setToggleGroup(g); r2.setToggleGroup(g); r3.setToggleGroup(g);",
+        "correct": true
+      },
+      {
+        "text": "r1.setSingleSelect(true);",
+        "correct": false
+      },
+      {
+        "text": "layout.setToggleGroup(true);",
+        "correct": false
+      },
+      {
+        "text": "Use ChoiceBox instead",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Radio buttons are solitary creatures. You must group them up to make them work as a team.",
+    "criminal": "Missing ToggleGroup"
+  },
+  {
+    "id": "U5-06",
+    "title": "The Selection Mystery",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Database.java",
+    "description": "Control Selection: ListView vs ComboBox.",
+    "bannerSnippet": "We need to select a criminal from <span class=\"text-crimson\">1,000 records</span>.",
+    "code": [
+      {
+        "text": "<span class=\"comment\">// Requirement: User must select ONE criminal from a list of 1,000.</span>",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"comment\">// The UI space is very limited (only 1 row high available).</span>",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"comment\">// Which JavaFX control is the correct suspect?</span>",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "Requirement 1: Select ONE item from a very large list.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "Requirement 2: UI space is limited (1 row high).",
+        "icon": "\ud83d\udccf"
+      },
+      {
+        "text": "A ListView displays multiple rows at once.",
+        "icon": "\ud83d\udccb"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "ListView",
+        "icon": "\ud83d\udccb",
+        "correct": false
+      },
+      {
+        "name": "ComboBox",
+        "icon": "\ud83d\udd3d",
+        "correct": true
+      },
+      {
+        "name": "RadioButton",
+        "icon": "\ud83d\udd18",
+        "correct": false
+      },
+      {
+        "name": "TextField",
+        "icon": "\ud83d\udcdd",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "ComboBox provides a dropdown menu, saving space while supporting large datasets",
+        "correct": true
+      },
+      {
+        "text": "ListView is the only control that can hold 1,000 items",
+        "correct": false
+      },
+      {
+        "text": "1,000 RadioButtons is the most efficient choice",
+        "correct": false
+      },
+      {
+        "text": "TextField allows users to type perfectly every time",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "ComboBox<String> criminals = new ComboBox<>();",
+        "correct": true
+      },
+      {
+        "text": "ListView<String> criminals = new ListView<>();",
+        "correct": false
+      },
+      {
+        "text": "ChoiceBox<String> criminals = new ChoiceBox<>(); // Good for small lists, bad for 1000",
+        "correct": false
+      },
+      {
+        "text": "ToggleGroup group = new ToggleGroup();",
+        "correct": false
+      }
+    ],
+    "detectorNote": "When space is tight and suspects are many, a dropdown (ComboBox) is your best tool.",
+    "criminal": "Incorrect Control Choice"
+  },
+  {
+    "id": "U5-07",
+    "title": "The Missing Text",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Report.java",
+    "description": "Text Controls: TextField vs TextArea.",
+    "bannerSnippet": "TextField report = <span class=\"text-crimson\">new TextField();</span>",
+    "code": [
+      {
+        "text": "<span class=\"comment\">// UI for entering a long, multi-paragraph investigation report</span>",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">TextField</span> reportInput = <span class=\"keyword\">new</span> <span class=\"class-name\">TextField</span>();",
+        "bug": true
+      },
+      {
+        "text": "reportInput.<span class=\"method\">setPrefHeight</span>(<span class=\"number\">300</span>);",
+        "bug": true
+      },
+      {
+        "text": "reportInput.<span class=\"method\">setPrefWidth</span>(<span class=\"number\">400</span>);",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The developer wants the user to enter a multi-paragraph report.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "They increased the height of the TextField to 300 pixels.",
+        "icon": "\ud83d\udccf"
+      },
+      {
+        "text": "TextField only supports a SINGLE line of text, regardless of how tall you make it.",
+        "icon": "\u26a0\ufe0f"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Incorrect UI Control",
+        "icon": "\ud83c\udf9b\ufe0f",
+        "correct": true
+      },
+      {
+        "name": "Missing ScrollPane",
+        "icon": "\ud83d\udcdc",
+        "correct": false
+      },
+      {
+        "name": "Layout Error",
+        "icon": "\ud83d\udcd0",
+        "correct": false
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "TextFields are single-line. For multi-line text, a TextArea is required",
+        "correct": true
+      },
+      {
+        "text": "You must wrap the TextField in a ScrollPane to get multiple lines",
+        "correct": false
+      },
+      {
+        "text": "The width must be larger than the height",
+        "correct": false
+      },
+      {
+        "text": "Text cannot be entered into JavaFX without a KeyboardEvent handler",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "TextArea reportInput = new TextArea();",
+        "correct": true
+      },
+      {
+        "text": "reportInput.setMultiLine(true);",
+        "correct": false
+      },
+      {
+        "text": "ScrollPane sp = new ScrollPane(reportInput);",
+        "correct": false
+      },
+      {
+        "text": "PasswordField reportInput = new PasswordField();",
+        "correct": false
+      }
+    ],
+    "detectorNote": "A field is a single strip of land. An area is a whole field. Use TextArea for big paragraphs!",
+    "criminal": "Incorrect Control Choice"
+  },
+  {
+    "id": "U5-08",
+    "title": "The Layout Disaster",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Senior Investigator",
+    "difficultyColor": "crimson",
+    "xpReward": 250,
+    "filename": "MainView.java",
+    "description": "Understanding JavaFX Layouts.",
+    "bannerSnippet": "HBox root = <span class=\"text-crimson\">new HBox(topMenu, leftNav, centerContent);</span>",
+    "code": [
+      {
+        "text": "<span class=\"comment\">// We want a standard application layout:</span>",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"comment\">// Menu at TOP, Navigation on LEFT, Content in CENTER</span>",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">HBox</span> root = <span class=\"keyword\">new</span> <span class=\"class-name\">HBox</span>();",
+        "bug": true
+      },
+      {
+        "text": "root.<span class=\"method\">getChildren</span>().<span class=\"method\">addAll</span>(topMenu, leftNav, centerContent);",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The developer wants components explicitly pinned to Top, Left, and Center.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "HBox aligns all its children in a single horizontal row from left to right.",
+        "icon": "\u27a1\ufe0f"
+      },
+      {
+        "text": "The result is the Menu, Navigation, and Content side-by-side in a single line.",
+        "icon": "\u274c"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "VBox",
+        "icon": "\u2b07\ufe0f",
+        "correct": false
+      },
+      {
+        "name": "BorderPane",
+        "icon": "\ud83d\uddbc\ufe0f",
+        "correct": true
+      },
+      {
+        "name": "GridPane",
+        "icon": "\ud83d\udd32",
+        "correct": false
+      },
+      {
+        "name": "StackPane",
+        "icon": "\ud83e\udd5e",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "BorderPane explicitly defines Top, Bottom, Left, Right, and Center regions",
+        "correct": true
+      },
+      {
+        "text": "VBox puts them in a vertical column, which doesn't fit the requirement",
+        "correct": false
+      },
+      {
+        "text": "GridPane requires manual coordinate calculations for every element",
+        "correct": false
+      },
+      {
+        "text": "StackPane places them on top of each other",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "BorderPane root = new BorderPane(); root.setTop(topMenu); root.setLeft(leftNav); root.setCenter(centerContent);",
+        "correct": true
+      },
+      {
+        "text": "VBox root = new VBox(topMenu, leftNav, centerContent);",
+        "correct": false
+      },
+      {
+        "text": "StackPane root = new StackPane(topMenu, leftNav, centerContent);",
+        "correct": false
+      },
+      {
+        "text": "FlowPane root = new FlowPane(topMenu, leftNav, centerContent);",
+        "correct": false
+      }
+    ],
+    "detectorNote": "If a UI has a top header, a side nav, and a big center area, it is almost certainly a BorderPane.",
+    "criminal": "Incorrect Layout Container"
+  },
+  {
+    "id": "U5-09",
+    "title": "The Hidden Evidence",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Gallery.java",
+    "description": "Scrolling in JavaFX.",
+    "bannerSnippet": "VBox gallery = new VBox(); <span class=\"text-crimson\">// 50 images added</span>",
+    "code": [
+      {
+        "text": "<span class=\"comment\">// Displaying 50 suspect photos in a vertical column</span>",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">VBox</span> gallery = <span class=\"keyword\">new</span> <span class=\"class-name\">VBox</span>();",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"keyword\">for</span> (<span class=\"class-name\">Image</span> img : suspectPhotos) {",
+        "bug": false
+      },
+      {
+        "text": "    gallery.<span class=\"method\">getChildren</span>().<span class=\"method\">add</span>(<span class=\"keyword\">new</span> <span class=\"class-name\">ImageView</span>(img));",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">Scene</span> scene = <span class=\"keyword\">new</span> <span class=\"class-name\">Scene</span>(gallery, <span class=\"number\">400</span>, <span class=\"number\">600</span>);",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "50 images are stacked vertically in a VBox.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "The Scene is only 600 pixels tall.",
+        "icon": "\ud83d\udccf"
+      },
+      {
+        "text": "Most of the images spill off the bottom of the screen and cannot be reached.",
+        "icon": "\ud83d\ude48"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Missing ScrollPane",
+        "icon": "\ud83d\udcdc",
+        "correct": true
+      },
+      {
+        "name": "Layout Error",
+        "icon": "\ud83d\udcd0",
+        "correct": false
+      },
+      {
+        "name": "Missing EventHandler",
+        "icon": "\ud83d\udd0c",
+        "correct": false
+      },
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "VBox does not provide scrollbars automatically. It must be wrapped in a ScrollPane.",
+        "correct": true
+      },
+      {
+        "text": "The Scene automatically provides scrollbars but they are hidden",
+        "correct": false
+      },
+      {
+        "text": "VBox is the wrong layout, HBox should be used",
+        "correct": false
+      },
+      {
+        "text": "The images are too large and must be resized",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "ScrollPane scroll = new ScrollPane(gallery); Scene scene = new Scene(scroll, 400, 600);",
+        "correct": true
+      },
+      {
+        "text": "gallery.setScrollable(true);",
+        "correct": false
+      },
+      {
+        "text": "scene.enableScrolling();",
+        "correct": false
+      },
+      {
+        "text": "ListView gallery = new ListView();",
+        "correct": false
+      }
+    ],
+    "detectorNote": "JavaFX layouts just grow. If you want a window into that growing layout, you need a ScrollPane.",
+    "criminal": "Missing Scroll View"
+  },
+  {
+    "id": "U5-10",
+    "title": "The Broken Menu Bar",
+    "topic": "JAVAFX_DIVISION",
+    "difficulty": "Senior Investigator",
+    "difficultyColor": "crimson",
+    "xpReward": 300,
+    "filename": "MenuBar.java",
+    "description": "Constructing JavaFX Menus.",
+    "bannerSnippet": "MenuBar bar = <span class=\"text-crimson\">new MenuBar(fileMenuItem);</span>",
+    "code": [
+      {
+        "text": "<span class=\"comment\">// We want a top bar with \"File\" -> \"Exit\"</span>",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">MenuItem</span> exitItem = <span class=\"keyword\">new</span> <span class=\"class-name\">MenuItem</span>(<span class=\"string\">\"Exit\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">MenuBar</span> bar = <span class=\"keyword\">new</span> <span class=\"class-name\">MenuBar</span>();",
+        "bug": false
+      },
+      {
+        "text": "bar.<span class=\"method\">getMenus</span>().<span class=\"method\">add</span>(exitItem);",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "A MenuBar holds Menus.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "A Menu holds MenuItems.",
+        "icon": "\ud83d\udcc2"
+      },
+      {
+        "text": "The code tries to add a MenuItem directly into the MenuBar.",
+        "icon": "\ud83d\udeab"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "ClassCastException",
+        "icon": "\ud83c\udfad",
+        "correct": false
+      },
+      {
+        "name": "Missing EventHandler",
+        "icon": "\ud83d\udd0c",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "MenuBar only accepts Menu objects, not MenuItems",
+        "correct": true
+      },
+      {
+        "text": "MenuItem is abstract and cannot be instantiated",
+        "correct": false
+      },
+      {
+        "text": "The MenuBar is not added to the layout",
+        "correct": false
+      },
+      {
+        "text": "The exitItem has no action event",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "Menu fileMenu = new Menu(\"File\"); fileMenu.getItems().add(exitItem); bar.getMenus().add(fileMenu);",
+        "correct": true
+      },
+      {
+        "text": "bar.getItems().add(exitItem);",
+        "correct": false
+      },
+      {
+        "text": "bar.getChildren().add(exitItem);",
+        "correct": false
+      },
+      {
+        "text": "Menu fileMenu = new Menu(\"File\", exitItem);",
+        "correct": false
+      }
+    ],
+    "detectorNote": "MenuBars hold Menus (File, Edit). Menus hold MenuItems (Save, Copy). Respect the hierarchy!",
+    "criminal": "Hierarchy Violation"
+  }
+]);

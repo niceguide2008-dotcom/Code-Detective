@@ -1,0 +1,1100 @@
+[
+  {
+    "id": "U4-01",
+    "title": "The Silent Console",
+    "topic": "IO_GENERICS",
+    "difficulty": "Rookie",
+    "difficultyColor": "green",
+    "xpReward": 100,
+    "filename": "Investigation.java",
+    "description": "Console I/O and Type Mismatch.",
+    "bannerSnippet": "Scanner sc = new Scanner(System.in); <span class=\"text-crimson\">int age = sc.nextLine();</span>",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">import</span> java.util.Scanner;",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">Scanner</span> sc = <span class=\"keyword\">new</span> <span class=\"class-name\">Scanner</span>(<span class=\"class-name\">System</span>.<span class=\"variable\">in</span>);",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">print</span>(<span class=\"string\">\"Enter your age: \"</span>);",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"type\">int</span> age = sc.<span class=\"method\">nextLine</span>();",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The program asks the user for their age, expecting a number.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "The variable 'age' is declared as an 'int'.",
+        "icon": "\ud83d\udd22"
+      },
+      {
+        "text": "The Scanner's 'nextLine()' method returns a String, not an int.",
+        "icon": "\ud83d\udd24"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "TypeMismatch",
+        "icon": "\ud83c\udfad",
+        "correct": true
+      },
+      {
+        "name": "InputMismatchException",
+        "icon": "\u274c",
+        "correct": false
+      },
+      {
+        "name": "Missing Scanner",
+        "icon": "\ud83d\udce0",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "A String cannot be assigned to an int variable without conversion",
+        "correct": true
+      },
+      {
+        "text": "The Scanner must be closed",
+        "correct": false
+      },
+      {
+        "text": "nextLine() reads integers by default",
+        "correct": false
+      },
+      {
+        "text": "System.out.print cannot be used for input",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "int age = sc.nextInt();",
+        "correct": true
+      },
+      {
+        "text": "int age = (int) sc.nextLine();",
+        "correct": false
+      },
+      {
+        "text": "int age = sc.next();",
+        "correct": false
+      },
+      {
+        "text": "String age = sc.nextInt();",
+        "correct": false
+      }
+    ],
+    "detectorNote": "If you want a number, use nextInt(). If you want text, use nextLine().",
+    "criminal": "TypeMismatch"
+  },
+  {
+    "id": "U4-02",
+    "title": "The Missing File",
+    "topic": "IO_GENERICS",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "FileHandler.java",
+    "description": "File I/O and Checked Exceptions.",
+    "bannerSnippet": "FileReader reader = <span class=\"text-crimson\">new FileReader(\"evidence.txt\")</span>;",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">import</span> java.io.FileReader;",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"keyword\">void</span> <span class=\"method\">readEvidence</span>() {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"class-name\">FileReader</span> reader = <span class=\"keyword\">new</span> <span class=\"class-name\">FileReader</span>(<span class=\"string\">\"evidence.txt\"</span>);",
+        "bug": true
+      },
+      {
+        "text": "}",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "The program tries to open a file named 'evidence.txt'.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "Opening a file might fail if the file doesn't exist on the hard drive.",
+        "icon": "\ud83d\udcc2"
+      },
+      {
+        "text": "Java forces you to handle this possibility with a checked exception.",
+        "icon": "\u26a0\ufe0f"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "FileNotFoundException",
+        "icon": "\ud83d\udcc4",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "Variable shadowing",
+        "icon": "\ud83d\udc65",
+        "correct": false
+      },
+      {
+        "name": "ClassCastException",
+        "icon": "\ud83c\udfad",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "FileReader throws a checked FileNotFoundException which must be caught or declared",
+        "correct": true
+      },
+      {
+        "text": "The filename must use double backslashes",
+        "correct": false
+      },
+      {
+        "text": "FileReader cannot read text files",
+        "correct": false
+      },
+      {
+        "text": "The file is locked by another process",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "try { FileReader reader = new FileReader(\"evidence.txt\"); } catch (FileNotFoundException e) {}",
+        "correct": true
+      },
+      {
+        "text": "FileReader reader = new FileReader();",
+        "correct": false
+      },
+      {
+        "text": "File f = new FileReader(\"evidence.txt\");",
+        "correct": false
+      },
+      {
+        "text": "FileReader reader = \"evidence.txt\";",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Always plan for the worst when dealing with the filesystem!",
+    "criminal": "Unhandled Checked Exception"
+  },
+  {
+    "id": "U4-03",
+    "title": "The Vanishing Evidence",
+    "topic": "IO_GENERICS",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "FileHandler.java",
+    "description": "Resource Handling and Memory Leaks.",
+    "bannerSnippet": "reader.read(); <span class=\"text-crimson\">// Done reading</span>",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">try</span> {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"class-name\">FileReader</span> reader = <span class=\"keyword\">new</span> <span class=\"class-name\">FileReader</span>(<span class=\"string\">\"evidence.txt\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"type\">int</span> data = reader.<span class=\"method\">read</span>();",
+        "bug": false
+      },
+      {
+        "text": "} <span class=\"keyword\">catch</span> (<span class=\"class-name\">Exception</span> e) {",
+        "bug": false
+      },
+      {
+        "text": "    e.<span class=\"method\">printStackTrace</span>();",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The code opens a file and reads data from it.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "Files are operating system resources.",
+        "icon": "\ud83d\udcbe"
+      },
+      {
+        "text": "The code finishes without closing the resource, which can cause memory leaks or file locks.",
+        "icon": "\ud83d\udd13"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Resource Leak",
+        "icon": "\ud83d\udd13",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "FileNotFoundException",
+        "icon": "\ud83d\udcc4",
+        "correct": false
+      },
+      {
+        "name": "Syntax Error",
+        "icon": "\u274c",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "The reader is never closed, keeping the file locked",
+        "correct": true
+      },
+      {
+        "text": "The try block is empty",
+        "correct": false
+      },
+      {
+        "text": "Exception is too broad of a catch",
+        "correct": false
+      },
+      {
+        "text": "read() returns a char, not an int",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "Use a finally block with reader.close(), or use Try-With-Resources: try (FileReader r = new FileReader(\"evidence.txt\")) { ... }",
+        "correct": true
+      },
+      {
+        "text": "reader.delete();",
+        "correct": false
+      },
+      {
+        "text": "reader = null;",
+        "correct": false
+      },
+      {
+        "text": "catch (ResourceLeak e)",
+        "correct": false
+      }
+    ],
+    "detectorNote": "If you open a door, close it. Try-with-resources does it automatically!",
+    "criminal": "Resource Leak"
+  },
+  {
+    "id": "U4-04",
+    "title": "The Unsafe Container",
+    "topic": "IO_GENERICS",
+    "difficulty": "Rookie",
+    "difficultyColor": "green",
+    "xpReward": 100,
+    "filename": "Lab.java",
+    "description": "The need for Generics for type safety.",
+    "bannerSnippet": "evidence.add(\"Fingerprint\"); <span class=\"text-crimson\">evidence.add(100);</span>",
+    "code": [
+      {
+        "text": "<span class=\"class-name\">ArrayList</span> evidence = <span class=\"keyword\">new</span> <span class=\"class-name\">ArrayList</span>();",
+        "bug": true
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "evidence.<span class=\"method\">add</span>(<span class=\"string\">\"Fingerprint\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "evidence.<span class=\"method\">add</span>(<span class=\"number\">100</span>);",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "The ArrayList is created without specifying a type (it is a Raw Type).",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "Raw types allow you to mix Strings, Integers, and any other object together.",
+        "icon": "\ud83d\udce6"
+      },
+      {
+        "text": "This usually leads to ClassCastExceptions later when you retrieve the data.",
+        "icon": "\u26a0\ufe0f"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Raw Type Vulnerability",
+        "icon": "\ud83d\udce6",
+        "correct": true
+      },
+      {
+        "name": "TypeMismatch",
+        "icon": "\ud83c\udfad",
+        "correct": false
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "IndexOutOfBounds",
+        "icon": "\ud83d\udcca",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "Collections without generics are not type-safe and accept any Object",
+        "correct": true
+      },
+      {
+        "text": "ArrayLists can only store Strings",
+        "correct": false
+      },
+      {
+        "text": "100 is a primitive and cannot be added to a collection",
+        "correct": false
+      },
+      {
+        "text": "The array is out of bounds",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "ArrayList<String> evidence = new ArrayList<>();",
+        "correct": true
+      },
+      {
+        "text": "ArrayList(String) evidence = new ArrayList();",
+        "correct": false
+      },
+      {
+        "text": "String[] evidence = new ArrayList();",
+        "correct": false
+      },
+      {
+        "text": "ArrayList evidence = new ArrayList(String);",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Generics (<String>) enforce rules so you don't accidentally put a gun in a bag meant for donuts.",
+    "criminal": "Raw Type Safety Violation"
+  },
+  {
+    "id": "U4-05",
+    "title": "The Universal Evidence Box",
+    "topic": "IO_GENERICS",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "EvidenceBox.java",
+    "description": "Constructing Generic Classes.",
+    "bannerSnippet": "class EvidenceBox<span class=\"text-crimson\">&lt;____&gt;</span> {",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"keyword\">____</span>&gt; {",
+        "bug": true
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">private</span> <span class=\"keyword\">____</span> evidence;",
+        "bug": true
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">void</span> <span class=\"method\">store</span>(<span class=\"keyword\">____</span> evidence) {",
+        "bug": true
+      },
+      {
+        "text": "        <span class=\"keyword\">this</span>.evidence = evidence;",
+        "bug": false
+      },
+      {
+        "text": "    }",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "This class is meant to hold ANY type of evidence.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "Java allows you to use Type Parameters (usually a single uppercase letter).",
+        "icon": "\ud83d\udd20"
+      },
+      {
+        "text": "The letter acts as a placeholder for the actual type that will be used later.",
+        "icon": "\ud83d\udce6"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Generic Type Parameter",
+        "icon": "\ud83d\udd20",
+        "correct": true
+      },
+      {
+        "name": "Raw Type",
+        "icon": "\ud83d\udce6",
+        "correct": false
+      },
+      {
+        "name": "Missing Return",
+        "icon": "\ud83d\udce4",
+        "correct": false
+      },
+      {
+        "name": "Missing inheritance",
+        "icon": "\ud83e\uddec",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "A type parameter like T allows the class to be strongly typed when instantiated",
+        "correct": true
+      },
+      {
+        "text": "Classes cannot be generic",
+        "correct": false
+      },
+      {
+        "text": "The blanks should be filled with 'Object'",
+        "correct": false
+      },
+      {
+        "text": "The blanks should be filled with 'String'",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "class EvidenceBox<T> { private T evidence; void store(T evidence) { ... } }",
+        "correct": true
+      },
+      {
+        "text": "class EvidenceBox<Object> { private Object evidence; }",
+        "correct": false
+      },
+      {
+        "text": "class EvidenceBox<String> { private String evidence; }",
+        "correct": false
+      },
+      {
+        "text": "class EvidenceBox<Generic> { private Generic evidence; }",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Use <T> for Type. It's a placeholder that morphs into whatever type you need later!",
+    "criminal": "Missing Generic Declaration"
+  },
+  {
+    "id": "U4-06",
+    "title": "The Generic Investigator",
+    "topic": "IO_GENERICS",
+    "difficulty": "Senior Investigator",
+    "difficultyColor": "crimson",
+    "xpReward": 250,
+    "filename": "Lab.java",
+    "description": "Generic Methods.",
+    "bannerSnippet": "static <span class=\"text-crimson\">&lt;T&gt;</span> void inspect(T evidence)",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">static</span> &lt;<span class=\"class-name\">T</span>&gt; <span class=\"keyword\">void</span> <span class=\"method\">inspect</span>(<span class=\"class-name\">T</span> evidence) {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(evidence);",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"comment\">// Will this code compile?</span>",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"method\">inspect</span>(<span class=\"string\">\"Blood\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"method\">inspect</span>(<span class=\"number\">145</span>);",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"method\">inspect</span>(<span class=\"number\">99.9</span>);",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "The method is a Generic Method, denoted by the <T> before the return type.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "It accepts a parameter of type T.",
+        "icon": "\ud83d\udce5"
+      },
+      {
+        "text": "We are passing a String, an Integer, and a Double to the same method.",
+        "icon": "\ud83c\udfad"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": false
+      },
+      {
+        "name": "TypeMismatch",
+        "icon": "\ud83d\udeab",
+        "correct": false
+      },
+      {
+        "name": "Valid Generic Execution",
+        "icon": "\u2705",
+        "correct": true
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "A generic method accepts any Object type, and autoboxing handles the primitives",
+        "correct": true
+      },
+      {
+        "text": "T defaults to String, so passing 145 fails",
+        "correct": false
+      },
+      {
+        "text": "Generic methods cannot be static",
+        "correct": false
+      },
+      {
+        "text": "You must explicitly specify the type like inspect<String>(\"Blood\")",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "The code is completely valid and compiles.",
+        "correct": true
+      },
+      {
+        "text": "Change T to Object",
+        "correct": false
+      },
+      {
+        "text": "Create three overloaded inspect() methods",
+        "correct": false
+      },
+      {
+        "text": "Compile Error.",
+        "correct": false
+      }
+    ],
+    "detectorNote": "One method to rule them all! Generics allow you to write a method once and use it for any object type.",
+    "criminal": "Valid Generic Method"
+  },
+  {
+    "id": "U4-07",
+    "title": "The Restricted Type",
+    "topic": "IO_GENERICS",
+    "difficulty": "Senior Investigator",
+    "difficultyColor": "crimson",
+    "xpReward": 250,
+    "filename": "Vault.java",
+    "description": "Bounded Type Parameters.",
+    "bannerSnippet": "class EvidenceBox<span class=\"text-crimson\">&lt;T extends Number&gt;</span>",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">T</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Number</span>&gt; {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"class-name\">T</span> value;",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">Integer</span>&gt; box1 = <span class=\"keyword\">new</span> <span class=\"class-name\">EvidenceBox</span>&lt;&gt;();",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">Double</span>&gt; box2 = <span class=\"keyword\">new</span> <span class=\"class-name\">EvidenceBox</span>&lt;&gt;();",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">String</span>&gt; box3 = <span class=\"keyword\">new</span> <span class=\"class-name\">EvidenceBox</span>&lt;&gt;();",
+        "bug": true
+      }
+    ],
+    "clues": [
+      {
+        "text": "The class EvidenceBox uses a Bounded Type Parameter (<T extends Number>).",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "This means T can only be Number or a subclass of Number.",
+        "icon": "\ud83d\udd22"
+      },
+      {
+        "text": "Integer and Double are subclasses of Number. String is not.",
+        "icon": "\ud83d\udeab"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": true
+      },
+      {
+        "name": "TypeMismatch",
+        "icon": "\ud83c\udfad",
+        "correct": false
+      },
+      {
+        "name": "Valid Generic Execution",
+        "icon": "\u2705",
+        "correct": false
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "String does not extend Number, violating the type bound",
+        "correct": true
+      },
+      {
+        "text": "EvidenceBox cannot be instantiated multiple times",
+        "correct": false
+      },
+      {
+        "text": "Double is not a subclass of Number",
+        "correct": false
+      },
+      {
+        "text": "Integer cannot be boxed",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "String cannot be used. Remove box3, or change the bound.",
+        "correct": true
+      },
+      {
+        "text": "EvidenceBox<String extends Number> box3;",
+        "correct": false
+      },
+      {
+        "text": "EvidenceBox<Number> box3 = new EvidenceBox<String>();",
+        "correct": false
+      },
+      {
+        "text": "Cast String to Number",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Bounds set the rules. 'extends Number' means 'Numbers only allowed inside!'",
+    "criminal": "Type Bound Violation"
+  },
+  {
+    "id": "U4-08",
+    "title": "The Forbidden Generic",
+    "topic": "IO_GENERICS",
+    "difficulty": "Master Detective",
+    "difficultyColor": "crimson",
+    "xpReward": 350,
+    "filename": "Lab.java",
+    "description": "Generic instantiation restrictions (Type Erasure).",
+    "bannerSnippet": "T evidence = <span class=\"text-crimson\">new T()</span>;",
+    "code": [
+      {
+        "text": "<span class=\"keyword\">class</span> <span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">T</span>&gt; {",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"class-name\">T</span> evidence;",
+        "bug": false
+      },
+      {
+        "text": "",
+        "bug": false
+      },
+      {
+        "text": "    <span class=\"keyword\">void</span> <span class=\"method\">createEvidence</span>() {",
+        "bug": false
+      },
+      {
+        "text": "        evidence = <span class=\"keyword\">new</span> <span class=\"class-name\">T</span>();",
+        "bug": true
+      },
+      {
+        "text": "    }",
+        "bug": false
+      },
+      {
+        "text": "}",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "The code tries to instantiate the generic type parameter T.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "Due to Type Erasure, the compiler does not know what T will be at runtime.",
+        "icon": "\ud83d\udc7b"
+      },
+      {
+        "text": "You cannot instantiate an unknown type.",
+        "icon": "\ud83d\udeab"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "Forbidden Generic Instantiation",
+        "icon": "\u274c",
+        "correct": true
+      },
+      {
+        "name": "Raw Type",
+        "icon": "\ud83d\udce6",
+        "correct": false
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      },
+      {
+        "name": "Constructor mismatch",
+        "icon": "\ud83c\udfd7\ufe0f",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "Because of Type Erasure, 'new T()' is illegal in Java",
+        "correct": true
+      },
+      {
+        "text": "T does not have a default constructor",
+        "correct": false
+      },
+      {
+        "text": "The variable evidence must be static",
+        "correct": false
+      },
+      {
+        "text": "evidence is already initialized",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "Pass a factory or Class<T> into the method to create instances",
+        "correct": true
+      },
+      {
+        "text": "evidence = new Object();",
+        "correct": false
+      },
+      {
+        "text": "evidence = T.new();",
+        "correct": false
+      },
+      {
+        "text": "evidence = new T[];",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Because of Type Erasure, generics are ghosts at runtime. You can't construct a ghost!",
+    "criminal": "Generic Erasure Rule Violation"
+  },
+  {
+    "id": "U4-09",
+    "title": "The Immutable Message",
+    "topic": "IO_GENERICS",
+    "difficulty": "Code Investigator",
+    "difficultyColor": "amber",
+    "xpReward": 150,
+    "filename": "Letter.java",
+    "description": "Understanding String Immutability.",
+    "bannerSnippet": "message.<span class=\"text-crimson\">concat(\" Detective\")</span>;",
+    "code": [
+      {
+        "text": "<span class=\"type\">String</span> message = <span class=\"string\">\"Java\"</span>;",
+        "bug": false
+      },
+      {
+        "text": "message.<span class=\"method\">concat</span>(<span class=\"string\">\" Detective\"</span>);",
+        "bug": true
+      },
+      {
+        "text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(message);",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "The concat() method joins two strings together.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "Strings in Java are Immutable, meaning they can never be changed after creation.",
+        "icon": "\ud83d\udd12"
+      },
+      {
+        "text": "concat() creates a BRAND NEW string and returns it, but doesn't change the original.",
+        "icon": "\u2728"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "\"Java\"",
+        "icon": "\u2615",
+        "correct": true
+      },
+      {
+        "name": "\"Java Detective\"",
+        "icon": "\ud83d\udd75\ufe0f",
+        "correct": false
+      },
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": false
+      },
+      {
+        "name": "NullPointerException",
+        "icon": "\ud83d\udc80",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "Strings are immutable. The new concatenated string was created but immediately discarded",
+        "correct": true
+      },
+      {
+        "text": "The concat method modifies the original string",
+        "correct": false
+      },
+      {
+        "text": "Strings cannot contain spaces",
+        "correct": false
+      },
+      {
+        "text": "The concat method is deprecated",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "message = message.concat(\" Detective\");",
+        "correct": true
+      },
+      {
+        "text": "message.append(\" Detective\");",
+        "correct": false
+      },
+      {
+        "text": "String message2 = \" Detective\";",
+        "correct": false
+      },
+      {
+        "text": "System.out.println(message);",
+        "correct": false
+      }
+    ],
+    "detectorNote": "Strings are set in stone. If you want to change one, you actually have to carve a brand new stone and assign it!",
+    "criminal": "String Immutability"
+  },
+  {
+    "id": "U4-10",
+    "title": "The StringBuffer Operation",
+    "topic": "IO_GENERICS",
+    "difficulty": "Rookie",
+    "difficultyColor": "green",
+    "xpReward": 100,
+    "filename": "Report.java",
+    "description": "Using mutable String structures.",
+    "bannerSnippet": "<span class=\"text-cyan\">sb.append(\"Detective\")</span>;",
+    "code": [
+      {
+        "text": "<span class=\"class-name\">StringBuffer</span> sb = <span class=\"keyword\">new</span> <span class=\"class-name\">StringBuffer</span>(<span class=\"string\">\"Java \"</span>);",
+        "bug": false
+      },
+      {
+        "text": "sb.<span class=\"method\">append</span>(<span class=\"string\">\"Detective\"</span>);",
+        "bug": false
+      },
+      {
+        "text": "sb.<span class=\"method\">reverse</span>();",
+        "bug": false
+      },
+      {
+        "text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(sb);",
+        "bug": false
+      }
+    ],
+    "clues": [
+      {
+        "text": "StringBuffer is MUTABLE, unlike String.",
+        "icon": "\ud83d\udd0d"
+      },
+      {
+        "text": "append() adds text to the end, resulting in 'Java Detective'.",
+        "icon": "\ud83d\udcdd"
+      },
+      {
+        "text": "reverse() flips the entire string backward.",
+        "icon": "\ud83d\udd04"
+      }
+    ],
+    "suspects": [
+      {
+        "name": "evitceteD avaJ",
+        "icon": "\ud83d\udd04",
+        "correct": true
+      },
+      {
+        "name": "Java Detective",
+        "icon": "\ud83d\udd75\ufe0f",
+        "correct": false
+      },
+      {
+        "name": "Compilation Error",
+        "icon": "\u274c",
+        "correct": false
+      },
+      {
+        "name": "Java evitceteD",
+        "icon": "\ud83e\udde9",
+        "correct": false
+      }
+    ],
+    "reasons": [
+      {
+        "text": "StringBuffer is modified in-place. It first appends, then the whole string is reversed.",
+        "correct": true
+      },
+      {
+        "text": "StringBuffer is immutable like String",
+        "correct": false
+      },
+      {
+        "text": "append() doesn't modify the original object",
+        "correct": false
+      },
+      {
+        "text": "reverse() only reverses the last appended word",
+        "correct": false
+      }
+    ],
+    "fixes": [
+      {
+        "text": "The code is fully functional.",
+        "correct": true
+      },
+      {
+        "text": "sb = sb.append(\"Detective\");",
+        "correct": false
+      },
+      {
+        "text": "sb.reverse(\"Detective\");",
+        "correct": false
+      },
+      {
+        "text": "String sb = new String();",
+        "correct": false
+      }
+    ],
+    "detectorNote": "StringBuffer and StringBuilder are like wet clay; you can reshape them constantly without throwing them away.",
+    "criminal": "Valid Mutable String"
+  }
+]
