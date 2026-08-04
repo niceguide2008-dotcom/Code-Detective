@@ -54,33 +54,7 @@ async function redirectHome() {
     );
 }
 
-async function createProfile(userId, name, emailAddr) {
-    try {
-        const { error } = await supabase
-            .from('profiles')
-            .upsert({
-                id: userId,
-                username: name,
-                email: emailAddr
-            });
 
-        if (error) {
-            console.error(error);
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-async function checkSession() {
-    const {
-        data: { session }
-    } = await supabase.auth.getSession();
-
-    if (session) {
-        redirectHome();
-    }
-}
 
 loginTab?.addEventListener('click', () => setMode('login'));
 signupTab?.addEventListener('click', () => setMode('signup'));
