@@ -141,6 +141,19 @@ if (error) {
 
 const user = data?.user ?? data?.session?.user;
 
+if (user) {
+    const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+            id: user.id,
+            username: detectiveName,
+            email: emailValue
+        });
+
+    if (profileError) {
+        console.error('[Profile]', profileError);
+    }
+}
 
 
 
