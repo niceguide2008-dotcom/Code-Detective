@@ -3223,7 +3223,7 @@
       caseState: { suspectSelected: null, reasonSelected: null, fixSelected: null, cluesRevealed: 0, step: 1 }
     };
 
-    const sharedSupabasePromise = import('./supabase.js').then((module) => module.supabase);
+    const sharedSupabasePromise = import('data:text/javascript;base64,aW1wb3J0IHsgY3JlYXRlQ2xpZW50IH0gZnJvbSAnQHN1cGFiYXNlL3N1cGFiYXNlLWpzJw0KDQpjb25zdCBmYWxsYmFja1VybCA9ICdodHRwczovL21idHdkaGFkeW9ubGlyYWlubXhtLnN1cGFiYXNlLmNvJw0KY29uc3QgZmFsbGJhY2tQdWJsaXNoYWJsZUtleSA9ICdzYl9wdWJsaXNoYWJsZV9uZjZ0ZXNua2s3MWFfTldod0ZJakdBX1ZOdEtKZ0NMJw0KDQpjb25zdCBydW50aW1lVXJsID0NCiAgKHR5cGVvZiB3aW5kb3cgIT09ICd1bmRlZmluZWQnICYmIHdpbmRvdy5fX1NVUEFCQVNFX1VSTF9fKSB8fA0KICBpbXBvcnQubWV0YS5lbnYuVklURV9TVVBBQkFTRV9VUkwgfHwNCiAgZmFsbGJhY2tVcmwNCg0KY29uc3QgcnVudGltZUtleSA9DQogICh0eXBlb2Ygd2luZG93ICE9PSAndW5kZWZpbmVkJyAmJiB3aW5kb3cuX19TVVBBQkFTRV9QVUJMSVNIQUJMRV9LRVlfXykgfHwNCiAgaW1wb3J0Lm1ldGEuZW52LlZJVEVfU1VQQUJBU0VfUFVCTElTSEFCTEVfS0VZIHx8DQogIGZhbGxiYWNrUHVibGlzaGFibGVLZXkNCg0KaWYgKCFydW50aW1lVXJsIHx8ICFydW50aW1lS2V5KSB7DQogIHRocm93IG5ldyBFcnJvcignTWlzc2luZyBTdXBhYmFzZSBlbnZpcm9ubWVudCB2YXJpYWJsZXMnKQ0KfQ0KDQpleHBvcnQgY29uc3Qgc3VwYWJhc2UgPSBjcmVhdGVDbGllbnQocnVudGltZVVybCwgcnVudGltZUtleSk=').then((module) => module.supabase);
 
     // Add presentation metadata expected by the Mastery Board.
     const rankIcons = ['🔎','🕵️','⭐','🏆','👑'];
@@ -3327,7 +3327,7 @@
     });
 
     document.getElementById('signin-option')?.addEventListener('click', () => {
-      window.location.replace('/index.html');
+      window.location.replace(new URL('index.html', window.location.href).href);
     });
 
     document.getElementById('logout-option')?.addEventListener('click', async () => {
@@ -3353,7 +3353,7 @@
       state.caseState = { suspectSelected: null, reasonSelected: null, fixSelected: null, cluesRevealed: 0, step: 1 };
 
       console.log('[Code Detective] Logout successful');
-      window.location.replace('/index.html');
+      window.location.replace(new URL('index.html', window.location.href).href);
     });
 
     function goToCrimeScene() {
@@ -4527,12 +4527,15 @@
         '[AUTH DEBUG] Session error =', sessionError
       );
 
-      let profile = null;
-      if (sessionData?.session?.user) {
-        profile = await loadProfile();
-        await restoreCaseProgress();
-        restoreCurrentCaseFromProfile(profile);
+      if (sessionError || !sessionData?.session?.user) {
+        console.warn('[Code Detective] No authenticated session. Redirecting to login.');
+        window.location.replace(new URL('index.html', window.location.href).href);
+        return;
       }
+
+      const profile = await loadProfile();
+      await restoreCaseProgress();
+      restoreCurrentCaseFromProfile(profile);
 
       updateDashboard();
       renderCriminalDatabase();

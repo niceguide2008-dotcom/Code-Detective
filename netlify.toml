@@ -1,8 +1,14 @@
 [build]
-  publish = "."
+  publish = "dist"
   command = "npm run build"
 
 [[redirects]]
-  from = "/api/*"
-  to = "/index.html"
-  status = 200
+  from = "/home"
+  to = "/home.html"
+  status = 301
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

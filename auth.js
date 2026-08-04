@@ -63,7 +63,7 @@ if (!form || !loginTab || !signupTab || !nameField || !displayName || !email || 
 
         if (session?.user) {
             console.log('[Auth] Existing session detected. Redirecting to /home.html');
-            window.location.replace('/home.html');
+            window.location.replace(new URL('home.html', window.location.href).href);
         }
     }
 
@@ -140,7 +140,7 @@ if (!form || !loginTab || !signupTab || !nameField || !displayName || !email || 
 
                 if (session?.user) {
                     console.log('[Auth] Redirecting to /home.html');
-                    window.location.replace('/home.html');
+                    window.location.replace(new URL('home.html', window.location.href).href);
                 }
             } else {
                 console.log('[Auth] Login attempt started');
@@ -177,7 +177,7 @@ if (!form || !loginTab || !signupTab || !nameField || !displayName || !email || 
 
                 if (session?.user) {
                     console.log('[Auth] Redirecting to /home.html');
-                    window.location.replace('/home.html');
+                    window.location.replace(new URL('home.html', window.location.href).href);
                 } else {
                     showMessage('Authentication did not create a usable session. Please try again.', 'error');
                 }

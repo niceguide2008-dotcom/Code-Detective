@@ -3327,7 +3327,7 @@
     });
 
     document.getElementById('signin-option')?.addEventListener('click', () => {
-      window.location.replace('/index.html');
+      window.location.replace(new URL('index.html', window.location.href).href);
     });
 
     document.getElementById('logout-option')?.addEventListener('click', async () => {
@@ -3353,7 +3353,7 @@
       state.caseState = { suspectSelected: null, reasonSelected: null, fixSelected: null, cluesRevealed: 0, step: 1 };
 
       console.log('[Code Detective] Logout successful');
-      window.location.replace('/index.html');
+      window.location.replace(new URL('index.html', window.location.href).href);
     });
 
     function goToCrimeScene() {
@@ -4527,12 +4527,15 @@
         '[AUTH DEBUG] Session error =', sessionError
       );
 
-      let profile = null;
-      if (sessionData?.session?.user) {
-        profile = await loadProfile();
-        await restoreCaseProgress();
-        restoreCurrentCaseFromProfile(profile);
+      if (sessionError || !sessionData?.session?.user) {
+        console.warn('[Code Detective] No authenticated session. Redirecting to login.');
+        window.location.replace(new URL('index.html', window.location.href).href);
+        return;
       }
+
+      const profile = await loadProfile();
+      await restoreCaseProgress();
+      restoreCurrentCaseFromProfile(profile);
 
       updateDashboard();
       renderCriminalDatabase();

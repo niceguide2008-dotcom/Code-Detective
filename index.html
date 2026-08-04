@@ -161,6 +161,30 @@
             color: #53667a;
             font-size: 12px;
         }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+                padding: 18px 12px;
+            }
+
+            .auth-card {
+                margin: auto 0;
+                padding: 24px 18px;
+                border-radius: 16px;
+            }
+
+            .logo { font-size: 30px; }
+            h1 { font-size: 23px; }
+            .subtitle { margin-bottom: 20px; font-size: 14px; }
+            .tabs { margin-bottom: 20px; }
+            input, .submit-btn { min-height: 48px; font-size: 16px; }
+            .footer { font-size: 10px; line-height: 1.5; }
+        }
+
+        @media (max-height: 650px) {
+            body { align-items: flex-start; }
+        }
     </style>
 </head>
 
