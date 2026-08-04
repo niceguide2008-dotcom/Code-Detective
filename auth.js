@@ -125,7 +125,35 @@ if (user) {
         console.error('[Profile]', profileError);
     }
 }
-const { data, error } = await supabase.auth.signUp(...)
+const { data, error } = await supabase.auth.signUp({
+    email: emailValue,
+    password: passwordValue,
+    options: {
+        data: {
+            display_name: detectiveName
+        }
+    }
+});
+
+if (error) {
+    throw error;
+}
+
+const user = data?.user ?? data?.session?.user;
+
+if (user) {
+    const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+            id: user.id,
+            username: detectiveName,
+            email: emailValue
+        });
+
+    if (profileError) {
+        console.error('[Profile]', profileError);
+    }
+}
 
 
 
