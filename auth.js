@@ -110,11 +110,13 @@ if (!form || !loginTab || !signupTab || !nameField || !displayName || !email || 
                         }
                     }
                 });
-                if (data?.user) {
+                const user = data?.user ?? data?.session?.user;
+
+if (user) {
     const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
-            id: data.user.id,
+            id: user.id,
             username: detectiveName,
             email: emailValue
         });
