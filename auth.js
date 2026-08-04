@@ -125,17 +125,9 @@ if (user) {
         console.error('[Profile]', profileError);
     }
 }
-const {
-    data: { user }
-} = await supabase.auth.getUser();
+const { data, error } = await supabase.auth.signUp(...)
 
-const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
 
-console.log(profile);
 
                 console.log('[Auth] Signup result: user=' + (data?.user?.id ? 'present' : 'absent') + ', session=' + (data?.session ? 'present' : 'absent'));
                 console.log('[Auth] Signup error:', error?.message || error);
