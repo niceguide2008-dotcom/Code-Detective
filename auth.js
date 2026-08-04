@@ -110,6 +110,30 @@ if (!form || !loginTab || !signupTab || !nameField || !displayName || !email || 
                         }
                     }
                 });
+                if (data?.user) {
+    const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+            id: data.user.id,
+            username: detectiveName,
+            email: emailValue
+        });
+
+    if (profileError) {
+        console.error('[Profile]', profileError);
+    }
+}
+const {
+    data: { user }
+} = await supabase.auth.getUser();
+
+const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+console.log(profile);
 
                 console.log('[Auth] Signup result: user=' + (data?.user?.id ? 'present' : 'absent') + ', session=' + (data?.session ? 'present' : 'absent'));
                 console.log('[Auth] Signup error:', error?.message || error);
