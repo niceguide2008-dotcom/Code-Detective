@@ -114,16 +114,16 @@ const CASES = [
     difficulty: 'Rookie',
     difficultyColor: 'green',
     xpReward: 100,
-    filename: 'Score.java',
+    filename: 'total_dxp.java',
     description: 'Operator precedence and compound assignment.',
-    bannerSnippet: 'score <span class="text-crimson">+=</span> 10 * 2;',
+    bannerSnippet: 'total_dxp <span class="text-crimson">+=</span> 10 * 2;',
     code: [
-        { text: '<span class="type">int</span> score = <span class="number">50</span>;', bug: false },
-        { text: 'score += <span class="number">10</span> * <span class="number">2</span>;', bug: true },
-        { text: '<span class="class-name">System</span>.<span class="variable">out</span>.<span class="method">println</span>(score);', bug: false }
+        { text: '<span class="type">int</span> total_dxp = <span class="number">50</span>;', bug: false },
+        { text: 'total_dxp += <span class="number">10</span> * <span class="number">2</span>;', bug: true },
+        { text: '<span class="class-name">System</span>.<span class="variable">out</span>.<span class="method">println</span>(total_dxp);', bug: false }
       ],
     clues: [
-        { text: 'The score starts at 50.', icon: '🔍' },
+        { text: 'The total_dxp starts at 50.', icon: '🔍' },
         { text: 'Multiplication (*) has a higher precedence than compound assignment (+=).', icon: '⚖️' },
         { text: 'First, 10 * 2 is evaluated (20). Then, 20 is added to 50.', icon: '🧮' }
       ],
@@ -137,7 +137,7 @@ const CASES = [
         { text: '(50 + 10) * 2 = 120', correct: false },
         { text: 'Multiplication executes first (10*2=20), then addition assignment (50+20=70)', correct: true },
         { text: 'The compound operator just overrides the variable', correct: false },
-        { text: 'Score is unchanged', correct: false }
+        { text: 'total_dxp is unchanged', correct: false }
       ],
     fixes: [
         { text: 'The correct output is 70', correct: true },

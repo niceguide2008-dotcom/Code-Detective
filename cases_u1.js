@@ -204,26 +204,26 @@ CASES.push(...[
     "difficulty": "Rookie",
     "difficultyColor": "green",
     "xpReward": 100,
-    "filename": "Score.java",
+    "filename": "total_dxp.java",
     "description": "Operator precedence and compound assignment.",
-    "bannerSnippet": "score <span class=\"text-crimson\">+=</span> 10 * 2;",
+    "bannerSnippet": "total_dxp <span class=\"text-crimson\">+=</span> 10 * 2;",
     "code": [
       {
-        "text": "<span class=\"type\">int</span> score = <span class=\"number\">50</span>;",
+        "text": "<span class=\"type\">int</span> total_dxp = <span class=\"number\">50</span>;",
         "bug": false
       },
       {
-        "text": "score += <span class=\"number\">10</span> * <span class=\"number\">2</span>;",
+        "text": "total_dxp += <span class=\"number\">10</span> * <span class=\"number\">2</span>;",
         "bug": true
       },
       {
-        "text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(score);",
+        "text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(total_dxp);",
         "bug": false
       }
     ],
     "clues": [
       {
-        "text": "The score starts at 50.",
+        "text": "The total_dxp starts at 50.",
         "icon": "\ud83d\udd0d"
       },
       {
@@ -271,7 +271,7 @@ CASES.push(...[
         "correct": false
       },
       {
-        "text": "Score is unchanged",
+        "text": "total_dxp is unchanged",
         "correct": false
       }
     ],

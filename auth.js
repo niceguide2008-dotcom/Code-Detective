@@ -1,353 +1,480 @@
-import { supabase } from "./supabase.js";
+import { supabase } from './supabase.js';
 
-// =========================
-// DOM ELEMENTS
-// =========================
+console.log('[Auth] Auth module loaded');
 
-const form = document.getElementById("authForm");
-const loginTab = document.getElementById("loginTab");
-const signupTab = document.getElementById("signupTab");
+const form = document.getElementById('authForm');
+const loginTab = document.getElementById('loginTab');
+const signupTab = document.getElementById('signupTab');
+const nameField = document.getElementById('nameField');
+const displayName = document.getElementById('displayName');
+const email = document.getElementById('email');
+const password = document.getElementById('password');
+const submitBtn = document.getElementById('submitBtn');
+const message = document.getElementById('message');
 
-const nameField = document.getElementById("nameField");
-const displayName = document.getElementById("displayName");
-
-const email = document.getElementById("email");
-const password = document.getElementById("password");
-
-const submitBtn = document.getElementById("submitBtn");
-const message = document.getElementById("message");
-
-let mode = "login";
-
-// =========================
-// UI
-// =========================
-
-function showMessage(text, type = "") {
-    message.textContent = text;
-    message.className = type;
-}
-
-function clearMessage() {
-    message.textContent = "";
-    message.className = "";
-}
-
-function setLoading(state) {
-    submitBtn.disabled = state;
-
-    if (state) {
-        submitBtn.textContent =
-            mode === "login"
-                ? "AUTHENTICATING..."
-                : "CREATING ACCOUNT...";
-    } else {
-        submitBtn.textContent =
-            mode === "login"
-                ? "ENTER HEADQUARTERS"
-                : "CREATE DETECTIVE ACCOUNT";
-    }
-}
-
-function switchMode(newMode) {
-
-    mode = newMode;
-
-    clearMessage();
-
-    if (mode === "login") {
-
-        loginTab.classList.add("active");
-        signupTab.classList.remove("active");
-
-        nameField.style.display = "none";
-        displayName.required = false;
-
-        password.autocomplete = "current-password";
-
-        submitBtn.textContent = "ENTER HEADQUARTERS";
-
-    } else {
-
-        signupTab.classList.add("active");
-        loginTab.classList.remove("active");
-
-        nameField.style.display = "block";
-        displayName.required = true;
-
-        password.autocomplete = "new-password";
-
-        submitBtn.textContent = "CREATE DETECTIVE ACCOUNT";
-    }
-
-}
-
-// =========================
-// REDIRECT
-// =========================
-
-function goHome() {
-    window.location.replace("home.html");
-}
-
-// =========================
-// SESSION CHECK
-// =========================
-
-async function checkSession() {
-
-    const {
-        data: { session },
-        error
-    } = await supabase.auth.getSession();
-
-    if (error) {
-        console.error(error);
-        return;
-    }
-
-    if (session) {
-        goHome();
-    }
-
-}
-// =========================
-// CREATE PROFILE
-// =========================
-
-async function createProfile(user, detectiveName) {
-
-    if (!user) return;
-
-    try {
-
-        const { error } = await supabase
-            .from("profiles")
-            .upsert({
-                id: user.id,
-                username: detectiveName,
-                email: user.email
-            });
-
-        if (error) {
-            console.error("[PROFILE]", error);
-        }
-
-    } catch (err) {
-        console.error("[PROFILE]", err);
-    }
-
-}
-
-// =========================
-// SIGN UP
-// =========================
-
-async function signUpUser() {
-
-    const detectiveName = displayName.value.trim();
-
-    if (!detectiveName) {
-        showMessage("Please enter your detective name.", "error");
-        return;
-    }
-
-    const emailValue = email.value.trim();
-    const passwordValue = password.value;
-
-    const { data, error } = await supabase.auth.signUp({
-
-        email: emailValue,
-
-        password: passwordValue,
-
-        options: {
-            data: {
-                display_name: detectiveName
-            }
-        }
-
-    });
-
-    if (error) {
-        throw error;
-    }
-
-    const user = data.user ?? data.session?.user;
-
-    if (!user) {
-
-        showMessage(
-            "Account created successfully. Please verify your email before logging in.",
-            "success"
-        );
-
-        switchMode("login");
-        return;
-    }
-
-    await createProfile(user, detectiveName);
-
-    const {
-        data: { session }
-    } = await supabase.auth.getSession();
-
-    if (session) {
-        goHome();
-        return;
-    }
-
-    showMessage(
-        "Account created successfully. Please log in.",
-        "success"
+if (
+    !form ||
+    !loginTab ||
+    !signupTab ||
+    !nameField ||
+    !displayName ||
+    !email ||
+    !password ||
+    !submitBtn ||
+    !message
+) {
+    console.error(
+        '[Auth] Missing one or more authentication elements on this page.'
     );
+} else {
 
-    switchMode("login");
+    let mode = 'login';
 
-}
-// =========================
-// LOGIN
-// =========================
-
-async function loginUser() {
-
-    const emailValue = email.value.trim();
-    const passwordValue = password.value;
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailValue,
-        password: passwordValue
-    });
-
-    if (error) {
-        throw error;
+    function showMessage(text, type) {
+        message.textContent = text;
+        message.className = type;
     }
 
-    if (!data.session) {
-        throw new Error("Unable to create login session.");
+    function clearMessage() {
+        message.textContent = '';
+        message.className = '';
     }
 
-    goHome();
+    function setMode(newMode) {
 
-}
+        mode = newMode;
 
-// =========================
-// FORM SUBMIT
-// =========================
+        clearMessage();
 
-form.addEventListener("submit", async (event) => {
+        if (mode === 'login') {
 
-    event.preventDefault();
+            loginTab.classList.add('active');
+            signupTab.classList.remove('active');
 
-    clearMessage();
+            nameField.style.display = 'none';
 
-    const emailValue = email.value.trim();
-    const passwordValue = password.value;
+            displayName.required = false;
 
-    if (!emailValue || !passwordValue) {
+            password.autocomplete = 'current-password';
 
-        showMessage(
-            "Please enter your email and password.",
-            "error"
-        );
-
-        return;
-    }
-
-    setLoading(true);
-
-    try {
-
-        if (mode === "signup") {
-
-            await signUpUser();
+            submitBtn.textContent = 'ENTER HEADQUARTERS';
 
         } else {
 
-            await loginUser();
+            signupTab.classList.add('active');
+            loginTab.classList.remove('active');
+
+            nameField.style.display = 'block';
+
+            displayName.required = true;
+
+            password.autocomplete = 'new-password';
+
+            submitBtn.textContent = 'CREATE DETECTIVE ACCOUNT';
+        }
+    }
+
+
+    // =====================================================
+    // CHECK EXISTING LOGIN SESSION
+    // =====================================================
+
+    async function redirectIfSessionExists() {
+
+        const {
+            data: { session },
+            error
+        } = await supabase.auth.getSession();
+
+        if (error) {
+
+            console.error(
+                '[Auth] Session check failed:',
+                error
+            );
+
+            return;
+        }
+
+        if (session?.user) {
+
+            console.log(
+                '[Auth] Existing session detected. Redirecting to home.html'
+            );
+
+            window.location.replace(
+                new URL(
+                    'home.html',
+                    window.location.href
+                ).href
+            );
+        }
+    }
+
+
+    // =====================================================
+    // LOGIN / SIGNUP TAB BUTTONS
+    // =====================================================
+
+    loginTab.addEventListener('click', () => {
+        setMode('login');
+    });
+
+    signupTab.addEventListener('click', () => {
+        setMode('signup');
+    });
+        // =====================================================
+    // AUTHENTICATION FORM
+    // =====================================================
+
+    form.addEventListener('submit', async (event) => {
+
+        event.preventDefault();
+
+        clearMessage();
+
+        const emailValue = email.value.trim();
+        const passwordValue = password.value;
+
+        if (!emailValue || !passwordValue) {
+
+            showMessage(
+                'Enter your email and password.',
+                'error'
+            );
+
+            return;
+        }
+
+        submitBtn.disabled = true;
+
+        submitBtn.textContent =
+            mode === 'login'
+                ? 'AUTHENTICATING...'
+                : 'CREATING ACCOUNT...';
+
+        try {
+
+            // =================================================
+            // SIGN UP
+            // =================================================
+
+            if (mode === 'signup') {
+
+                console.log(
+                    '[Auth] Signup attempt started'
+                );
+
+                const detectiveName =
+                    displayName.value.trim();
+
+                if (!detectiveName) {
+
+                    showMessage(
+                        'Enter your detective name.',
+                        'error'
+                    );
+
+                    return;
+                }
+
+
+                // ---------------------------------------------
+                // CREATE SUPABASE AUTH USER
+                // ---------------------------------------------
+
+                const {
+                    data,
+                    error
+                } = await supabase.auth.signUp({
+
+                    email: emailValue,
+
+                    password: passwordValue,
+
+                    options: {
+
+                        data: {
+                            display_name: detectiveName
+                        }
+                    }
+                });
+
+
+                console.log(
+                    '[Auth] Signup result: user=' +
+                    (data?.user?.id ? 'present' : 'absent') +
+                    ', session=' +
+                    (data?.session ? 'present' : 'absent')
+                );
+
+                console.log(
+                    '[Auth] Signup error:',
+                    error?.message || error
+                );
+
+
+                if (error) {
+                    throw error;
+                }
+
+
+                // ---------------------------------------------
+                // CREATE / UPDATE PROFILE
+                // ---------------------------------------------
+
+                const user =
+                    data?.user ??
+                    data?.session?.user;
+
+
+                if (user) {
+
+                    const {
+                        error: profileError
+                    } = await supabase
+                        .from('profiles')
+                        .upsert({
+
+                            id: user.id,
+
+                            username: detectiveName,
+
+                            email: emailValue
+                        });
+
+
+                    if (profileError) {
+
+                        console.error(
+                            '[Profile] Profile creation failed:',
+                            profileError
+                        );
+
+                    } else {
+
+                        console.log(
+                            '[Profile] User profile created successfully'
+                        );
+                    }
+                }
+
+
+                // ---------------------------------------------
+                // EMAIL CONFIRMATION REQUIRED
+                // ---------------------------------------------
+
+                if (!data.session) {
+
+                    showMessage(
+                        'Account created. Check your email and confirm your account, then return here and log in.',
+                        'success'
+                    );
+
+                    setMode('login');
+
+                    return;
+                }
+
+
+                // ---------------------------------------------
+                // CHECK SESSION AFTER SIGNUP
+                // ---------------------------------------------
+
+                const {
+                    data: { session },
+                    error: sessionError
+                } = await supabase.auth.getSession();
+
+
+                console.log(
+                    '[Auth] Session after signup:',
+                    session
+                );
+
+
+                if (sessionError) {
+                    throw sessionError;
+                }
+
+
+                // ---------------------------------------------
+                // REDIRECT AFTER SUCCESSFUL SIGNUP
+                // ---------------------------------------------
+
+                if (session?.user) {
+
+                    console.log(
+                        '[Auth] Redirecting to home.html'
+                    );
+
+                    window.location.replace(
+                        new URL(
+                            'home.html',
+                            window.location.href
+                        ).href
+                    );
+                }
+
+            }
+                        // =================================================
+            // LOGIN
+            // =================================================
+
+            else {
+
+                console.log(
+                    '[Auth] Login attempt started'
+                );
+
+
+                const {
+                    data,
+                    error
+                } = await supabase.auth.signInWithPassword({
+
+                    email: emailValue,
+
+                    password: passwordValue
+                });
+
+
+                console.log(
+                    '[Auth] Authentication result: user=' +
+                    (data?.user?.id ? 'present' : 'absent') +
+                    ', session=' +
+                    (data?.session ? 'present' : 'absent')
+                );
+
+
+                console.log(
+                    '[Auth] Authentication error:',
+                    error?.message || error
+                );
+
+
+                // ---------------------------------------------
+                // LOGIN ERROR
+                // ---------------------------------------------
+
+                if (error) {
+
+                    showMessage(
+                        error.message,
+                        'error'
+                    );
+
+                    return;
+                }
+
+
+                // ---------------------------------------------
+                // VERIFY SESSION EXISTS
+                // ---------------------------------------------
+
+                if (!data?.session) {
+
+                    console.warn(
+                        '[Auth] Login succeeded but no session was created.'
+                    );
+
+                    showMessage(
+                        'Login succeeded, but no active session was created. Please try again.',
+                        'error'
+                    );
+
+                    return;
+                }
+
+
+                // ---------------------------------------------
+                // GET ACTIVE SESSION
+                // ---------------------------------------------
+
+                const {
+                    data: { session },
+                    error: sessionError
+                } = await supabase.auth.getSession();
+
+
+                console.log(
+                    '[Auth] Session after login:',
+                    session
+                );
+
+
+                if (sessionError) {
+                    throw sessionError;
+                }
+
+
+                // ---------------------------------------------
+                // REDIRECT TO HOME
+                // ---------------------------------------------
+
+                if (session?.user) {
+
+                    console.log(
+                        '[Auth] Redirecting to home.html'
+                    );
+
+                    window.location.replace(
+                        new URL(
+                            'home.html',
+                            window.location.href
+                        ).href
+                    );
+
+                } else {
+
+                    showMessage(
+                        'Authentication did not create a usable session. Please try again.',
+                        'error'
+                    );
+                }
+            }
 
         }
 
-    } catch (error) {
+        // =====================================================
+        // ERROR HANDLING
+        // =====================================================
 
-        console.error("[AUTH]", error);
+        catch (error) {
 
-        showMessage(
-            error.message || "Authentication failed.",
-            "error"
-        );
+            console.error(
+                '[Auth] Authentication error:',
+                error
+            );
 
-    } finally {
+            showMessage(
+                error.message ||
+                'Authentication failed.',
+                'error'
+            );
+        }
 
-        setLoading(false);
+        // =====================================================
+        // RESET BUTTON
+        // =====================================================
 
-    }
+        finally {
 
-});
-// =========================
-// TAB SWITCHING
-// =========================
+            submitBtn.disabled = false;
 
-loginTab.addEventListener("click", () => {
-    switchMode("login");
-});
+            submitBtn.textContent =
+                mode === 'login'
+                    ? 'ENTER HEADQUARTERS'
+                    : 'CREATE DETECTIVE ACCOUNT';
+        }
+    });
 
-signupTab.addEventListener("click", () => {
-    switchMode("signup");
-});
 
-// =========================
-// AUTH STATE LISTENER
-// =========================
+    // =========================================================
+    // INITIALIZE AUTH PAGE
+    // =========================================================
 
-supabase.auth.onAuthStateChange((event, session) => {
+    await redirectIfSessionExists();
 
-    console.log("[AUTH EVENT]", event);
-
-    if (
-        (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
-        session
-    ) {
-        goHome();
-    }
-
-});
-
-// =========================
-// AUTO SESSION CHECK
-// =========================
-
-window.addEventListener("load", async () => {
-
-    await checkSession();
-
-});
-// =========================
-// INITIALIZE
-// =========================
-
-switchMode("login");
-
-// =========================
-// GLOBAL ERROR HANDLING
-// =========================
-
-window.addEventListener("unhandledrejection", (event) => {
-
-    console.error("[Unhandled Promise]", event.reason);
-
-});
-
-window.addEventListener("error", (event) => {
-
-    console.error("[JavaScript Error]", event.error);
-
-});
-
-// =========================
-// READY
-// =========================
-
-console.log("%cCode Detective Authentication Ready",
-    "color:#00e5ff;font-size:14px;font-weight:bold;"
-);
+    setMode('login');
+}
