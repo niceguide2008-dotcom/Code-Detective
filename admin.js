@@ -3,7 +3,28 @@ import { supabase } from './supabase.js';
 const $ = (s) => document.querySelector(s);
 const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = (v) => v ? new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v)) : '—';
-const state = { users: [], selected: null, totalCases: 50 };
+const LEGACY_CASE_TOTAL = 50;
+const PACK_CASE_TOTAL = Array.isArray(window.JAVA_OOP_UNIT1_CASES) ? window.JAVA_OOP_UNIT1_CASES.length : 13;
+const state = { users: [], selected: null, totalCases: LEGACY_CASE_TOTAL + PACK_CASE_TOTAL };
+
+// Keep per-detective case progress visually distinct from the admin console's red accents.
+document.head.insertAdjacentHTML('beforeend', `<style>
+  :root{--bg:#0E1117;--panel:#1B2230;--panel2:#222B3A;--line:#303B4D;--text:#FFFFFF;--muted:#7B8798;--red:#FF5D73;--amber:#F5B942;--green:#38D39F}
+  body{background:radial-gradient(circle at 75% 0,rgba(245,185,66,.10),transparent 28%),var(--bg)}
+  .brand-mark{border-color:#C9921C;background:#222B3A}.brand h1,.eyebrow,.detail-section h4{color:#F5B942}
+  .admin-id button,.ghost{background:#1B2230;color:#FFFFFF;border-color:#303B4D;font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.01em}.return-to-hq{display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(27,34,48,.45);color:#B6BECF;border:1px solid rgba(48,59,77,.8);border-radius:10px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;font-size:13px;font-weight:500;letter-spacing:0;white-space:nowrap;transition:all .25s ease}.return-to-hq:hover{color:#FFFFFF;background:rgba(245,185,66,.08);border-color:#F5B942}.stat,.user-card{background:linear-gradient(145deg,#1B2230,#0E1117);border-color:#303B4D}
+  .user-card:hover{border-color:#F5B942;box-shadow:0 14px 35px rgba(0,0,0,.45)}.avatar{background:#222B3A;border-color:#303B4D}.rank{color:#FFD166;border-color:#C9921C;background:rgba(245,185,66,.10)}
+  .bar{background:#303B4D}.bar i{background:linear-gradient(90deg,#38D39F,#79f2b4)!important}.search{background:#222B3A;border-color:#303B4D}.card-metrics{border-color:#303B4D}
+  .drawer,.drawer-head{background:#1B2230;border-color:#303B4D}.detail-row{border-color:#303B4D}.case-row{border-color:#303B4D;background:#222B3A}.case-icon{background:rgba(56,211,159,.14)}
+  .denied a{background:#F5B942;color:#0E1117}
+</style>`);
+
+const returnToHQ = document.createElement('button');
+returnToHQ.className = 'ghost return-to-hq';
+returnToHQ.type = 'button';
+returnToHQ.textContent = 'Return to HQ';
+returnToHQ.addEventListener('click', () => location.assign('/home.html'));
+document.querySelector('.admin-id')?.prepend(returnToHQ);
 
 async function boot(){
   const { data:{session}, error } = await supabase.auth.getSession();
@@ -39,7 +60,7 @@ function renderStats(){
 
 function renderUsers(users){
   const grid=$('#userGrid');
-  $('#resultCount').textContent=`${users.length} detective${users.length===1?'':'s'}`;
+  $('#resultCount').textContent=`${users.length} detective${users.length===1?'':'s'} · ${state.totalCases} cases in the catalog`;
   if(!users.length){ grid.innerHTML='<div class="empty">No detectives found.</div>'; return; }
   grid.innerHTML=users.map(u=>{
     const solved=Number(u.cases_solved||0), pct=Math.min(100,Math.round((solved/state.totalCases)*100));

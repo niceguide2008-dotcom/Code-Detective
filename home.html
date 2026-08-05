@@ -17,33 +17,33 @@
        DESIGN TOKENS & ROOT VARIABLES
     ============================================= */
     :root {
-      --cyan: #00f3ff;
-      --cyan-dim: #00b8c4;
-      --cyan-glow: rgba(0, 243, 255, 0.15);
-      --amber: #ffb700;
-      --amber-dim: #cc9200;
-      --amber-glow: rgba(255, 183, 0, 0.15);
-      --crimson: #ff2e63;
-      --crimson-dim: #cc2450;
-      --crimson-glow: rgba(255, 46, 99, 0.15);
-      --green: #00ff88;
-      --green-glow: rgba(0, 255, 136, 0.15);
-      --purple: #9b5de5;
-      --purple-glow: rgba(155, 93, 229, 0.15);
+      --cyan: #F5B942;
+      --cyan-dim: #C9921C;
+      --cyan-glow: rgba(245, 185, 66, 0.15);
+      --amber: #FFD166;
+      --amber-dim: #C9921C;
+      --amber-glow: rgba(255, 209, 102, 0.15);
+      --crimson: #FF5D73;
+      --crimson-dim: #C9475B;
+      --crimson-glow: rgba(255, 93, 115, 0.15);
+      --green: #38D39F;
+      --green-glow: rgba(56, 211, 159, 0.15);
+      --purple: #4FA9FF;
+      --purple-glow: rgba(79, 169, 255, 0.15);
 
-      --bg-primary: #0d1117;
-      --bg-secondary: #111827;
-      --bg-tertiary: #1a2332;
-      --bg-card: #161d2e;
-      --bg-card-hover: #1e2a3d;
-      --bg-terminal: #0a0e1a;
-      --border: rgba(255, 255, 255, 0.07);
-      --border-active: rgba(0, 243, 255, 0.3);
+      --bg-primary: #0E1117;
+      --bg-secondary: #1B2230;
+      --bg-tertiary: #222B3A;
+      --bg-card: #1B2230;
+      --bg-card-hover: #222B3A;
+      --bg-terminal: #0E1117;
+      --border: #303B4D;
+      --border-active: rgba(245, 185, 66, 0.45);
 
-      --text-primary: #e6edf3;
-      --text-secondary: #8b949e;
-      --text-muted: #4a5568;
-      --text-code: #cdd9e5;
+      --text-primary: #FFFFFF;
+      --text-secondary: #B6BECF;
+      --text-muted: #7B8798;
+      --text-code: #FFFFFF;
 
       --font-ui: 'Inter', sans-serif;
       --font-code: 'Fira Code', 'JetBrains Mono', monospace;
@@ -53,9 +53,9 @@
       --radius-lg: 16px;
       --radius-xl: 24px;
 
-      --shadow-cyan: 0 0 20px rgba(0, 243, 255, 0.2);
-      --shadow-amber: 0 0 20px rgba(255, 183, 0, 0.2);
-      --shadow-crimson: 0 0 20px rgba(255, 46, 99, 0.2);
+      --shadow-cyan: 0 0 20px rgba(245, 185, 66, 0.2);
+      --shadow-amber: 0 0 20px rgba(255, 209, 102, 0.2);
+      --shadow-crimson: 0 0 20px rgba(255, 93, 115, 0.2);
       --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
 
       --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2609,6 +2609,15 @@
         margin: 28px 0 14px;
       }
     }
+    /* Midnight Gold palette overrides for legacy hard-coded accents. */
+    body::before { background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(245,185,66,.01) 2px, rgba(245,185,66,.01) 4px); }
+    .nav-tab.active { background: linear-gradient(135deg, rgba(245,185,66,.15), rgba(245,185,66,.05)); border-color: rgba(245,185,66,.28); }
+    .nav-xp-badge, .profile-avatar-ring { border-color: rgba(245,185,66,.28); }
+    .nav-xp-badge:hover, .profile-avatar:hover { box-shadow: 0 0 20px rgba(245,185,66,.2); }
+    .badge-cyan { border-color: rgba(245,185,66,.25); }
+    .badge-amber { border-color: rgba(255,209,102,.25); }
+    .badge-crimson { border-color: rgba(255,93,115,.25); }
+    .badge-green { border-color: rgba(56,211,159,.25); }
   </style>
 </head>
 
@@ -2640,6 +2649,10 @@
         <span class="nav-tab-icon">📊</span>
         <span class="nav-tab-label">Mastery Board</span>
       </button>
+      <a class="nav-tab" href="/admin.html" id="tab-admin" title="Open admin console" style="text-decoration:none;">
+        <span class="nav-tab-icon">⚙️</span>
+        <span class="nav-tab-label">Admin</span>
+      </a>
     </div>
 
     <div class="nav-right" style="position: relative;">
@@ -2821,7 +2834,7 @@
                 <div class="donut-center-label">
                   <div class="donut-pct" style="color:var(--green);"><span id="donut-solved-num">0</span><span
                       class="donut-pct-unit">%</span></div>
-                  <div class="donut-label" id="donut-solved-sub">0 / 50</div>
+                  <div class="donut-label" id="donut-solved-sub">0 / 63</div>
                 </div>
               </div>
               <div class="donut-card-sub" id="donut-solved-desc">Cases closed successfully</div>
@@ -2843,7 +2856,7 @@
                 <div class="donut-center-label">
                   <div class="donut-pct" style="color:var(--crimson);"><span id="donut-unsolved-num">0</span><span
                       class="donut-pct-unit">%</span></div>
-                  <div class="donut-label" id="donut-unsolved-sub">0 / 50</div>
+                  <div class="donut-label" id="donut-unsolved-sub">0 / 63</div>
                 </div>
               </div>
               <div class="donut-card-sub" id="donut-unsolved-desc">Active investigations remain</div>
@@ -3098,7 +3111,7 @@
               the cases to catch them</div>
           </div>
           <div style="display:flex; gap:10px; align-items:center;">
-            <div class="badge badge-cyan">📂 50 Cases</div>
+            <div class="badge badge-cyan">📂 <span id="case-catalog-total">50</span> Cases</div>
             <div class="badge badge-green">✓ <span id="unlocked-count">3 Unlocked</span></div>
           </div>
         </div>
@@ -3332,7 +3345,7 @@
 
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        showScreen(tab.dataset.screen);
+        if (tab.dataset.screen) showScreen(tab.dataset.screen);
       });
     });
 
@@ -3649,6 +3662,7 @@ console.log("[DXP DEBUG] Save Error:", error);
       setText('dropdown-email', state.profileUsername || '');
       setText('nav-xp', `${formatXP(state.totalXP)} DXP`);
       setText('stat-cases', state.casesCompleted);
+      setText('case-catalog-total', Array.isArray(CASES) ? CASES.length : 0);
       setText('stat-streak', state.streak);
       setText('stat-accuracy', `${state.accuracy}%`);
       setText('dash-streak', `${state.streak} Day Streak`);
@@ -3685,6 +3699,32 @@ console.log("[DXP DEBUG] Save Error:", error);
       }
 
       updateDonutCards();
+    }
+
+    function accuracyStatsKey() {
+      return `codeDetectiveAccuracyStats:${state.profileUsername || 'anonymous'}`;
+    }
+
+    async function recordQuestionAnswer(isCorrect) {
+      let stats;
+      try {
+        stats = JSON.parse(localStorage.getItem(accuracyStatsKey()) || 'null');
+      } catch (_) {
+        stats = null;
+      }
+      if (!stats || !Number.isFinite(stats.correct) || !Number.isFinite(stats.attempts)) {
+        // Preserve the existing profile percentage as a baseline for players who
+        // began investigating before per-answer tracking was introduced.
+        stats = state.accuracy > 0
+          ? { correct: Math.round(state.accuracy), attempts: 100 }
+          : { correct: 0, attempts: 0 };
+      }
+      stats.attempts += 1;
+      if (isCorrect) stats.correct += 1;
+      localStorage.setItem(accuracyStatsKey(), JSON.stringify(stats));
+      state.accuracy = Math.round((stats.correct / stats.attempts) * 100);
+      updateDashboard();
+      await saveProfileStats();
     }
 
     // =============================================
@@ -3779,6 +3819,10 @@ console.log("[DXP DEBUG] Save Error:", error);
       record.activeQuestion = Math.max(0, Math.min(Number(record.activeQuestion) || 0, questions.length));
       const correctCount = questions.filter(question => record.questionResults[question.id]?.correct).length;
       const investigationComplete = correctCount === questions.length && questions.length > 0;
+      if (!investigationComplete && record.activeQuestion >= questions.length) {
+        record.activeQuestion = questions.findIndex(question => !record.questionResults[question.id]?.correct);
+        savePackCaseState(c.id, record);
+      }
       const activeIndex = investigationComplete ? questions.length : record.activeQuestion;
       const question = questions[activeIndex];
       const answered = question ? record.questionResults[question.id] : null;
@@ -3834,7 +3878,7 @@ console.log("[DXP DEBUG] Save Error:", error);
         renderInvestigationBriefing(c);
       }));
 
-      briefing.querySelectorAll('.pack-question-option').forEach(button => button.addEventListener('click', () => {
+      briefing.querySelectorAll('.pack-question-option').forEach(button => button.addEventListener('click', async () => {
         const selected = Number(button.dataset.option);
         const isCorrect = selected === question.correctIndex;
         const previous = record.questionResults[question.id];
@@ -3845,6 +3889,7 @@ console.log("[DXP DEBUG] Save Error:", error);
           record.mistakes = (record.mistakes || 0) + 1;
         }
         savePackCaseState(c.id, record);
+        if (isCorrect || !previous || previous.selected !== selected) await recordQuestionAnswer(isCorrect);
         renderInvestigationBriefing(c);
       }));
 
@@ -3943,18 +3988,24 @@ console.log("[DXP DEBUG] Save Error:", error);
         });
       }
 
-      // Evidence
-      renderEvidence(c);
-
-      // Suspects
-      renderSuspects(c);
+      // Pack cases own the investigation panel above. Legacy cases retain the
+      // existing evidence/suspect/reason/repair flow.
+      if (!isJavaOOPPackCase(c)) {
+        renderEvidence(c);
+        renderSuspects(c);
+      }
 
       // Update nav buttons
       document.getElementById('prev-case-btn').disabled = state.currentCaseIndex === 0;
       document.getElementById('next-case-nav-btn').disabled = state.currentCaseIndex === CASES.length - 1;
 
       // Steps
-      updateSteps();
+      if (isJavaOOPPackCase(c)) {
+        const { record } = getPackCaseState(c.id);
+        setPackStepLabels(true, Math.min(Number(record.activeQuestion) || 0, 2), (c.interactiveQuestions || []).length);
+      } else {
+        updateSteps();
+      }
     }
 
     function resetCaseState() {
@@ -4082,6 +4133,7 @@ console.log("[DXP DEBUG] Save Error:", error);
       const card = document.getElementById(`suspect-${i}`);
 
       if (suspect.correct) {
+        await recordQuestionAnswer(true);
         card.classList.add('correct');
         state.caseState.step = 2;
         showToast('success', '🎯', `Correct! The criminal is ${suspect.name}`);
@@ -4094,6 +4146,7 @@ console.log("[DXP DEBUG] Save Error:", error);
           renderEvidence(c);
         }, 400);
       } else {
+        await recordQuestionAnswer(false);
         if (c.story) { const s = getPackCaseState(c.id); s.record.mistakes = (s.record.mistakes || 0) + 1; savePackCaseState(c.id, s.record); }
         card.classList.add('wrong');
         showToast('error', '❌', `Wrong! ${suspect.name} is not the culprit. Keep investigating.`);
@@ -4129,6 +4182,7 @@ console.log("[DXP DEBUG] Save Error:", error);
       const el = document.getElementById(`reason-${i}`);
 
       if (reason.correct) {
+        await recordQuestionAnswer(true);
         el.classList.add('correct');
         state.caseState.step = 3;
         showToast('success', '💡', 'Root cause identified!');
@@ -4141,6 +4195,7 @@ console.log("[DXP DEBUG] Save Error:", error);
           renderEvidence(c);
         }, 400);
       } else {
+        await recordQuestionAnswer(false);
         if (c.story) { const s = getPackCaseState(c.id); s.record.mistakes = (s.record.mistakes || 0) + 1; savePackCaseState(c.id, s.record); }
         el.classList.add('wrong');
         showToast('error', '❌', 'Incorrect reasoning. Try another theory.');
@@ -4175,6 +4230,7 @@ console.log("[DXP DEBUG] Save Error:", error);
       const el = document.getElementById(`fix-${i}`);
 
       if (fix.correct) {
+        await recordQuestionAnswer(true);
         el.classList.add('correct');
         showToast('success', '🔧', 'Correct fix applied! Submit the case.');
         setTimeout(() => {
@@ -4182,6 +4238,7 @@ console.log("[DXP DEBUG] Save Error:", error);
           document.getElementById('submit-section').scrollIntoView({ behavior: 'smooth' });
         }, 400);
       } else {
+        await recordQuestionAnswer(false);
         const activeCase = CASES[state.currentCaseIndex];
         if (activeCase?.story) { const s = getPackCaseState(activeCase.id); s.record.mistakes = (s.record.mistakes || 0) + 1; savePackCaseState(activeCase.id, s.record); }
         el.classList.add('wrong');
@@ -4400,6 +4457,15 @@ console.log("[DXP DEBUG] Save Error:", error);
 
     async function submitCase() {
       const c = CASES[state.currentCaseIndex];
+      if (isJavaOOPPackCase(c)) {
+        const { record } = getPackCaseState(c.id);
+        const questions = c.interactiveQuestions || [];
+        const complete = questions.length > 0 && questions.every(question => record.questionResults?.[question.id]?.correct);
+        if (!complete) {
+          showToast('error', '🔒', 'Verify every evidence question before submitting the final report.');
+          return;
+        }
+      }
       const alreadyCompleted = state.completedCaseIds.has(c.id);
       const xpGain = alreadyCompleted ? 0 : getCaseCompletionXP(c);
       const oldXP = state.totalXP;
