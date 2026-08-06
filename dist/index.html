@@ -87,6 +87,30 @@
             margin-bottom: 17px;
         }
 
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-input-wrapper input {
+            padding-right: 48px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 0;
+            background: transparent;
+            color: #8fa3b7;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .password-toggle:hover {
+            color: #00e5ff;
+        }
+
         label {
             display: block;
             margin-bottom: 7px;
@@ -162,6 +186,23 @@
             font-size: 12px;
         }
 
+        /* Midnight Gold palette */
+        body {
+            color: #FFFFFF;
+            background: radial-gradient(circle at 20% 20%, rgba(245, 185, 66, .10), transparent 30%), radial-gradient(circle at 80% 80%, rgba(201, 146, 28, .10), transparent 30%), #0E1117;
+        }
+        .auth-card { border-color: #303B4D; background: rgba(27, 34, 48, .96); box-shadow: 0 0 50px rgba(245, 185, 66, .08); }
+        .cyan { color: #F5B942; }
+        .subtitle, .footer { color: #7B8798; }
+        .tabs { background: #1B2230; }
+        .tab { color: #B6BECF; }
+        .tab.active, .submit-btn { color: #0E1117; background: #F5B942; }
+        label { color: #B6BECF; }
+        input { color: #FFFFFF; border-color: #303B4D; background: #222B3A; }
+        input:focus { border-color: #F5B942; box-shadow: 0 0 0 3px rgba(245, 185, 66, .10); }
+        #message.error { color: #FF5D73; border-color: rgba(255,93,115,.25); background: rgba(255,93,115,.08); }
+        #message.success { color: #38D39F; border-color: rgba(56,211,159,.25); background: rgba(56,211,159,.08); }
+
         @media (max-width: 520px) {
             body {
                 align-items: flex-start;
@@ -186,7 +227,8 @@
             body { align-items: flex-start; }
         }
     </style>
-  <script type="module" crossorigin src="/assets/login-BJIQ_DeO.js"></script>
+  <script type="module" crossorigin src="/assets/login-CKIX2Ur5.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/supabase-C0Bv1Tz9.js">
 </head>
 
 <body>
@@ -233,14 +275,22 @@
 
         <div class="field">
             <label>PASSWORD</label>
-            <input
-                id="password"
-                type="password"
-                placeholder="Minimum 6 characters"
-                autocomplete="current-password"
-                minlength="6"
-                required
-            >
+            <div class="password-input-wrapper">
+                <input
+                    id="password"
+                    type="password"
+                    placeholder="Minimum 6 characters"
+                    autocomplete="current-password"
+                    minlength="6"
+                    required
+                >
+                <button
+                    id="passwordToggle"
+                    class="password-toggle"
+                    type="button"
+                    aria-label="Show password"
+                >👁</button>
+            </div>
         </div>
 
         <button id="submitBtn" class="submit-btn" type="submit">
