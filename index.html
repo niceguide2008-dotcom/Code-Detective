@@ -87,6 +87,30 @@
             margin-bottom: 17px;
         }
 
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-input-wrapper input {
+            padding-right: 48px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 0;
+            background: transparent;
+            color: #8fa3b7;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .password-toggle:hover {
+            color: #00e5ff;
+        }
+
         label {
             display: block;
             margin-bottom: 7px;
@@ -249,14 +273,22 @@
 
         <div class="field">
             <label>PASSWORD</label>
-            <input
-                id="password"
-                type="password"
-                placeholder="Minimum 6 characters"
-                autocomplete="current-password"
-                minlength="6"
-                required
-            >
+            <div class="password-input-wrapper">
+                <input
+                    id="password"
+                    type="password"
+                    placeholder="Minimum 6 characters"
+                    autocomplete="current-password"
+                    minlength="6"
+                    required
+                >
+                <button
+                    id="passwordToggle"
+                    class="password-toggle"
+                    type="button"
+                    aria-label="Show password"
+                >👁</button>
+            </div>
         </div>
 
         <button id="submitBtn" class="submit-btn" type="submit">

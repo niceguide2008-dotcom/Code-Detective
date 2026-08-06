@@ -9,6 +9,7 @@ const nameField = document.getElementById('nameField');
 const displayName = document.getElementById('displayName');
 const email = document.getElementById('email');
 const password = document.getElementById('password');
+const passwordToggle = document.getElementById('passwordToggle');
 const submitBtn = document.getElementById('submitBtn');
 const message = document.getElementById('message');
 
@@ -20,6 +21,7 @@ if (
     !displayName ||
     !email ||
     !password ||
+    !passwordToggle ||
     !submitBtn ||
     !message
 ) {
@@ -39,6 +41,18 @@ if (
         message.textContent = '';
         message.className = '';
     }
+
+    function togglePasswordVisibility() {
+        const isHidden = password.type === 'password';
+        password.type = isHidden ? 'text' : 'password';
+        passwordToggle.textContent = isHidden ? '🙈' : '👁';
+        passwordToggle.setAttribute(
+            'aria-label',
+            isHidden ? 'Hide password' : 'Show password'
+        );
+    }
+
+    passwordToggle.addEventListener('click', togglePasswordVisibility);
 
     function setMode(newMode) {
 
