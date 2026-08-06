@@ -2739,7 +2739,16 @@
               Detective Headquarters</div>
             <h1 style="font-size:28px; font-weight:900; letter-spacing:-0.5px;" id="welcome-heading">Welcome</h1>
           </div>
-          <div style="display:flex; gap:10px;">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <a
+              class="btn btn-primary"
+              href="/android/app/release/app-release.apk"
+              target="_blank"
+              rel="noopener"
+              download="app-release.apk"
+            >
+              Install
+            </a>
             <div class="badge badge-crimson">🔥 <span id="dash-streak">3 Day Streak</span></div>
             <div class="badge badge-amber">📅 Active</div>
           </div>
@@ -3357,10 +3366,23 @@
       return true;
     }
 
+  
     // =============================================
     // NAVIGATION
     // =============================================
-    function showScreen(screenId) {
+      // Mobile navigation history
+const screenHistory = [];
+
+    function showScreen(screenId) 
+    {
+      // Remember the previous screen for Android Back navigation
+if (
+  !isBackNavigation &&
+  state.currentScreen &&
+  state.currentScreen !== screenId
+) {
+  screenHistory.push(state.currentScreen);
+}
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
 
@@ -3379,6 +3401,62 @@
       if (screenId === 'mastery') renderMasteryBoard();
       if (screenId === 'dashboard') updateDashboard();
     }
+    // ==========================================
+// ANDROID BACK BUTTON
+// ==========================================
+
+let isBackNavigation = false;
+
+async function setupAndroidBackButton() {
+  // Only run inside the Capacitor Android app
+  if (!window.Capacitor?.isNativePlatform?.()) {
+    return;
+  }
+
+  try {
+    const App = window.Capacitor?.Plugins?.App;
+    if (!App) {
+  console.warn('[Code Detective] Capacitor App plugin unavailable');
+  return;
+}
+
+    App.addListener('backButton', () => {
+
+      // If we have a previous screen, return to it
+      if (screenHistory.length > 0) {
+        const previousScreen = screenHistory.pop();
+
+        // Prevent showScreen() from adding the current
+        // screen back into history
+        isBackNavigation = true;
+
+        showScreen(previousScreen);
+
+        isBackNavigation = false;
+        return;
+      }
+
+      // No previous screen:
+      // go to dashboard first
+      if (state.currentScreen !== 'dashboard') {
+        isBackNavigation = true;
+
+        showScreen('dashboard');
+
+        isBackNavigation = false;
+        return;
+      }
+
+      // Already on dashboard → exit Android app
+      App.exitApp();
+    });
+
+  } catch (error) {
+    console.warn('[Code Detective] Android back handler unavailable:', error);
+  }
+}
+
+setupAndroidBackButton();
 
     // Profile Dropdown Logic
     document.getElementById('nav-avatar-btn').addEventListener('click', (e) => {
