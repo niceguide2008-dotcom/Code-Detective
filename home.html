@@ -2671,6 +2671,9 @@
         <div class="dropdown-item">
           <span style="color:var(--cyan)">🏅</span> Rank: <span id="dropdown-rank"></span>
         </div>
+        <div class="dropdown-item" id="edit-username-option" style="color:var(--cyan); margin-top:8px; cursor:pointer;">
+          <span>✏️</span> Edit Username
+        </div>
         <div class="dropdown-item" id="signin-option" style="color:var(--amber); margin-top:8px; cursor:pointer;">
           <span>🔑</span> Sign In
         </div>
@@ -3307,6 +3310,53 @@
       if (el) el.innerHTML = value ?? '';
     }
 
+    function normalizeUsername(value) {
+      const trimmed = String(value || '').trim();
+      if (!trimmed) return '';
+      const cleaned = trimmed
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9._-]/g, '');
+      return cleaned.slice(0, 24);
+    }
+
+    async function saveProfileUsername(nextUsername) {
+      const supabase = await sharedSupabasePromise;
+      const {
+        data: { session },
+        error: sessionError
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.user) {
+        showToast('error', '⚠️', 'You need to be signed in to update your username.');
+        return false;
+      }
+
+      const normalizedUsername = normalizeUsername(nextUsername);
+      if (!normalizedUsername) {
+        showToast('error', '⚠️', 'Please enter a username.');
+        return false;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: normalizedUsername, updated_at: new Date().toISOString() })
+        .eq('id', session.user.id);
+
+      if (error) {
+        console.error('[Code Detective] Failed to update username:', error);
+        showToast('error', '⚠️', 'Unable to update username right now.');
+        return false;
+      }
+
+      const previousDisplay = (state.profileDisplayName || '').trim();
+      const shouldReplaceDisplay = !previousDisplay || previousDisplay.toLowerCase() === (state.profileUsername || '').toLowerCase();
+      state.profileUsername = normalizedUsername;
+      state.profileDisplayName = shouldReplaceDisplay ? normalizedUsername : previousDisplay;
+      updateDashboard();
+      showToast('success', '✅', 'Username updated successfully.');
+      return true;
+    }
+
     // =============================================
     // NAVIGATION
     // =============================================
@@ -3347,6 +3397,16 @@
       tab.addEventListener('click', () => {
         if (tab.dataset.screen) showScreen(tab.dataset.screen);
       });
+    });
+
+    document.getElementById('edit-username-option')?.addEventListener('click', async () => {
+      const currentUsername = (state.profileUsername || '').trim();
+      const nextUsername = window.prompt('Choose a new username:', currentUsername);
+      if (nextUsername === null) return;
+      const saved = await saveProfileUsername(nextUsername);
+      if (saved) {
+        document.getElementById('profile-dropdown').classList.remove('active');
+      }
     });
 
     document.getElementById('signin-option')?.addEventListener('click', () => {
