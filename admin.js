@@ -7,6 +7,14 @@ const LEGACY_CASE_TOTAL = 50;
 const PACK_CASE_TOTAL = Array.isArray(window.JAVA_OOP_UNIT1_CASES) ? window.JAVA_OOP_UNIT1_CASES.length : 13;
 const state = { users: [], selected: null, totalCases: LEGACY_CASE_TOTAL + PACK_CASE_TOTAL };
 
+function getUserName(user){
+  return String(user?.display_name || user?.username || user?.email?.split('@')[0] || '').trim().toLowerCase();
+}
+
+function sortUsers(users){
+  return [...users].sort((a,b)=>getUserName(a).localeCompare(getUserName(b), undefined, { sensitivity: 'base' }));
+}
+
 // Keep per-detective case progress visually distinct from the admin console's red accents.
 document.head.insertAdjacentHTML('beforeend', `<style>
   :root{--bg:#0E1117;--panel:#1B2230;--panel2:#222B3A;--line:#303B4D;--text:#FFFFFF;--muted:#7B8798;--red:#FF5D73;--amber:#F5B942;--green:#38D39F}
@@ -43,7 +51,7 @@ async function loadUsers(){
   const { data, error } = await supabase.rpc('admin_list_users');
   setLoading(false);
   if(error){ showError(error.message); return; }
-  state.users = Array.isArray(data) ? data : [];
+  state.users = sortUsers(Array.isArray(data) ? data : []);
   renderStats(); renderUsers(state.users);
 }
 
@@ -99,7 +107,7 @@ function closeDrawer(){ $('#drawer').classList.remove('open'); $('#overlay').cla
 function setLoading(v){$('#loading').hidden=!v; $('#userGrid').hidden=v;}
 function showError(m){$('#userGrid').innerHTML=`<div class="empty error">Could not load admin data: ${esc(m)}</div>`;}
 
-$('#search').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();renderUsers(state.users.filter(u=>[u.display_name,u.username,u.email,u.current_case_id,u.rank].some(v=>String(v||'').toLowerCase().includes(q))))});
+$('#search').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();const filtered=state.users.filter(u=>[u.display_name,u.username,u.email,u.current_case_id,u.rank].some(v=>String(v||'').toLowerCase().includes(q)));renderUsers(sortUsers(filtered));});
 $('#refresh').addEventListener('click',loadUsers); $('#closeDrawer').addEventListener('click',closeDrawer); $('#overlay').addEventListener('click',closeDrawer);
 $('#logout').addEventListener('click',async()=>{await supabase.auth.signOut();location.replace('/index.html')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
