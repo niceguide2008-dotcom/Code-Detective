@@ -378,7 +378,12 @@ async function sendBroadcast() {
     alert(`Notification delivered to ${recipients.length} user${recipients.length === 1 ? '' : 's'}.`);
   } catch (error) {
     console.error('Failed to send broadcast to Supabase:', error);
-    alert(`Notification could not be delivered. ${error?.message || 'Please try again.'}`);
+    const message = String(error?.message || 'Please try again.');
+    if (/no schema.*public\.notifications|relation .*notifications.*does not exist|table .*notifications.*does not exist/i.test(message)) {
+      alert('Notification could not be delivered because the Supabase notifications table is not set up yet. Run notifications_schema.sql from the project in Supabase SQL Editor, then try again.');
+    } else {
+      alert(`Notification could not be delivered. ${message}`);
+    }
   }
 }
 
