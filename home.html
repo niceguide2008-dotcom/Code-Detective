@@ -2082,9 +2082,40 @@
         font-size: 24px;
       }
 
+      .nav-right {
+        position: relative;
+      }
+
       .notification-panel {
+        width: min(360px, calc(100vw - 24px));
         min-width: 0;
-        max-width: 100%;
+        max-width: calc(100vw - 24px);
+        right: 0;
+        top: 48px;
+        box-sizing: border-box;
+        max-height: min(70vh, 560px);
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
+      .notification-panel-header {
+        align-items: flex-start;
+      }
+
+      .notification-item {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .notification-item > div:last-child {
+        grid-column: 2;
+        justify-self: start;
+      }
+
+      .notification-item-title,
+      .notification-item-message,
+      .notification-item-meta {
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
     }
 
@@ -4588,6 +4619,8 @@
 
 
     const sharedSupabasePromise = import('./supabase.js').then((module) => module.supabase);
+    let notificationRealtimeChannel = null;
+    let notificationRefreshTimer = null;
 
     // Add presentation metadata expected by the Mastery Board.
     const rankIcons = ['🔎','🕵️','⭐','🏆','👑'];
@@ -4717,34 +4750,128 @@
       };
     }
 
+    function normalizeSupabaseNotification(item) {
+      return {
+        id: item.id,
+        type: item.type,
+        title: item.title,
+        message: item.message,
+        icon: item.type === 'assignment' ? '📚' : item.type === 'critical' ? '🚨' : item.type === 'important' ? '📢' : '🔔',
+        meta: item.created_at ? new Date(item.created_at).toLocaleString('en-IN') : '',
+        read: Boolean(item.is_read),
+        createdAt: item.created_at
+      };
+    }
+
+    function upsertNotification(item, { announce = false } = {}) {
+      const normalized = normalizeSupabaseNotification(item);
+      const existingIndex = state.notifications.findIndex(notification => notification.id === normalized.id);
+
+      if (existingIndex >= 0) {
+        state.notifications[existingIndex] = {
+          ...state.notifications[existingIndex],
+          ...normalized
+        };
+      } else {
+        state.notifications = [normalized, ...state.notifications];
+        if (announce) {
+          const icon = normalized.icon || '🔔';
+          showToast('success', icon, normalized.title || 'New notification');
+        }
+      }
+
+      state.notifications.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      renderNotifications();
+      renderActivityStream();
+    }
+
     async function loadNotificationsFromSupabase() {
       try {
         const supabase = await sharedSupabasePromise;
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session?.user) return;
-        const userId = sessionData.session.user.id;
-        
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) return;
+
         const { data, error } = await supabase
           .from('notifications')
-          .select('*')
+          .select('id,title,message,type,sender_id,recipient_id,is_read,created_at')
           .eq('recipient_id', userId)
           .order('created_at', { ascending: false });
-          
-        if (!error && data) {
-          state.notifications = data.map(item => ({
-            id: item.id,
-            type: item.type,
-            title: item.title,
-            message: item.message,
-            icon: item.type === 'critical' ? '🚨' : item.type === 'important' ? '📢' : '🔔',
-            meta: new Date(item.created_at).toLocaleString(),
-            read: item.is_read,
-            createdAt: item.created_at
-          }));
-          renderNotifications();
-        }
+
+        if (error) throw error;
+
+        state.notifications = Array.isArray(data) ? data.map(normalizeSupabaseNotification) : [];
+        renderNotifications();
+        renderActivityStream();
       } catch (e) {
         console.error('Failed to load notifications from Supabase:', e);
+      }
+    }
+
+    async function initNotificationRealtime() {
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) return;
+
+        if (notificationRealtimeChannel) {
+          await supabase.removeChannel(notificationRealtimeChannel);
+        }
+
+        notificationRealtimeChannel = supabase
+          .channel(`code-detective-notifications-${userId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'notifications',
+              filter: `recipient_id=eq.${userId}`
+            },
+            payload => upsertNotification(payload.new, { announce: true })
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'notifications',
+              filter: `recipient_id=eq.${userId}`
+            },
+            payload => upsertNotification(payload.new)
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: 'DELETE',
+              schema: 'public',
+              table: 'notifications',
+              filter: `recipient_id=eq.${userId}`
+            },
+            payload => {
+              state.notifications = state.notifications.filter(item => item.id !== payload.old?.id);
+              renderNotifications();
+              renderActivityStream();
+            }
+          )
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[Notifications] Realtime subscription active');
+            } else if (status === 'CHANNEL_ERROR') {
+              console.warn('[Notifications] Realtime subscription unavailable; focus refresh remains active.');
+            }
+          });
+
+        // Lightweight fallback for browsers/webviews where realtime is unavailable.
+        if (!notificationRefreshTimer) {
+          notificationRefreshTimer = window.setInterval(() => {
+            if (!document.hidden) loadNotificationsFromSupabase();
+          }, 60000);
+        }
+      } catch (e) {
+        console.error('Failed to initialize notification realtime:', e);
       }
     }
 
@@ -4842,6 +4969,10 @@
       `;
     }
 
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) loadNotificationsFromSupabase();
+    });
+
     function toggleNotifications() {
       const panel = getEl('notification-panel');
       const bell = getEl('nav-bell-btn');
@@ -4850,6 +4981,7 @@
       panel.classList.toggle('active', state.notificationsOpen);
       if (state.notificationsOpen) {
         renderNotifications();
+        loadNotificationsFromSupabase();
       }
     }
 
@@ -6986,6 +7118,7 @@ console.log("[DXP DEBUG] Save Error:", error);
 
       seedLearningData();
       await loadNotificationsFromSupabase();
+      await initNotificationRealtime();
       initThemeSystem();
       const profile = await loadProfile();
       await restoreCaseProgress();

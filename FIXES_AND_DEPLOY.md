@@ -17,3 +17,29 @@
 5. Netlify will use `netlify.toml` and publish `dist` automatically.
 
 Do not manually copy the raw `supabase.js` into `dist`; Vite must process it because it imports `@supabase/supabase-js`.
+
+## Notification fixes applied (2026-08-08)
+
+- Admin custom notifications are now inserted into the real Supabase `notifications` table and only recorded as successful admin history after delivery succeeds.
+- New assignments now create real `assignment` notifications for the student audience instead of relying only on browser `localStorage`.
+- The admin notification composer is moved to the top of the Admin console, immediately after the hero/header area.
+- The Home page loads notifications from Supabase, refreshes on visibility/focus and when the notification panel is opened, and subscribes to Supabase Realtime for new/updated/deleted notifications.
+- A newly received notification produces a Home-page toast and updates the notification/activity UI immediately.
+- Mobile notification dropdown sizing/positioning was adjusted to remain inside narrow viewports and wrap long content.
+- `notifications_schema.sql` includes an idempotent Supabase Realtime publication step for `public.notifications`.
+
+### Rebuild after extracting this fixed source
+
+```bash
+npm install
+npm run build
+npx cap sync android
+```
+
+Then reopen Android Studio with:
+
+```bash
+npx cap open android
+```
+
+The uploaded `dist/` directory in this archive is the previous build artifact; rebuild it with the commands above so the generated bundle contains the fixes.

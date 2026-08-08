@@ -54,6 +54,7 @@ function ensureAdminExtensions() {
     body[data-theme="light"]{--bg:#f5f7fb;--panel:#ffffff;--panel2:#eef2f7;--line:#d8e2ee;--text:#142033;--muted:#64748b;--red:#ef4444;--amber:#f59e0b;--green:#10b981}
     body[data-theme="dark"]{--bg:#06070b;--panel:#121727;--panel2:#182132;--line:#243244;--text:#f8fafc;--muted:#94a3b8;--red:#ff5d73;--amber:#f5b942;--green:#38d39f}
     #admin-extensions{margin-top:24px;display:grid;gap:16px}
+    #admin-extensions .admin-panel[data-panel=\"broadcast\"]{scroll-margin-top:20px}
     .admin-panel{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 16px 35px rgba(0,0,0,.16)}
     .admin-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.admin-panel-head h3{margin:0;font-size:18px}.admin-panel-head p{margin:4px 0 0;font-size:12px;color:var(--muted)}
     .admin-form{display:grid;gap:10px}.admin-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.admin-form input,.admin-form textarea,.admin-form select{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text);font:inherit}.admin-form textarea{min-height:90px;resize:vertical}.admin-actions{display:flex;gap:10px;flex-wrap:wrap}.admin-list{display:grid;gap:10px;margin-top:12px}.admin-list-item{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.03)}
@@ -66,9 +67,9 @@ function ensureAdminExtensions() {
   wrapper.id = 'admin-extensions';
   wrapper.innerHTML = `
     <div class="admin-tabs">
-      <button type="button" class="active" data-view="overview">Overview</button>
+      <button type="button" data-view="broadcast" class="active">🔔 Send Notification</button>
+      <button type="button" data-view="overview">Overview</button>
       <button type="button" data-view="assignments">Assignments</button>
-      <button type="button" data-view="broadcast">Broadcast</button>
     </div>
     <div class="admin-panel" data-panel="overview">
       <div class="admin-panel-head">
@@ -117,7 +118,7 @@ function ensureAdminExtensions() {
       </form>
       <div id="assignment-list" class="admin-list"></div>
     </div>
-    <div class="admin-panel" data-panel="broadcast" hidden>
+    <div class="admin-panel" data-panel="broadcast">
       <div class="admin-panel-head">
         <div>
           <h3>Broadcast notifications</h3>
@@ -150,7 +151,15 @@ function ensureAdminExtensions() {
   `;
 
   const shell = document.querySelector('.shell');
-  if (shell) shell.appendChild(wrapper);
+  const hero = shell?.querySelector('.hero');
+  const stats = shell?.querySelector('.stats');
+  if (shell) {
+    // Keep the notification composer near the top of the admin console.
+    // Insert the extension block after the hero and before the statistics/registry.
+    if (stats) shell.insertBefore(wrapper, stats);
+    else if (hero) hero.insertAdjacentElement('afterend', wrapper);
+    else shell.prepend(wrapper);
+  }
 
   wrapper.querySelectorAll('.admin-tabs button').forEach(button => {
     button.addEventListener('click', () => {
@@ -200,7 +209,7 @@ function resetAssignmentForm() {
   if (form) form.reset();
 }
 
-function saveAssignmentFromForm() {
+async function saveAssignmentFromForm() {
   const payload = {
     id: state.editingAssignmentId || `assignment-${Date.now()}`,
     title: document.getElementById('assignment-title').value.trim(),
@@ -220,15 +229,19 @@ function saveAssignmentFromForm() {
     return;
   }
 
-  if (state.editingAssignmentId) {
+  const isEditing = Boolean(state.editingAssignmentId);
+  if (isEditing) {
     state.assignments = state.assignments.map(item => item.id === state.editingAssignmentId ? { ...item, ...payload } : item);
   } else {
     state.assignments = [payload, ...state.assignments];
   }
-
   setStoredValue('codeDetectiveAssignments', state.assignments);
-  setStoredValue('codeDetectiveNotifications', [
-    {
+
+  // A newly created assignment must create real Supabase notifications.
+  // localStorage alone cannot deliver an assignment to another device/user.
+  if (!isEditing) {
+    const createdAt = new Date().toISOString();
+    const queuedNotification = {
       id: `notif-${Date.now()}`,
       type: 'assignment',
       title: 'New Assignment',
@@ -236,13 +249,44 @@ function saveAssignmentFromForm() {
       icon: '📚',
       meta: `Due ${payload.dueDate}`,
       read: false,
-      createdAt: new Date().toISOString()
-    },
-    ...(getStoredValue('codeDetectiveNotifications', []) || [])
-  ]);
+      createdAt
+    };
+    setStoredValue('codeDetectiveNotifications', [
+      queuedNotification,
+      ...(getStoredValue('codeDetectiveNotifications', []) || [])
+    ]);
+
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const senderId = sessionData?.session?.user?.id;
+      if (sessionError || !senderId) throw sessionError || new Error('Admin session not found.');
+
+      const recipients = getNotificationRecipients('Students');
+      if (!recipients.length) throw new Error('No student recipients were found.');
+
+      const notifications = recipients.map(user => ({
+        title: 'New Assignment',
+        message: `${payload.title} is now available for ${payload.subject}. Due ${payload.dueDate} ${payload.dueTime}.`,
+        type: 'assignment',
+        sender_id: senderId,
+        recipient_id: user.id,
+        is_read: false
+      }));
+
+      const { error } = await supabase.from('notifications').insert(notifications);
+      if (error) throw error;
+    } catch (error) {
+      console.error('Failed to deliver assignment notification:', error);
+      resetAssignmentForm();
+      renderAdminModules();
+      alert(`Assignment saved, but the user notification could not be delivered. ${error?.message || ''}`.trim());
+      return;
+    }
+  }
+
   resetAssignmentForm();
   renderAdminModules();
-  alert('Assignment saved and student notification queued.');
+  alert(isEditing ? 'Assignment updated successfully.' : 'Assignment saved and student notification delivered.');
 }
 
 function editAssignment(id) {
@@ -268,6 +312,26 @@ function deleteAssignment(id) {
   renderAdminModules();
 }
 
+function getNotificationRecipients(target) {
+  const users = Array.isArray(state.users) ? state.users.filter(user => user?.id) : [];
+  if (target === 'Everyone') return users;
+
+  const isAdminUser = user => Boolean(
+    user?.is_admin === true ||
+    user?.isAdmin === true ||
+    String(user?.role || '').toLowerCase() === 'admin'
+  );
+
+  if (target === 'Admins') {
+    const admins = users.filter(isAdminUser);
+    return admins.length ? admins : [];
+  }
+
+  // The admin_list_users RPC may not expose role metadata in older databases.
+  // In that case treat the returned registry as the student audience.
+  return users.filter(user => !isAdminUser(user));
+}
+
 async function sendBroadcast() {
   const payload = {
     id: `broadcast-${Date.now()}`,
@@ -283,38 +347,39 @@ async function sendBroadcast() {
     return;
   }
   
-  // Keep local history for Admin UI
-  state.broadcasts = [payload, ...state.broadcasts];
-  setStoredValue('codeDetectiveBroadcasts', state.broadcasts);
+  try {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const senderId = sessionData?.session?.user?.id;
+    if (sessionError || !senderId) throw sessionError || new Error('Admin session not found.');
 
-  // Send real notifications via Supabase
-  if (!state.users || state.users.length === 0) {
-    alert('Warning: No users loaded to receive the broadcast.');
-  } else {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const senderId = sessionData?.session?.user?.id;
-      if (senderId) {
-        const notifications = state.users.map(u => ({
-          title: payload.title,
-          message: payload.message,
-          type: payload.priority.toLowerCase(),
-          sender_id: senderId,
-          recipient_id: u.id,
-          is_read: false
-        }));
-        
-        const { error } = await supabase.from('notifications').insert(notifications);
-        if (error) console.error('Supabase Broadcast Error:', error);
-      }
-    } catch (e) {
-      console.error('Failed to send broadcast to Supabase:', e);
+    const recipients = getNotificationRecipients(payload.target);
+    if (!recipients.length) {
+      alert(`No users were found for the selected audience: ${payload.target}.`);
+      return;
     }
-  }
 
-  document.getElementById('broadcast-form').reset();
-  renderAdminModules();
-  alert('Broadcast delivered to the target audience via Supabase.');
+    const notifications = recipients.map(user => ({
+      title: payload.title,
+      message: payload.message,
+      type: payload.priority.toLowerCase(),
+      sender_id: senderId,
+      recipient_id: user.id,
+      is_read: false
+    }));
+
+    const { error } = await supabase.from('notifications').insert(notifications);
+    if (error) throw error;
+
+    // Only record successful deliveries in the admin history.
+    state.broadcasts = [payload, ...state.broadcasts];
+    setStoredValue('codeDetectiveBroadcasts', state.broadcasts);
+    document.getElementById('broadcast-form').reset();
+    renderAdminModules();
+    alert(`Notification delivered to ${recipients.length} user${recipients.length === 1 ? '' : 's'}.`);
+  } catch (error) {
+    console.error('Failed to send broadcast to Supabase:', error);
+    alert(`Notification could not be delivered. ${error?.message || 'Please try again.'}`);
+  }
 }
 
 function renderAdminModules() {
