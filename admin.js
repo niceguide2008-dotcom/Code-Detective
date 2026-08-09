@@ -156,6 +156,7 @@ function switchPanel(name) {
 function getUserName(user) { return String(user?.display_name || user?.username || user?.email?.split('@')[0] || 'Detective').trim(); }
 function sortUsers(users) { return [...users].sort((a,b) => getUserName(a).localeCompare(getUserName(b), undefined, {sensitivity:'base'})); }
 function isAdminUser(user) { return user?.is_admin === true || user?.isAdmin === true || String(user?.role || '').toLowerCase() === 'admin'; }
+function getAdminUsers() { return state.users.filter(isAdminUser); }
 function getStudentUsers() { return state.users.filter(u => !isAdminUser(u)); }
 
 function renderRecipientPickers() {
@@ -222,13 +223,55 @@ async function loadUsers() {
   const { data, error } = await supabase.rpc('admin_list_users');
   setLoading(false);
   if (error) { showError(error.message); return; }
-  state.users = sortUsers(Array.isArray(data) ? data : []);
+
+  // The user-list RPC may intentionally omit administrator accounts.
+  // Notification targeting must still be able to resolve real admin recipients,
+  // so merge admin profiles from the existing user_roles/profiles tables.
+  state.users = Array.isArray(data) ? data : [];
   try {
-    const { data: roles } = await supabase.from('user_roles').select('user_id,role');
+    const { data: roles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('user_id,role');
+    if (rolesError) throw rolesError;
+
     const roleMap = new Map((roles || []).map(row => [row.user_id, row.role]));
-    state.users = state.users.map(user => ({ ...user, role: roleMap.get(user.id) || user.role, is_admin: String(roleMap.get(user.id) || user.role || '').toLowerCase() === 'admin' }));
-  } catch (_) {}
-  renderStats(); renderUsers(state.users); renderRecipientPickers();
+    const adminIds = [...roleMap.entries()]
+      .filter(([, role]) => String(role || '').toLowerCase() === 'admin')
+      .map(([id]) => id);
+
+    if (adminIds.length) {
+      const { data: adminProfiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', adminIds);
+      if (profileError) throw profileError;
+
+      const existing = new Map(state.users.map(user => [user.id, user]));
+      (adminProfiles || []).forEach(profile => {
+        existing.set(profile.id, {
+          ...(existing.get(profile.id) || {}),
+          ...profile,
+          role: roleMap.get(profile.id) || profile.role || 'admin',
+          is_admin: true
+        });
+      });
+      state.users = [...existing.values()];
+    }
+
+    state.users = state.users.map(user => ({
+      ...user,
+      role: roleMap.get(user.id) || user.role,
+      is_admin: String(roleMap.get(user.id) || user.role || '').toLowerCase() === 'admin'
+    }));
+  } catch (error) {
+    // Keep the existing user list usable even if role/profile enrichment is unavailable.
+    console.warn('[Admin Users] Could not enrich administrator recipients:', error.message);
+  }
+
+  state.users = sortUsers(state.users);
+  renderStats();
+  renderUsers(state.users);
+  renderRecipientPickers();
 }
 
 function renderStats() {
@@ -310,46 +353,80 @@ async function deleteAssignment(id){ if(!confirm('Delete this assignment for all
 async function sendBroadcast(){
   const title=$('#broadcast-title')?.value.trim(), message=$('#broadcast-message')?.value.trim(), type=$('#broadcast-priority')?.value||'general', target=$('#broadcast-target')?.value||'Students';
   if(!title||!message){alert('Enter a title and message.');return;}
-  const recipients=target==='Selected'?[...document.querySelectorAll('[data-broadcast-recipient]:checked')].map(el=>el.value):target==='Students'?getStudentUsers().map(u=>u.id):target==='Admins'?state.users.filter(isAdminUser).map(u=>u.id):state.users.map(u=>u.id);
+
+  const recipients = target === 'Selected'
+    ? [...document.querySelectorAll('[data-broadcast-recipient]:checked')].map(el => el.value)
+    : target === 'Students'
+      ? getStudentUsers().map(u => u.id)
+      : target === 'Admins'
+        ? getAdminUsers().map(u => u.id)
+        : state.users.map(u => u.id);
+
   if(!recipients.length){alert('No recipients match the selected audience.');return;}
   const {data:sessionData}=await supabase.auth.getSession(); const sender_id=sessionData?.session?.user?.id; if(!sender_id)return;
-  try{const rows=recipients.map(recipient_id=>({title,message,type,sender_id,recipient_id,is_read:false}));const {error}=await supabase.from('notifications').insert(rows);if(error)throw error;state.broadcasts=[{title,message,type,target,createdAt:new Date().toISOString()},...state.broadcasts];setStoredValue('codeDetectiveBroadcasts',state.broadcasts);$('#broadcast-form').reset();renderRecipientPickers();await loadAdminNotifications();alert(`Notification delivered to ${recipients.length} user${recipients.length===1?'':'s'}.`);}catch(error){console.error('[Notifications] Send failed:',error);alert(`Notification could not be delivered. ${error.message}`);}
+  try{
+    const rows=recipients.map(recipient_id=>({title,message,type,sender_id,recipient_id,is_read:false}));
+    const {error}=await supabase.from('notifications').insert(rows);
+    if(error)throw error;
+    state.broadcasts=[{title,message,type,target,createdAt:new Date().toISOString()},...state.broadcasts];
+    setStoredValue('codeDetectiveBroadcasts',state.broadcasts);
+    $('#broadcast-form').reset();
+    renderRecipientPickers();
+    await loadAdminNotifications();
+    alert(`Notification delivered to ${recipients.length} ${target === 'Admins' ? 'admin' : 'user'}${recipients.length===1?'':'s'}.`);
+  }catch(error){console.error('[Notifications] Send failed:',error);alert(`Notification could not be delivered. ${error.message}`);}
 }
 
 async function loadAdminNotifications() {
+  const historyEl = $('#notification-history');
+  if (historyEl) historyEl.innerHTML = '<div class="admin-list-item admin-muted">Loading notification history…</div>';
+
   const { data, error } = await supabase
     .from('notifications')
-    .select(
-      'id,title,message,type,recipient_id,is_read,created_at'
-    )
-    .order('created_at', {
-      ascending: false
-    })
-    .limit(80);
+    .select('id,title,message,type,sender_id,recipient_id,is_read,created_at')
+    .order('created_at', { ascending: false });
 
   if (error) {
-    $('#notification-history').innerHTML =
-      `<div class="admin-list-item admin-muted">
-        Could not load notifications: ${esc(error.message)}
-      </div>`;
+    if (historyEl) historyEl.innerHTML = `<div class="admin-list-item admin-muted">Could not load notifications: ${esc(error.message)}</div>`;
+    console.error('[Notifications] History load failed:', error);
     return;
   }
 
-  state.notifications = data || [];
+  const rows = data || [];
+  const profileIds = [...new Set(rows.flatMap(row => [row.sender_id, row.recipient_id]).filter(Boolean))];
+  let profileMap = new Map();
 
-  renderNotificationHistory();
-
-  const count =
-    document.getElementById('overview-notification-count');
-
-  if (count) {
-    count.textContent = state.notifications.length;
+  if (profileIds.length) {
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id,display_name,username,email')
+      .in('id', profileIds);
+    if (!profileError) {
+      profileMap = new Map((profiles || []).map(profile => [profile.id, profile]));
+    } else {
+      console.warn('[Notifications] Could not resolve notification names:', profileError.message);
+    }
   }
 
-  if(error){$('#notification-history').innerHTML=`<div class="admin-list-item admin-muted">Could not load notifications: ${esc(error.message)}</div>`;return;}
-  state.notifications=data||[];renderNotificationHistory();$('#overview-notification-count')&&($('#overview-notification-count').textContent=state.notifications.length);
+  state.notifications = rows.map(row => ({
+    ...row,
+    sender: profileMap.get(row.sender_id),
+    recipient: profileMap.get(row.recipient_id)
+  }));
+
+  renderNotificationHistory();
+  const count = document.getElementById('overview-notification-count');
+  if (count) count.textContent = state.notifications.length;
 }
-function renderNotificationHistory(){const el=$('#notification-history');if(!el)return;if(!state.notifications.length){el.innerHTML='<div class="admin-list-item admin-muted">No notifications found.</div>';return;}el.innerHTML=state.notifications.map(n=>`<div class="admin-list-item"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><span class="admin-chip">${esc(n.type||'general')}</span><h4 style="margin:8px 0 4px">${esc(n.title)}</h4><div class="admin-muted">${esc(n.message)}</div><div class="admin-muted" style="margin-top:7px">${esc(fmt(n.created_at))} · ${n.is_read?'Read':'Unread'}</div></div><button class="admin-btn danger" data-delete-notification="${esc(n.id)}" type="button">Delete</button></div></div>`).join('');el.querySelectorAll('[data-delete-notification]').forEach(btn=>btn.addEventListener('click',()=>deleteNotification(btn.dataset.deleteNotification)));}
+
+function renderNotificationHistory(){
+  const el=$('#notification-history');
+  if(!el)return;
+  if(!state.notifications.length){el.innerHTML='<div class="admin-list-item admin-muted">No notifications have been sent yet.</div>';return;}
+  const personName = profile => String(profile?.display_name || profile?.username || profile?.email?.split('@')[0] || 'Unknown user');
+  el.innerHTML=state.notifications.map(n=>`<div class="admin-list-item"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div style="min-width:0"><span class="admin-chip">${esc(n.type||'general')}</span><h4 style="margin:8px 0 4px">${esc(n.title)}</h4><div class="admin-muted">${esc(n.message)}</div><div class="admin-muted" style="margin-top:7px">Sent ${esc(fmt(n.created_at))} · ${n.is_read?'Read':'Unread'}</div><div class="admin-muted" style="margin-top:5px">From: ${esc(personName(n.sender))} · To: ${esc(personName(n.recipient))}</div></div><button class="admin-btn danger" data-delete-notification="${esc(n.id)}" type="button">Delete</button></div></div>`).join('');
+  el.querySelectorAll('[data-delete-notification]').forEach(btn=>btn.addEventListener('click',()=>deleteNotification(btn.dataset.deleteNotification)));
+}
 async function deleteNotification(id){if(!confirm('Delete this notification?'))return;try{const {error}=await supabase.from('notifications').delete().eq('id',id);if(error)throw error;state.notifications=state.notifications.filter(n=>n.id!==id);renderNotificationHistory();}catch(error){alert(`Notification could not be deleted. ${error.message}`);}}
 
 async function loadStreakRisk(){
