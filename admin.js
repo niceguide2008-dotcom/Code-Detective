@@ -1,543 +1,384 @@
 import { supabase } from './supabase.js';
 
-const $ = (s) => document.querySelector(s);
-const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt = (v) => v ? new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v)) : '—';
+const $ = (selector) => document.querySelector(selector);
+const esc = (value = '') => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const fmt = (value) => value ? new Intl.DateTimeFormat('en-IN', { dateStyle:'medium', timeStyle:'short' }).format(new Date(value)) : '—';
 const LEGACY_CASE_TOTAL = 50;
-const PACK_CASE_TOTAL = Array.isArray(window.JAVA_OOP_UNIT1_CASES) ? window.JAVA_OOP_UNIT1_CASES.length : 13;
-const state = { users: [], selected: null, totalCases: LEGACY_CASE_TOTAL + PACK_CASE_TOTAL, assignments: [], broadcasts: [], editingAssignmentId: null, themePreference: 'system' };
+const PACK_CASE_TOTAL = 13;
+
+const state = {
+  users: [],
+  selected: null,
+  totalCases: LEGACY_CASE_TOTAL + PACK_CASE_TOTAL,
+  assignments: [],
+  broadcasts: [],
+  notifications: [],
+  atRisk: [],
+  editingAssignmentId: null,
+  themePreference: 'system'
+};
 
 function getStoredValue(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch (error) {
-    return fallback;
-  }
+  try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch (_) { return fallback; }
 }
-
-function setStoredValue(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function normalizeTheme(value) {
-  return value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
-}
-
-function applyAdminTheme(themeValue = state.themePreference) {
-  const normalized = normalizeTheme(themeValue);
-  state.themePreference = normalized;
-  const resolvedTheme = normalized === 'system'
+function setStoredValue(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+function normalizeTheme(value) { return ['light','dark','system'].includes(value) ? value : 'system'; }
+function applyAdminTheme(value = state.themePreference) {
+  state.themePreference = normalizeTheme(value);
+  const resolved = state.themePreference === 'system'
     ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    : normalized;
-  document.body.setAttribute('data-theme', resolvedTheme);
-  setStoredValue('codeDetectiveTheme', normalized);
+    : state.themePreference;
+  document.body.setAttribute('data-theme', resolved);
+  setStoredValue('codeDetectiveTheme', state.themePreference);
 }
-
 function initAdminTheme() {
   applyAdminTheme(getStoredValue('codeDetectiveTheme', 'system'));
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  const update = () => {
-    if (state.themePreference === 'system') applyAdminTheme('system');
-  };
-  if (typeof mediaQuery.addEventListener === 'function') {
-    mediaQuery.addEventListener('change', update);
-  } else if (typeof mediaQuery.addListener === 'function') {
-    mediaQuery.addListener(update);
-  }
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const update = () => state.themePreference === 'system' && applyAdminTheme('system');
+  mq.addEventListener?.('change', update);
+}
+
+function injectAdminStyles() {
+  document.head.insertAdjacentHTML('beforeend', `<style>
+    body[data-theme="light"]{--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f7;--line:#d8e2ee;--text:#142033;--muted:#64748b;--red:#ef4444;--amber:#f59e0b;--green:#10b981}
+    body[data-theme="dark"]{--bg:#06070b;--panel:#121727;--panel2:#182132;--line:#28364a;--text:#f8fafc;--muted:#94a3b8;--red:#ff5d73;--amber:#f5b942;--green:#38d39f}
+    #admin-extensions{margin:24px 0 28px;display:grid;gap:16px}
+    #admin-extensions .admin-panel{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 16px 35px rgba(0,0,0,.16)}
+    .admin-tabs{display:flex;gap:8px;flex-wrap:wrap}.admin-tabs button{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:9px 13px;border-radius:999px;cursor:pointer;font-weight:700}.admin-tabs button.active{background:var(--amber);color:#0e1117;border-color:var(--amber)}
+    .admin-panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}.admin-panel-head h3{margin:0;font-size:18px}.admin-panel-head p{margin:5px 0 0;font-size:12px;color:var(--muted)}
+    .admin-form{display:grid;gap:11px}.admin-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.admin-form input,.admin-form textarea,.admin-form select{width:100%;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:11px;padding:11px 12px;color:var(--text);font:inherit;outline:none}.admin-form textarea{min-height:96px;resize:vertical}.admin-form input:focus,.admin-form textarea:focus,.admin-form select:focus{border-color:rgba(0,243,255,.45);box-shadow:0 0 0 3px rgba(0,243,255,.05)}
+    .admin-actions{display:flex;gap:9px;flex-wrap:wrap}.admin-actions button,.admin-btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;font-weight:700}.admin-btn.primary{background:var(--amber);color:#0e1117;border-color:var(--amber)}.admin-btn.danger{color:#ff9aa6;border-color:rgba(255,93,115,.35)}
+    .admin-list{display:grid;gap:10px;margin-top:12px}.admin-list-item{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.025)}
+    .admin-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.admin-kpi{padding:16px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}.admin-kpi strong{font-size:28px;display:block;margin-top:5px}.admin-kpi small{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-size:10px}
+    .recipient-picker{display:grid;gap:8px;max-height:190px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:11px;background:rgba(0,0,0,.08)}.recipient-row{display:flex;gap:9px;align-items:center;font-size:12px;color:var(--text)}.recipient-row small{color:var(--muted);margin-left:auto}.streak-risk{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.streak-risk strong{display:block}.streak-risk span{font-size:11px;color:var(--muted)}
+    .admin-muted{color:var(--muted);font-size:12px;line-height:1.6}.admin-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;background:rgba(245,185,66,.1);color:var(--amber);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    @media(max-width:950px){.admin-grid-2{grid-template-columns:1fr}.admin-form-grid{grid-template-columns:1fr}}
+    @media(max-width:650px){#admin-extensions .admin-panel{padding:15px}.admin-panel-head{flex-direction:column}.streak-risk{grid-template-columns:1fr}.admin-tabs{overflow:auto;flex-wrap:nowrap}.admin-tabs button{white-space:nowrap}}
+  </style>`);
 }
 
 function ensureAdminExtensions() {
   if (document.getElementById('admin-extensions')) return;
-
-  document.head.insertAdjacentHTML('beforeend', `<style>
-    body[data-theme="light"]{--bg:#f5f7fb;--panel:#ffffff;--panel2:#eef2f7;--line:#d8e2ee;--text:#142033;--muted:#64748b;--red:#ef4444;--amber:#f59e0b;--green:#10b981}
-    body[data-theme="dark"]{--bg:#06070b;--panel:#121727;--panel2:#182132;--line:#243244;--text:#f8fafc;--muted:#94a3b8;--red:#ff5d73;--amber:#f5b942;--green:#38d39f}
-    #admin-extensions{margin-top:24px;display:grid;gap:16px}
-    #admin-extensions .admin-panel[data-panel=\"broadcast\"]{scroll-margin-top:20px}
-    .admin-panel{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 16px 35px rgba(0,0,0,.16)}
-    .admin-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.admin-panel-head h3{margin:0;font-size:18px}.admin-panel-head p{margin:4px 0 0;font-size:12px;color:var(--muted)}
-    .admin-form{display:grid;gap:10px}.admin-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.admin-form input,.admin-form textarea,.admin-form select{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text);font:inherit}.admin-form textarea{min-height:90px;resize:vertical}.admin-actions{display:flex;gap:10px;flex-wrap:wrap}.admin-list{display:grid;gap:10px;margin-top:12px}.admin-list-item{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.03)}
-    .admin-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.admin-tabs button{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:999px;cursor:pointer}.admin-tabs button.active{background:var(--amber);color:#0e1117;border-color:var(--amber)}
-    .mini-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;background:rgba(245,185,66,.12);color:var(--amber);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
-    @media (max-width:700px){.admin-form-grid{grid-template-columns:1fr}}
-  </style>`);
-
+  injectAdminStyles();
   const wrapper = document.createElement('section');
   wrapper.id = 'admin-extensions';
   wrapper.innerHTML = `
     <div class="admin-tabs">
-      <button type="button" data-view="broadcast" class="active">🔔 Send Notification</button>
-      <button type="button" data-view="overview">Overview</button>
-      <button type="button" data-view="assignments">Assignments</button>
+      <button class="active" data-view="notifications">🔔 Notifications</button>
+      <button data-view="assignments">📚 Assignments</button>
+      <button data-view="streaks">🔥 Streak Protection</button>
+      <button data-view="overview">📊 Overview</button>
     </div>
-    <div class="admin-panel" data-panel="overview">
-      <div class="admin-panel-head">
-        <div>
-          <h3>Learning operations</h3>
-          <p>Manage assignments and campus-wide announcements in one place.</p>
-        </div>
-        <div class="mini-pill">Admin control</div>
-      </div>
-      <div class="admin-form-grid">
-        <div class="admin-panel" style="padding:14px">
-          <div class="admin-panel-head" style="margin-bottom:8px"><div><h3>Assignments</h3><p>${state.assignments.length} active items</p></div></div>
-          <div id="assignments-summary"></div>
-        </div>
-        <div class="admin-panel" style="padding:14px">
-          <div class="admin-panel-head" style="margin-bottom:8px"><div><h3>Broadcasts</h3><p>${state.broadcasts.length} scheduled messages</p></div></div>
-          <div id="broadcast-summary"></div>
-        </div>
-      </div>
-    </div>
-    <div class="admin-panel" data-panel="assignments" hidden>
-      <div class="admin-panel-head">
-        <div>
-          <h3>Assignment management</h3>
-          <p>Create, edit, and remove learning assignments for students.</p>
-        </div>
-        <div class="mini-pill">Create / edit</div>
-      </div>
-      <form id="assignment-form" class="admin-form">
-        <input type="hidden" id="assignment-id" />
+
+    <div class="admin-panel" data-panel="notifications">
+      <div class="admin-panel-head"><div><h3>Send Notification</h3><p>Send a clear, targeted notification without cluttering the student dashboard.</p></div><span class="admin-chip">Instant delivery</span></div>
+      <form id="broadcast-form" class="admin-form">
         <div class="admin-form-grid">
-          <input id="assignment-title" placeholder="Assignment title" required />
-          <input id="assignment-subject" placeholder="Subject" required />
-          <input id="assignment-difficulty" placeholder="Difficulty" required />
-          <input id="assignment-due-date" type="date" required />
-          <input id="assignment-due-time" type="time" required />
-          <input id="assignment-max-marks" type="number" placeholder="Maximum marks" required />
+          <input id="broadcast-title" placeholder="Notification title" required>
+          <select id="broadcast-priority"><option value="general">Normal</option><option value="important">Important</option><option value="critical">Critical</option></select>
+          <select id="broadcast-target"><option value="Students">All students</option><option value="Everyone">Everyone</option><option value="Admins">Administrators</option><option value="Selected">Selected students</option></select>
+          <input id="broadcast-search" placeholder="Filter selected students (optional)">
         </div>
-        <textarea id="assignment-description" placeholder="Description"></textarea>
-        <textarea id="assignment-instructions" placeholder="Instructions"></textarea>
-        <input id="assignment-attachment" placeholder="Attachment (optional)" />
-        <div class="admin-actions">
-          <button class="ghost" type="submit">Save assignment</button>
-          <button class="ghost" type="button" id="cancel-assignment-edit">Cancel</button>
+        <div id="broadcast-recipient-picker" class="recipient-picker" hidden></div>
+        <textarea id="broadcast-message" placeholder="Write the complete notification message..." required></textarea>
+        <div class="admin-actions"><button class="admin-btn primary" type="submit">📢 Send notification</button><button class="admin-btn" type="button" id="clear-broadcast">Clear</button></div>
+      </form>
+      <div class="admin-panel-head" style="margin-top:24px"><div><h3>Notification history</h3><p>Recent notifications sent through Supabase.</p></div><button class="admin-btn" type="button" id="refresh-notifications">↻ Refresh</button></div>
+      <div id="notification-history" class="admin-list"></div>
+    </div>
+
+    <div class="admin-panel" data-panel="assignments" hidden>
+      <div class="admin-panel-head"><div><h3>Assignment Control Center</h3><p>Create, edit, delete and distribute assignments from one place.</p></div><span class="admin-chip">Supabase synced</span></div>
+      <form id="assignment-form" class="admin-form">
+        <input type="hidden" id="assignment-id">
+        <div class="admin-form-grid">
+          <input id="assignment-title" placeholder="Assignment title" required>
+          <input id="assignment-subject" placeholder="Subject" required>
+          <select id="assignment-difficulty"><option value="Easy">Easy</option><option value="Medium" selected>Medium</option><option value="Hard">Hard</option></select>
+          <input id="assignment-due-date" type="date" required>
+          <input id="assignment-due-time" type="time" required>
+          <input id="assignment-max-marks" type="number" min="1" placeholder="Maximum marks" required>
         </div>
+        <textarea id="assignment-description" placeholder="Full assignment description"></textarea>
+        <textarea id="assignment-instructions" placeholder="Instructions / submission requirements"></textarea>
+        <input id="assignment-attachment" placeholder="Attachment or resource reference (optional)">
+        <div class="admin-form-grid">
+          <select id="assignment-target"><option value="Students">All students</option><option value="Selected">Selected students</option></select>
+          <div id="assignment-recipient-count" class="admin-muted" style="display:flex;align-items:center">All current students will receive this assignment.</div>
+        </div>
+        <div id="assignment-recipient-picker" class="recipient-picker" hidden></div>
+        <div class="admin-actions"><button class="admin-btn primary" type="submit">💾 Save assignment</button><button class="admin-btn" type="button" id="cancel-assignment-edit">Cancel edit</button></div>
       </form>
       <div id="assignment-list" class="admin-list"></div>
     </div>
-    <div class="admin-panel" data-panel="broadcast">
-      <div class="admin-panel-head">
-        <div>
-          <h3>Broadcast notifications</h3>
-          <p>Send critical updates, reminders, and platform announcements.</p>
-        </div>
-        <div class="mini-pill">Instant delivery</div>
-      </div>
-      <form id="broadcast-form" class="admin-form">
-        <div class="admin-form-grid">
-          <input id="broadcast-title" placeholder="Title" required />
-          <select id="broadcast-priority">
-            <option value="Normal">Normal</option>
-            <option value="Important">Important</option>
-            <option value="Critical">Critical</option>
-          </select>
-          <select id="broadcast-target">
-            <option value="Everyone">Everyone</option>
-            <option value="Students">Students</option>
-            <option value="Admins">Admins</option>
-          </select>
-          <input id="broadcast-schedule" placeholder="Schedule (optional)" />
-        </div>
-        <textarea id="broadcast-message" placeholder="Message"></textarea>
-        <div class="admin-actions">
-          <button class="ghost" type="submit">Send broadcast</button>
-        </div>
-      </form>
-      <div id="broadcast-list" class="admin-list"></div>
+
+    <div class="admin-panel" data-panel="streaks" hidden>
+      <div class="admin-panel-head"><div><h3>Streak Protection</h3><p>Students who have an active streak but have not completed a case today.</p></div><button class="admin-btn primary" id="send-streak-reminders" type="button">🔥 Remind everyone at risk</button></div>
+      <div id="streak-summary" class="admin-grid-2"></div>
+      <div id="streak-risk-list" class="admin-list"></div>
     </div>
-  `;
+
+    <div class="admin-panel" data-panel="overview" hidden>
+      <div class="admin-panel-head"><div><h3>Learning Operations</h3><p>Live administrative overview.</p></div></div>
+      <div class="admin-grid-2">
+        <div class="admin-kpi"><small>Assignments</small><strong id="overview-assignment-count">0</strong><div class="admin-muted">Supabase-backed assignments</div></div>
+        <div class="admin-kpi"><small>Notifications</small><strong id="overview-notification-count">0</strong><div class="admin-muted">Recent notification records</div></div>
+        <div class="admin-kpi"><small>At-risk streaks</small><strong id="overview-risk-count">0</strong><div class="admin-muted">Students needing a reminder</div></div>
+        <div class="admin-kpi"><small>Registered users</small><strong id="overview-user-count">0</strong><div class="admin-muted">Current detective registry</div></div>
+      </div>
+    </div>`;
 
   const shell = document.querySelector('.shell');
   const hero = shell?.querySelector('.hero');
   const stats = shell?.querySelector('.stats');
-  if (shell) {
-    // Keep the notification composer near the top of the admin console.
-    // Insert the extension block after the hero and before the statistics/registry.
-    if (stats) shell.insertBefore(wrapper, stats);
-    else if (hero) hero.insertAdjacentElement('afterend', wrapper);
-    else shell.prepend(wrapper);
-  }
+  if (stats) shell.insertBefore(wrapper, stats); else if (hero) hero.after(wrapper); else shell?.prepend(wrapper);
 
-  wrapper.querySelectorAll('.admin-tabs button').forEach(button => {
-    button.addEventListener('click', () => {
-      wrapper.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
-      button.classList.add('active');
-      wrapper.querySelectorAll('.admin-panel[data-panel]').forEach(panel => {
-        const isMatch = panel.dataset.panel === button.dataset.view;
-        panel.hidden = !isMatch;
-      });
-    });
-  });
-
-  const assignmentForm = document.getElementById('assignment-form');
-  assignmentForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    saveAssignmentFromForm();
-  });
-
-  document.getElementById('cancel-assignment-edit')?.addEventListener('click', resetAssignmentForm);
-  document.getElementById('broadcast-form')?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    sendBroadcast();
-  });
+  wrapper.querySelectorAll('.admin-tabs button').forEach(button => button.addEventListener('click', () => switchPanel(button.dataset.view)));
+  $('#broadcast-form')?.addEventListener('submit', e => { e.preventDefault(); sendBroadcast(); });
+  $('#clear-broadcast')?.addEventListener('click', () => $('#broadcast-form')?.reset());
+  $('#refresh-notifications')?.addEventListener('click', loadAdminNotifications);
+  $('#broadcast-target')?.addEventListener('change', renderRecipientPickers);
+  $('#broadcast-search')?.addEventListener('input', renderRecipientPickers);
+  $('#assignment-target')?.addEventListener('change', renderRecipientPickers);
+  $('#assignment-form')?.addEventListener('submit', e => { e.preventDefault(); saveAssignmentFromForm(); });
+  $('#cancel-assignment-edit')?.addEventListener('click', resetAssignmentForm);
+  $('#send-streak-reminders')?.addEventListener('click', sendStreakReminders);
 }
 
-function seedAdminData() {
-  if (!Array.isArray(getStoredValue('codeDetectiveAssignments', [])) || getStoredValue('codeDetectiveAssignments', []).length === 0) {
-    const starterAssignments = [
-      { id: 'admin-a1', title: 'Binary Trees Lab', subject: 'Programming', description: 'Build a tree traversal demo in Java.', difficulty: 'Medium', dueDate: '2026-08-25', dueTime: '23:59', maxMarks: 30, instructions: 'Upload the completed source file and screenshots.', attachment: 'tree-lab.zip', submitted: false },
-      { id: 'admin-a2', title: 'Operating Systems Quiz', subject: 'Operating Systems', description: 'Review scheduling and deadlock concepts.', difficulty: 'Easy', dueDate: '2026-08-20', dueTime: '18:00', maxMarks: 20, instructions: 'Complete the quiz before the deadline.', attachment: '', submitted: false }
-    ];
-    setStoredValue('codeDetectiveAssignments', starterAssignments);
-  }
-  if (!Array.isArray(getStoredValue('codeDetectiveBroadcasts', [])) || getStoredValue('codeDetectiveBroadcasts', []).length === 0) {
-    const starterBroadcasts = [
-      { id: 'b1', title: 'Platform update', message: 'The new multi-subject dashboard is now live.', priority: 'Important', target: 'Everyone', createdAt: new Date().toISOString() }
-    ];
-    setStoredValue('codeDetectiveBroadcasts', starterBroadcasts);
-  }
-  state.assignments = getStoredValue('codeDetectiveAssignments', []);
-  state.broadcasts = getStoredValue('codeDetectiveBroadcasts', []);
+function switchPanel(name) {
+  document.querySelectorAll('#admin-extensions .admin-tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  document.querySelectorAll('#admin-extensions [data-panel]').forEach(p => p.hidden = p.dataset.panel !== name);
+  if (name === 'streaks') loadStreakRisk();
+  if (name === 'notifications') loadAdminNotifications();
 }
 
-function resetAssignmentForm() {
-  state.editingAssignmentId = null;
-  const form = document.getElementById('assignment-form');
-  if (form) form.reset();
+function getUserName(user) { return String(user?.display_name || user?.username || user?.email?.split('@')[0] || 'Detective').trim(); }
+function sortUsers(users) { return [...users].sort((a,b) => getUserName(a).localeCompare(getUserName(b), undefined, {sensitivity:'base'})); }
+function isAdminUser(user) { return user?.is_admin === true || user?.isAdmin === true || String(user?.role || '').toLowerCase() === 'admin'; }
+function getStudentUsers() { return state.users.filter(u => !isAdminUser(u)); }
+
+function renderRecipientPickers() {
+  const broadcastTarget = $('#broadcast-target')?.value;
+  const assignmentTarget = $('#assignment-target')?.value;
+  const search = ($('#broadcast-search')?.value || '').toLowerCase();
+  const students = getStudentUsers().filter(u => `${getUserName(u)} ${u.email || ''}`.toLowerCase().includes(search));
+  const broadcastPicker = $('#broadcast-recipient-picker');
+  if (broadcastPicker) {
+    const show = broadcastTarget === 'Selected';
+    broadcastPicker.hidden = !show;
+    if (show) broadcastPicker.innerHTML = students.map(u => `<label class="recipient-row"><input type="checkbox" data-broadcast-recipient value="${esc(u.id)}"><span>${esc(getUserName(u))}</span><small>${esc(u.email || '')}</small></label>`).join('') || '<span class="admin-muted">No matching students.</span>';
+  }
+  const assignmentPicker = $('#assignment-recipient-picker');
+  if (assignmentPicker) {
+    const show = assignmentTarget === 'Selected';
+    assignmentPicker.hidden = !show;
+    if (show) assignmentPicker.innerHTML = students.map(u => `<label class="recipient-row"><input type="checkbox" data-assignment-recipient value="${esc(u.id)}"><span>${esc(getUserName(u))}</span><small>${esc(u.email || '')}</small></label>`).join('') || '<span class="admin-muted">No matching students.</span>';
+  }
+  const count = $('#assignment-recipient-count');
+  if (count) count.textContent = assignmentTarget === 'Selected' ? `${document.querySelectorAll('[data-assignment-recipient]:checked').length} students selected.` : `${getStudentUsers().length} current students will receive this assignment.`;
 }
 
-async function saveAssignmentFromForm() {
-  const payload = {
-    id: state.editingAssignmentId || `assignment-${Date.now()}`,
-    title: document.getElementById('assignment-title').value.trim(),
-    subject: document.getElementById('assignment-subject').value.trim(),
-    description: document.getElementById('assignment-description').value.trim(),
-    difficulty: document.getElementById('assignment-difficulty').value.trim(),
-    dueDate: document.getElementById('assignment-due-date').value,
-    dueTime: document.getElementById('assignment-due-time').value,
-    maxMarks: Number(document.getElementById('assignment-max-marks').value || 0),
-    instructions: document.getElementById('assignment-instructions').value.trim(),
-    attachment: document.getElementById('assignment-attachment').value.trim(),
-    submitted: false
-  };
-
-  if (!payload.title || !payload.subject || !payload.difficulty || !payload.dueDate || !payload.dueTime) {
-    alert('Please complete the required assignment fields.');
-    return;
-  }
-
-  const isEditing = Boolean(state.editingAssignmentId);
-  if (isEditing) {
-    state.assignments = state.assignments.map(item => item.id === state.editingAssignmentId ? { ...item, ...payload } : item);
-  } else {
-    state.assignments = [payload, ...state.assignments];
-  }
-  setStoredValue('codeDetectiveAssignments', state.assignments);
-
-  // A newly created assignment must create real Supabase notifications.
-  // localStorage alone cannot deliver an assignment to another device/user.
-  if (!isEditing) {
-    const createdAt = new Date().toISOString();
-    const queuedNotification = {
-      id: `notif-${Date.now()}`,
-      type: 'assignment',
-      title: 'New Assignment',
-      message: `${payload.title} is now available for ${payload.subject}.`,
-      icon: '📚',
-      meta: `Due ${payload.dueDate}`,
-      read: false,
-      createdAt
-    };
-    setStoredValue('codeDetectiveNotifications', [
-      queuedNotification,
-      ...(getStoredValue('codeDetectiveNotifications', []) || [])
-    ]);
-
-    try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      const senderId = sessionData?.session?.user?.id;
-      if (sessionError || !senderId) throw sessionError || new Error('Admin session not found.');
-
-      const recipients = getNotificationRecipients('Students');
-      if (!recipients.length) throw new Error('No student recipients were found.');
-
-      const notifications = recipients.map(user => ({
-        title: 'New Assignment',
-        message: `${payload.title} is now available for ${payload.subject}. Due ${payload.dueDate} ${payload.dueTime}.`,
-        type: 'assignment',
-        sender_id: senderId,
-        recipient_id: user.id,
-        is_read: false
-      }));
-
-      const { error } = await supabase.from('notifications').insert(notifications);
-      if (error) throw error;
-    } catch (error) {
-      console.error('Failed to deliver assignment notification:', error);
-      resetAssignmentForm();
-      renderAdminModules();
-      alert(`Assignment saved, but the user notification could not be delivered. ${error?.message || ''}`.trim());
-      return;
-    }
-  }
-
-  resetAssignmentForm();
-  renderAdminModules();
-  alert(isEditing ? 'Assignment updated successfully.' : 'Assignment saved and student notification delivered.');
+async function checkAdmin() {
+  const { data: rpcData, error: rpcError } = await supabase.rpc('is_admin');
+  if (!rpcError && rpcData === true) return true;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData?.session?.user?.id;
+  if (!userId) return false;
+  const { data: roleRows, error } = await supabase.from('user_roles').select('role').eq('user_id', userId);
+  if (error) return false;
+  return roleRows?.some(row => String(row.role).toLowerCase() === 'admin') || false;
 }
 
-function editAssignment(id) {
-  const assignment = state.assignments.find(item => item.id === id);
-  if (!assignment) return;
-  state.editingAssignmentId = id;
-  document.getElementById('assignment-id').value = assignment.id;
-  document.getElementById('assignment-title').value = assignment.title || '';
-  document.getElementById('assignment-subject').value = assignment.subject || '';
-  document.getElementById('assignment-description').value = assignment.description || '';
-  document.getElementById('assignment-difficulty').value = assignment.difficulty || '';
-  document.getElementById('assignment-due-date').value = assignment.dueDate || '';
-  document.getElementById('assignment-due-time').value = assignment.dueTime || '';
-  document.getElementById('assignment-max-marks').value = assignment.maxMarks || '';
-  document.getElementById('assignment-instructions').value = assignment.instructions || '';
-  document.getElementById('assignment-attachment').value = assignment.attachment || '';
-  document.querySelector('[data-view="assignments"]').click();
-}
-
-function deleteAssignment(id) {
-  state.assignments = state.assignments.filter(item => item.id !== id);
-  setStoredValue('codeDetectiveAssignments', state.assignments);
-  renderAdminModules();
-}
-
-function getNotificationRecipients(target) {
-  const users = Array.isArray(state.users) ? state.users.filter(user => user?.id) : [];
-  if (target === 'Everyone') return users;
-
-  const isAdminUser = user => Boolean(
-    user?.is_admin === true ||
-    user?.isAdmin === true ||
-    String(user?.role || '').toLowerCase() === 'admin'
-  );
-
-  if (target === 'Admins') {
-    const admins = users.filter(isAdminUser);
-    return admins.length ? admins : [];
-  }
-
-  // The admin_list_users RPC may not expose role metadata in older databases.
-  // In that case treat the returned registry as the student audience.
-  return users.filter(user => !isAdminUser(user));
-}
-
-async function sendBroadcast() {
-  const payload = {
-    id: `broadcast-${Date.now()}`,
-    title: document.getElementById('broadcast-title').value.trim(),
-    message: document.getElementById('broadcast-message').value.trim(),
-    priority: document.getElementById('broadcast-priority').value,
-    target: document.getElementById('broadcast-target').value,
-    schedule: document.getElementById('broadcast-schedule').value.trim(),
-    createdAt: new Date().toISOString()
-  };
-  if (!payload.title || !payload.message) {
-    alert('Please enter a title and message for the broadcast.');
-    return;
-  }
-  
-  try {
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    const senderId = sessionData?.session?.user?.id;
-    if (sessionError || !senderId) throw sessionError || new Error('Admin session not found.');
-
-    const recipients = getNotificationRecipients(payload.target);
-    if (!recipients.length) {
-      alert(`No users were found for the selected audience: ${payload.target}.`);
-      return;
-    }
-
-    const notifications = recipients.map(user => ({
-      title: payload.title,
-      message: payload.message,
-      type: payload.priority.toLowerCase(),
-      sender_id: senderId,
-      recipient_id: user.id,
-      is_read: false
-    }));
-
-    const { error } = await supabase.from('notifications').insert(notifications);
-    if (error) throw error;
-
-    // Only record successful deliveries in the admin history.
-    state.broadcasts = [payload, ...state.broadcasts];
-    setStoredValue('codeDetectiveBroadcasts', state.broadcasts);
-    document.getElementById('broadcast-form').reset();
-    renderAdminModules();
-    alert(`Notification delivered to ${recipients.length} user${recipients.length === 1 ? '' : 's'}.`);
-  } catch (error) {
-    console.error('Failed to send broadcast to Supabase:', error);
-    const message = String(error?.message || 'Please try again.');
-    if (/no schema.*public\.notifications|relation .*notifications.*does not exist|table .*notifications.*does not exist/i.test(message)) {
-      alert('Notification could not be delivered because the Supabase notifications table is not set up yet. Run notifications_schema.sql from the project in Supabase SQL Editor, then try again.');
-    } else {
-      alert(`Notification could not be delivered. ${message}`);
-    }
-  }
-}
-
-function renderAdminModules() {
-  const assignmentsSummary = document.getElementById('assignments-summary');
-  const broadcastSummary = document.getElementById('broadcast-summary');
-  const assignmentList = document.getElementById('assignment-list');
-  const broadcastList = document.getElementById('broadcast-list');
-
-  if (assignmentsSummary) {
-    assignmentsSummary.innerHTML = `<div class="admin-list-item"><strong>${state.assignments.length}</strong> assignments live. Students can review due dates and status from the new learning hub.</div>`;
-  }
-  if (broadcastSummary) {
-    broadcastSummary.innerHTML = `<div class="admin-list-item"><strong>${state.broadcasts.length}</strong> broadcast messages saved. Each message is surfaced in the notification center.</div>`;
-  }
-  if (assignmentList) {
-    assignmentList.innerHTML = state.assignments.length ? state.assignments.map(item => `
-      <div class="admin-list-item">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;">
-          <div>
-            <strong>${item.title}</strong>
-            <div style="font-size:12px;color:var(--muted);margin-top:4px;">${item.subject} • ${item.difficulty} • ${item.dueDate} ${item.dueTime}</div>
-          </div>
-          <div class="admin-actions">
-            <button class="ghost" type="button" onclick="editAssignment('${item.id}')">Edit</button>
-            <button class="ghost" type="button" onclick="deleteAssignment('${item.id}')">Delete</button>
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:8px;">${item.description || item.instructions || 'No details yet.'}</div>
-      </div>
-    `).join('') : '<div class="admin-list-item">No assignments yet.</div>';
-  }
-  if (broadcastList) {
-    broadcastList.innerHTML = state.broadcasts.length ? state.broadcasts.map(item => `
-      <div class="admin-list-item">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;">
-          <div>
-            <strong>${item.title}</strong>
-            <div style="font-size:12px;color:var(--muted);margin-top:4px;">${item.priority} • ${item.target}</div>
-          </div>
-          <div style="font-size:11px;color:var(--amber);">${new Date(item.createdAt).toLocaleString()}</div>
-        </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:8px;">${item.message}</div>
-      </div>
-    `).join('') : '<div class="admin-list-item">No broadcasts yet.</div>';
-  }
-}
-
-function getUserName(user){
-  return String(user?.display_name || user?.username || user?.email?.split('@')[0] || '').trim().toLowerCase();
-}
-
-function sortUsers(users){
-  return [...users].sort((a,b)=>getUserName(a).localeCompare(getUserName(b), undefined, { sensitivity: 'base' }));
-}
-
-// Keep per-detective case progress visually distinct from the admin console's red accents.
-document.head.insertAdjacentHTML('beforeend', `<style>
-  :root{--bg:#0E1117;--panel:#1B2230;--panel2:#222B3A;--line:#303B4D;--text:#FFFFFF;--muted:#7B8798;--red:#FF5D73;--amber:#F5B942;--green:#38D39F}
-  body{background:radial-gradient(circle at 75% 0,rgba(245,185,66,.10),transparent 28%),var(--bg)}
-  .brand-mark{border-color:#C9921C;background:#222B3A}.brand h1,.eyebrow,.detail-section h4{color:#F5B942}
-  .admin-id button,.ghost{background:#1B2230;color:#FFFFFF;border-color:#303B4D;font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.01em}.return-to-hq{display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(27,34,48,.45);color:#B6BECF;border:1px solid rgba(48,59,77,.8);border-radius:10px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;font-size:13px;font-weight:500;letter-spacing:0;white-space:nowrap;transition:all .25s ease}.return-to-hq:hover{color:#FFFFFF;background:rgba(245,185,66,.08);border-color:#F5B942}.stat,.user-card{background:linear-gradient(145deg,#1B2230,#0E1117);border-color:#303B4D}
-  .user-card:hover{border-color:#F5B942;box-shadow:0 14px 35px rgba(0,0,0,.45)}.avatar{background:#222B3A;border-color:#303B4D}.rank{color:#FFD166;border-color:#C9921C;background:rgba(245,185,66,.10)}
-  .bar{background:#303B4D}.bar i{background:linear-gradient(90deg,#38D39F,#79f2b4)!important}.search{background:#222B3A;border-color:#303B4D}.card-metrics{border-color:#303B4D}
-  .drawer,.drawer-head{background:#1B2230;border-color:#303B4D}.detail-row{border-color:#303B4D}.case-row{border-color:#303B4D;background:#222B3A}.case-icon{background:rgba(56,211,159,.14)}
-  .denied a{background:#F5B942;color:#0E1117}
-</style>`);
-
-const returnToHQ = document.createElement('button');
-returnToHQ.className = 'ghost return-to-hq';
-returnToHQ.type = 'button';
-returnToHQ.textContent = 'Return to HQ';
-returnToHQ.addEventListener('click', () => location.assign('/home.html'));
-document.querySelector('.admin-id')?.prepend(returnToHQ);
-
-async function boot(){
+async function boot() {
   const { data:{session}, error } = await supabase.auth.getSession();
-  if(error || !session) return location.replace('/index.html');
+  if (error || !session) return location.replace('/index.html');
   $('#adminEmail').textContent = session.user.email || 'Administrator';
-  const { data:isAdmin, error:roleError } = await supabase.rpc('is_admin');
-  if(roleError || !isAdmin){
-    document.body.innerHTML = `<main class="denied"><div><span>⛔</span><h1>Admin access required</h1><p>This account is signed in, but it is not authorized as a Code Detective administrator.</p><a href="/home.html">Return to dashboard</a></div></main>`;
+  if (!(await checkAdmin())) {
+    document.body.innerHTML = `<main class="denied"><div><span>⛔</span><h1>Admin access required</h1><p>This account is not authorized as a Code Detective administrator.</p><a href="/home.html">Return to dashboard</a></div></main>`;
     return;
   }
   initAdminTheme();
+  ensureAdminHomeButton();
   ensureAdminExtensions();
-  seedAdminData();
-  renderAdminModules();
   await loadUsers();
+  await Promise.all([loadAssignments(), loadAdminNotifications(), loadStreakRisk()]);
+  renderAdminModules();
 }
 
-async function loadUsers(){
+function ensureAdminHomeButton() {
+  if (document.getElementById('return-to-hq')) return;
+  const button = document.createElement('button');
+  button.id = 'return-to-hq';
+  button.className = 'ghost return-to-hq';
+  button.type = 'button';
+  button.textContent = '← Home';
+  button.addEventListener('click', () => location.assign(new URL('home.html', window.location.href).href));
+  document.querySelector('.admin-id')?.prepend(button);
+}
+
+async function loadUsers() {
   setLoading(true);
   const { data, error } = await supabase.rpc('admin_list_users');
   setLoading(false);
-  if(error){ showError(error.message); return; }
+  if (error) { showError(error.message); return; }
   state.users = sortUsers(Array.isArray(data) ? data : []);
-  renderStats(); renderUsers(state.users);
+  try {
+    const { data: roles } = await supabase.from('user_roles').select('user_id,role');
+    const roleMap = new Map((roles || []).map(row => [row.user_id, row.role]));
+    state.users = state.users.map(user => ({ ...user, role: roleMap.get(user.id) || user.role, is_admin: String(roleMap.get(user.id) || user.role || '').toLowerCase() === 'admin' }));
+  } catch (_) {}
+  renderStats(); renderUsers(state.users); renderRecipientPickers();
 }
 
-function renderStats(){
-  const users = state.users;
-  const solved = users.reduce((n,u)=>n+Number(u.cases_solved||0),0);
-  const xp = users.reduce((n,u)=>n+Number(u.total_dxp||0),0);
-  const active = users.filter(u=>u.last_sign_in_at && Date.now()-new Date(u.last_sign_in_at).getTime() < 7*86400000).length;
-  $('#totalUsers').textContent = users.length;
-  $('#activeUsers').textContent = active;
-  $('#casesSolved').textContent = solved;
-  $('#totalXp').textContent = xp.toLocaleString('en-IN');
+function renderStats() {
+  const solved = state.users.reduce((n,u)=>n+Number(u.cases_solved||0),0);
+  const xp = state.users.reduce((n,u)=>n+Number(u.total_dxp||0),0);
+  const active = state.users.filter(u=>u.last_sign_in_at && Date.now()-new Date(u.last_sign_in_at).getTime() < 7*86400000).length;
+  $('#totalUsers').textContent = state.users.length; $('#activeUsers').textContent = active; $('#casesSolved').textContent = solved; $('#totalXp').textContent = xp.toLocaleString('en-IN');
+  $('#overview-user-count') && ($('#overview-user-count').textContent = state.users.length);
 }
 
-function renderUsers(users){
-  const grid=$('#userGrid');
+function renderUsers(users) {
+  const grid=$('#userGrid'); if (!grid) return;
   $('#resultCount').textContent=`${users.length} detective${users.length===1?'':'s'} · ${state.totalCases} cases in the catalog`;
   if(!users.length){ grid.innerHTML='<div class="empty">No detectives found.</div>'; return; }
-  grid.innerHTML=users.map(u=>{
-    const solved=Number(u.cases_solved||0), pct=Math.min(100,Math.round((solved/state.totalCases)*100));
-    const name=u.display_name||u.username||u.email?.split('@')[0]||'Detective';
-    return `<button class="user-card" data-id="${esc(u.id)}">
-      <div class="card-top"><div class="avatar">${esc(u.avatar||'🕵️')}</div><div class="identity"><h3>${esc(name)}</h3><p>${esc(u.email||'No email')}</p></div><span class="rank">${esc(u.rank||'Rookie')}</span></div>
-      <div class="progress-line"><span>Case progress</span><strong>${solved}/${state.totalCases}</strong></div>
-      <div class="bar"><i style="width:${pct}%"></i></div>
-      <div class="card-metrics"><span><b>${Number(u.total_dxp||0).toLocaleString('en-IN')}</b> XP</span><span><b>${Number(u.accuracy||0)}%</b> accuracy</span><span><b>${Number(u.streak||0)}</b> streak</span></div>
-      <div class="last-seen">Last sign-in · ${esc(fmt(u.last_sign_in_at))}</div>
-    </button>`;
-  }).join('');
+  grid.innerHTML=users.map(u=>{ const solved=Number(u.cases_solved||0), pct=Math.min(100,Math.round((solved/state.totalCases)*100)); const name=getUserName(u); return `<button class="user-card" data-id="${esc(u.id)}"><div class="card-top"><div class="avatar">${esc(u.avatar||'🕵️')}</div><div class="identity"><h3>${esc(name)}</h3><p>${esc(u.email||'No email')}</p></div><span class="rank">${esc(u.rank||'Rookie')}</span></div><div class="progress-line"><span>Case progress</span><strong>${solved}/${state.totalCases}</strong></div><div class="bar"><i style="width:${pct}%"></i></div><div class="card-metrics"><span><b>${Number(u.total_dxp||0).toLocaleString('en-IN')}</b> XP</span><span><b>${Number(u.accuracy||0)}%</b> accuracy</span><span><b>${Number(u.streak||0)}</b> streak</span></div><div class="last-seen">Last sign-in · ${esc(fmt(u.last_sign_in_at))}</div></button>`; }).join('');
   grid.querySelectorAll('.user-card').forEach(b=>b.addEventListener('click',()=>openUser(b.dataset.id)));
 }
 
-async function openUser(id){
-  const user=state.users.find(u=>u.id===id); if(!user) return;
-  state.selected=user;
-  $('#drawer').classList.add('open'); $('#overlay').classList.add('show'); document.body.classList.add('locked');
-  const name=user.display_name||user.username||user.email?.split('@')[0]||'Detective';
-  $('#detailName').textContent=name; $('#detailEmail').textContent=user.email||'—'; $('#detailAvatar').textContent=user.avatar||'🕵️';
-  $('#accountDetails').innerHTML=detailRows([
-    ['User ID',user.id],['Username',user.username||'—'],['Joined',fmt(user.created_at)],['Last sign-in',fmt(user.last_sign_in_at)],['Last profile update',fmt(user.updated_at)]
-  ]);
-  $('#performanceDetails').innerHTML=detailRows([
-    ['XP / total_dxp',Number(user.total_dxp||0).toLocaleString('en-IN')],['Cases solved',`${Number(user.cases_solved||0)} / ${state.totalCases}`],['Current case',user.current_case_id||'—'],['Accuracy',`${Number(user.accuracy||0)}%`],['Streak',Number(user.streak||0)],['Rank',user.rank||'Rookie']
-  ]);
-  $('#caseList').innerHTML='<div class="case-loading">Loading case history…</div>';
-  const {data,error}=await supabase.rpc('admin_user_progress',{target_user_id:id});
-  if(error){ $('#caseList').innerHTML=`<div class="case-error">${esc(error.message)}</div>`; return; }
-  const rows=Array.isArray(data)?data:[];
-  $('#caseList').innerHTML=rows.length?rows.map(r=>`<div class="case-row"><div><span class="case-icon">${r.completed?'✓':'○'}</span><div><strong>${esc(r.case_id)}</strong><small>${r.completed?'Completed':'In progress'} · ${esc(fmt(r.completed_at||r.updated_at))}</small></div></div><b>+${Number(r.xp_earned||0)} XP</b></div>`).join(''):'<div class="empty small">No case progress recorded yet.</div>';
+async function loadAssignments() {
+  const { data, error } = await supabase.from('assignments').select('id,title,subject,description,difficulty,due_date,due_time,max_marks,instructions,attachment,created_at,updated_at').order('created_at',{ascending:false});
+  if (error) { console.warn('[Assignments] Could not load remote assignments:', error.message); state.assignments=[]; renderAssignmentList(); return; }
+  const rows = data || [];
+  const recipients = rows.length ? await supabase.from('assignment_recipients').select('assignment_id,recipient_id,submitted,submitted_at') : {data:[]};
+  const recs = recipients.data || [];
+  state.assignments = rows.map(a => ({ ...a, recipients: recs.filter(r=>r.assignment_id===a.id) }));
+  renderAssignmentList();
 }
+
+function assignmentPayloadFromForm() {
+  return {
+    title: $('#assignment-title')?.value.trim(), subject: $('#assignment-subject')?.value.trim(), difficulty: $('#assignment-difficulty')?.value,
+    due_date: $('#assignment-due-date')?.value, due_time: $('#assignment-due-time')?.value, max_marks: Number($('#assignment-max-marks')?.value || 0),
+    description: $('#assignment-description')?.value.trim() || '', instructions: $('#assignment-instructions')?.value.trim() || '', attachment: $('#assignment-attachment')?.value.trim() || ''
+  };
+}
+function selectedAssignmentRecipients() {
+  if ($('#assignment-target')?.value !== 'Selected') return getStudentUsers().map(u=>u.id);
+  return [...document.querySelectorAll('[data-assignment-recipient]:checked')].map(el=>el.value);
+}
+
+async function saveAssignmentFromForm() {
+  const payload=assignmentPayloadFromForm();
+  if(!payload.title||!payload.subject||!payload.due_date||!payload.due_time||payload.max_marks<=0){ alert('Please complete the required assignment fields.'); return; }
+  const recipientIds=selectedAssignmentRecipients();
+  if(!recipientIds.length){ alert('Select at least one student.'); return; }
+  const { data: sessionData }=await supabase.auth.getSession(); const adminId=sessionData?.session?.user?.id; if(!adminId){alert('Admin session expired.');return;}
+  let assignmentId=$('#assignment-id')?.value || null;
+  try {
+    if(assignmentId){
+      const {error}=await supabase.from('assignments').update({...payload,updated_at:new Date().toISOString()}).eq('id',assignmentId); if(error) throw error;
+      const {data:existingRecipients,error:existingError}=await supabase.from('assignment_recipients').select('recipient_id').eq('assignment_id',assignmentId);
+      if(existingError) throw existingError;
+      const existingIds=(existingRecipients||[]).map(r=>r.recipient_id);
+      const nextSet=new Set(recipientIds);
+      const removeIds=existingIds.filter(id=>!nextSet.has(id));
+      const addIds=recipientIds.filter(id=>!existingIds.includes(id));
+      if(removeIds.length) await supabase.from('assignment_recipients').delete().eq('assignment_id',assignmentId).in('recipient_id',removeIds);
+      if(addIds.length){ const {error:addError}=await supabase.from('assignment_recipients').insert(addIds.map(id=>({assignment_id:assignmentId,recipient_id:id}))); if(addError) throw addError; }
+    } else {
+      const {data,error}=await supabase.from('assignments').insert({...payload,created_by:adminId}).select('id').single(); if(error) throw error; assignmentId=data.id;
+    }
+    if(!$('#assignment-id').value){
+      const recipientRows=recipientIds.map(id=>({assignment_id:assignmentId,recipient_id:id}));
+      const {error:recError}=await supabase.from('assignment_recipients').insert(recipientRows); if(recError) throw recError;
+    }
+    if(!$('#assignment-id').value){
+      const message=[`Assignment: ${payload.title}`,`Subject: ${payload.subject}`,`Difficulty: ${payload.difficulty}`,`Due Date: ${payload.due_date}`,`Due Time: ${payload.due_time}`,`Maximum Marks: ${payload.max_marks}`,'',`Description:`,payload.description||'No description provided.','',`Instructions:`,payload.instructions||'No additional instructions provided.',payload.attachment?`\nAttachment: ${payload.attachment}`:''].filter(Boolean).join('\n');
+      const notifications=recipientIds.map(recipient_id=>({title:'New Assignment',message,type:'assignment',sender_id:adminId,recipient_id,is_read:false,assignment_id:assignmentId}));
+      const {error:nError}=await supabase.from('notifications').insert(notifications); if(nError) throw nError;
+    }
+    resetAssignmentForm(); await loadAssignments(); renderAdminModules(); alert(assignmentId ? 'Assignment saved successfully.' : 'Assignment created and notifications delivered.');
+  } catch(error){ console.error('[Assignments] Save failed:',error); alert(`Assignment could not be saved. ${error?.message||'Please run FINAL_UPGRADE.sql in Supabase first.'}`); }
+}
+
+function resetAssignmentForm(){ state.editingAssignmentId=null; $('#assignment-form')?.reset(); $('#assignment-id').value=''; $('#assignment-target').value='Students'; renderRecipientPickers(); }
+function editAssignment(id){ const a=state.assignments.find(x=>x.id===id); if(!a)return; state.editingAssignmentId=id; $('#assignment-id').value=a.id; $('#assignment-title').value=a.title||''; $('#assignment-subject').value=a.subject||''; $('#assignment-difficulty').value=a.difficulty||'Medium'; $('#assignment-due-date').value=a.due_date||''; $('#assignment-due-time').value=a.due_time||''; $('#assignment-max-marks').value=a.max_marks||''; $('#assignment-description').value=a.description||''; $('#assignment-instructions').value=a.instructions||''; $('#assignment-attachment').value=a.attachment||''; $('#assignment-target').value='Selected'; renderRecipientPickers(); setTimeout(()=>a.recipients?.forEach(r=>document.querySelector(`[data-assignment-recipient][value="${CSS.escape(r.recipient_id)}"]`)?.click()),0); switchPanel('assignments'); }
+async function deleteAssignment(id){ if(!confirm('Delete this assignment for all recipients?'))return; try{const {error}=await supabase.rpc('admin_delete_assignment',{p_assignment_id:id}); if(error) throw error; await loadAssignments(); renderAdminModules();}catch(error){alert(`Assignment could not be deleted. ${error.message}`);} }
+
+async function sendBroadcast(){
+  const title=$('#broadcast-title')?.value.trim(), message=$('#broadcast-message')?.value.trim(), type=$('#broadcast-priority')?.value||'general', target=$('#broadcast-target')?.value||'Students';
+  if(!title||!message){alert('Enter a title and message.');return;}
+  const recipients=target==='Selected'?[...document.querySelectorAll('[data-broadcast-recipient]:checked')].map(el=>el.value):target==='Students'?getStudentUsers().map(u=>u.id):target==='Admins'?state.users.filter(isAdminUser).map(u=>u.id):state.users.map(u=>u.id);
+  if(!recipients.length){alert('No recipients match the selected audience.');return;}
+  const {data:sessionData}=await supabase.auth.getSession(); const sender_id=sessionData?.session?.user?.id; if(!sender_id)return;
+  try{const rows=recipients.map(recipient_id=>({title,message,type,sender_id,recipient_id,is_read:false}));const {error}=await supabase.from('notifications').insert(rows);if(error)throw error;state.broadcasts=[{title,message,type,target,createdAt:new Date().toISOString()},...state.broadcasts];setStoredValue('codeDetectiveBroadcasts',state.broadcasts);$('#broadcast-form').reset();renderRecipientPickers();await loadAdminNotifications();alert(`Notification delivered to ${recipients.length} user${recipients.length===1?'':'s'}.`);}catch(error){console.error('[Notifications] Send failed:',error);alert(`Notification could not be delivered. ${error.message}`);}
+}
+
+async function loadAdminNotifications() {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select(
+      'id,title,message,type,recipient_id,is_read,created_at'
+    )
+    .order('created_at', {
+      ascending: false
+    })
+    .limit(80);
+
+  if (error) {
+    $('#notification-history').innerHTML =
+      `<div class="admin-list-item admin-muted">
+        Could not load notifications: ${esc(error.message)}
+      </div>`;
+    return;
+  }
+
+  state.notifications = data || [];
+
+  renderNotificationHistory();
+
+  const count =
+    document.getElementById('overview-notification-count');
+
+  if (count) {
+    count.textContent = state.notifications.length;
+  }
+
+  if(error){$('#notification-history').innerHTML=`<div class="admin-list-item admin-muted">Could not load notifications: ${esc(error.message)}</div>`;return;}
+  state.notifications=data||[];renderNotificationHistory();$('#overview-notification-count')&&($('#overview-notification-count').textContent=state.notifications.length);
+}
+function renderNotificationHistory(){const el=$('#notification-history');if(!el)return;if(!state.notifications.length){el.innerHTML='<div class="admin-list-item admin-muted">No notifications found.</div>';return;}el.innerHTML=state.notifications.map(n=>`<div class="admin-list-item"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><span class="admin-chip">${esc(n.type||'general')}</span><h4 style="margin:8px 0 4px">${esc(n.title)}</h4><div class="admin-muted">${esc(n.message)}</div><div class="admin-muted" style="margin-top:7px">${esc(fmt(n.created_at))} · ${n.is_read?'Read':'Unread'}</div></div><button class="admin-btn danger" data-delete-notification="${esc(n.id)}" type="button">Delete</button></div></div>`).join('');el.querySelectorAll('[data-delete-notification]').forEach(btn=>btn.addEventListener('click',()=>deleteNotification(btn.dataset.deleteNotification)));}
+async function deleteNotification(id){if(!confirm('Delete this notification?'))return;try{const {error}=await supabase.from('notifications').delete().eq('id',id);if(error)throw error;state.notifications=state.notifications.filter(n=>n.id!==id);renderNotificationHistory();}catch(error){alert(`Notification could not be deleted. ${error.message}`);}}
+
+async function loadStreakRisk(){
+  const {data,error}=await supabase.rpc('admin_streak_at_risk');
+  if(error){state.atRisk=[];$('#streak-risk-list')&&($('#streak-risk-list').innerHTML=`<div class="admin-list-item admin-muted">Could not calculate streak risk: ${esc(error.message)}. Run FINAL_UPGRADE.sql.</div>`);return;}
+  state.atRisk=Array.isArray(data)?data:[];renderStreakRisk();
+}
+function renderStreakRisk(){
+  $('#overview-risk-count')&&($('#overview-risk-count').textContent=state.atRisk.length);
+  const summary=$('#streak-summary');if(summary)summary.innerHTML=`<div class="admin-kpi"><small>At risk</small><strong>${state.atRisk.length}</strong><div class="admin-muted">Active streaks needing action</div></div><div class="admin-kpi"><small>Automation</small><strong>Daily</strong><div class="admin-muted">Server-side reminder job at 6:00 PM IST</div></div>`;
+  const list=$('#streak-risk-list');if(!list)return;if(!state.atRisk.length){list.innerHTML='<div class="admin-list-item admin-muted">✅ No students are currently at risk.</div>';return;}list.innerHTML=state.atRisk.map(u=>`<div class="admin-list-item streak-risk"><div><strong>🔥 ${esc(u.display_name||u.username||u.email||'Detective')}</strong><span>${Number(u.streak||0)} day streak · Last activity ${esc(fmt(u.last_activity))}</span></div><button class="admin-btn primary" type="button" data-remind-user="${esc(u.user_id)}">Remind</button></div>`).join('');list.querySelectorAll('[data-remind-user]').forEach(b=>b.addEventListener('click',()=>sendStreakReminders([b.dataset.remindUser])));}
+async function sendStreakReminders(userIds=state.atRisk.map(u=>u.user_id)){
+  if(!userIds.length){alert('No students are currently at risk.');return;}
+  const {data:sessionData}=await supabase.auth.getSession();const sender_id=sessionData?.session?.user?.id;if(!sender_id)return;
+  try{const rows=userIds.map(id=>{const r=state.atRisk.find(x=>x.user_id===id);const days=Number(r?.streak||0);return{title:'🔥 Your streak is at risk',message:`Your ${days}-day streak is at risk. Complete at least one Code Detective case today to keep it alive.`,type:'streak',sender_id,recipient_id:id,is_read:false};});const {error}=await supabase.from('notifications').insert(rows);if(error)throw error;alert(`Streak reminder${rows.length===1?'':'s'} sent.`);}catch(error){alert(`Streak reminders failed: ${error.message}`);}}
+
+function renderAssignmentList(){const el=$('#assignment-list');if(!el)return;if(!state.assignments.length){el.innerHTML='<div class="admin-list-item admin-muted">No assignments yet. Create your first assignment above.</div>';return;}el.innerHTML=state.assignments.map(a=>`<div class="admin-list-item"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><span class="admin-chip">${esc(a.subject)}</span><h4 style="margin:8px 0 4px">${esc(a.title)}</h4><div class="admin-muted">${esc(a.difficulty)} · Due ${esc(a.due_date)} ${esc(a.due_time)} · ${Number(a.max_marks||0)} marks</div></div><div class="admin-actions"><button class="admin-btn" data-edit-assignment="${esc(a.id)}">Edit</button><button class="admin-btn danger" data-delete-assignment="${esc(a.id)}">Delete</button></div></div><div class="admin-muted" style="margin-top:9px">${esc(a.description||'No description')}<br><br>${esc(a.instructions||'No additional instructions')}</div><div class="admin-muted" style="margin-top:9px">Recipients: ${a.recipients?.length||0} · Submitted: ${a.recipients?.filter(r=>r.submitted).length||0}</div></div>`).join('');el.querySelectorAll('[data-edit-assignment]').forEach(b=>b.addEventListener('click',()=>editAssignment(b.dataset.editAssignment)));el.querySelectorAll('[data-delete-assignment]').forEach(b=>b.addEventListener('click',()=>deleteAssignment(b.dataset.deleteAssignment)));}
+function renderAdminModules(){renderAssignmentList();renderNotificationHistory();renderStreakRisk();$('#overview-assignment-count')&&($('#overview-assignment-count').textContent=state.assignments.length);$('#overview-notification-count')&&($('#overview-notification-count').textContent=state.notifications.length);$('#overview-risk-count')&&($('#overview-risk-count').textContent=state.atRisk.length);}
+
+async function openUser(id){const user=state.users.find(u=>u.id===id);if(!user)return;state.selected=user;$('#drawer').classList.add('open');$('#overlay').classList.add('show');document.body.classList.add('locked');const name=getUserName(user);$('#detailName').textContent=name;$('#detailEmail').textContent=user.email||'—';$('#detailAvatar').textContent=user.avatar||'🕵️';$('#accountDetails').innerHTML=detailRows([['User ID',user.id],['Username',user.username||'—'],['Joined',fmt(user.created_at)],['Last sign-in',fmt(user.last_sign_in_at)],['Last profile update',fmt(user.updated_at)]]);$('#performanceDetails').innerHTML=detailRows([['XP / total_dxp',Number(user.total_dxp||0).toLocaleString('en-IN')],['Cases solved',`${Number(user.cases_solved||0)} / ${state.totalCases}`],['Current case',user.current_case_id||'—'],['Accuracy',`${Number(user.accuracy||0)}%`],['Streak',Number(user.streak||0)],['Rank',user.rank||'Rookie']]);$('#caseList').innerHTML='<div class="case-loading">Loading case history…</div>';const {data,error}=await supabase.rpc('admin_user_progress',{target_user_id:id});if(error){$('#caseList').innerHTML=`<div class="case-error">${esc(error.message)}</div>`;return;}const rows=Array.isArray(data)?data:[];$('#caseList').innerHTML=rows.length?rows.map(r=>`<div class="case-row"><div><span class="case-icon">${r.completed?'✓':'○'}</span><div><strong>${esc(r.case_id)}</strong><small>${r.completed?'Completed':'In progress'} · ${esc(fmt(r.completed_at||r.updated_at))}</small></div></div><b>+${Number(r.xp_earned||0)} XP</b></div>`).join(''):'<div class="empty small">No case progress recorded yet.</div>';}
 function detailRows(rows){return rows.map(([a,b])=>`<div class="detail-row"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join('')}
 function closeDrawer(){ $('#drawer').classList.remove('open'); $('#overlay').classList.remove('show'); document.body.classList.remove('locked'); }
-function setLoading(v){$('#loading').hidden=!v; $('#userGrid').hidden=v;}
+function setLoading(v){$('#loading').hidden=!v;$('#userGrid').hidden=v;}
 function showError(m){$('#userGrid').innerHTML=`<div class="empty error">Could not load admin data: ${esc(m)}</div>`;}
 
-$('#search').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();const filtered=state.users.filter(u=>[u.display_name,u.username,u.email,u.current_case_id,u.rank].some(v=>String(v||'').toLowerCase().includes(q)));renderUsers(sortUsers(filtered));});
-$('#refresh').addEventListener('click',loadUsers); $('#closeDrawer').addEventListener('click',closeDrawer); $('#overlay').addEventListener('click',closeDrawer);
-$('#logout').addEventListener('click',async()=>{await supabase.auth.signOut();location.replace('/index.html')});
+$('#search')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();const filtered=state.users.filter(u=>[u.display_name,u.username,u.email,u.current_case_id,u.rank].some(v=>String(v||'').toLowerCase().includes(q)));renderUsers(sortUsers(filtered));});
+$('#refresh')?.addEventListener('click',loadUsers);
+$('#closeDrawer')?.addEventListener('click',closeDrawer);
+$('#overlay')?.addEventListener('click',closeDrawer);
+$('#logout')?.addEventListener('click',async()=>{await supabase.auth.signOut();location.replace('/index.html')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
 boot();

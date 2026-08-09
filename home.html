@@ -1178,24 +1178,80 @@
 
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+      width:100%;
+      margin: 24px 0;
+      box-sizing: border-box;
     }
 
-    .stat-card {
-      background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      transition: transform 0.25s ease, border-color 0.25s ease;
-    }
+   .stat-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  padding: 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  /* Restore the card container */
+  border: 1px solid var(--border);
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(17, 27, 48, 0.82),
+      rgba(10, 17, 31, 0.72)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 10px 28px rgba(0, 0, 0, 0.12);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+
+  border-color: rgba(0, 243, 255, 0.25);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 14px 32px rgba(0, 0, 0, 0.18),
+    0 0 18px rgba(0, 243, 255, 0.04);
+}
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
 
     .stat-card:hover {
       transform: translateY(-3px);
       border-color: rgba(0, 243, 255, 0.24);
+    }
+
+    @media (max-width: 1100px) {
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    }
+    @media (max-width: 620px) {
+      .stats-grid { grid-template-columns: 1fr; gap: 14px; }
+      .stat-card { padding: 16px; }
     }
 
     .stat-icon {
@@ -1930,195 +1986,585 @@
       flex-shrink: 0;
     }
 
-    .notification-panel {
-      position: absolute;
-      top: 50px;
-      right: 0;
-      min-width: 300px;
-      max-width: 340px;
-      padding: 12px;
-      border-radius: 16px;
-      background: linear-gradient(145deg, rgba(13, 21, 39, 0.98), rgba(12, 18, 32, 0.98));
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
-      display: grid;
-      gap: 10px;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(-8px);
-      pointer-events: none;
-      transition: all 0.2s ease;
-      z-index: 1100;
-    }
+    /* =========================
+   NOTIFICATION CENTER
+   ========================= */
 
-    .notification-panel.active {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
+.notification-panel {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: min(430px, calc(100vw - 24px));
+  max-width: 430px;
+  max-height: min(72vh, 680px);
+  padding: 14px;
+  box-sizing: border-box;
 
-    .notification-panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 
-    .notification-controls {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+  overflow: hidden;
 
-    .notification-search {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(255,255,255,0.04);
-      color: var(--text-primary);
-      padding: 8px 10px;
-      font-size: 12px;
-      outline: none;
-    }
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(13, 21, 39, 0.99),
+      rgba(8, 15, 29, 0.99)
+    );
 
-    .notification-chip {
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-secondary);
-      border-radius: 999px;
-      padding: 5px 8px;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      cursor: pointer;
-      font-weight: 700;
-    }
+  border: 1px solid rgba(0, 243, 255, 0.14);
 
-    .notification-chip.active {
-      background: rgba(0, 243, 255, 0.14);
-      color: var(--cyan);
-      border-color: rgba(0, 243, 255, 0.2);
-    }
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 0 30px rgba(0, 243, 255, 0.06);
 
-    .notification-item {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 10px;
-      align-items: start;
-      padding: 10px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid transparent;
-    }
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.98);
+  pointer-events: none;
 
-    .notification-item.unread {
-      border-color: rgba(0, 243, 255, 0.22);
-      background: rgba(0, 243, 255, 0.09);
-    }
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
 
-    .notification-item-icon {
-      font-size: 16px;
-      margin-top: 2px;
-    }
+  z-index: 1100;
+}
 
-    .notification-item-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 2px;
-    }
+.notification-panel.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
 
-    .notification-item-message {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.45;
-      margin-bottom: 4px;
-    }
+.notification-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+}
 
-    .notification-item-meta {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
+.notification-panel-header h3 {
+  color: var(--text-primary);
+  font-size: 16px !important;
+  font-weight: 800;
+}
 
-    .notification-empty {
-      text-align: center;
-      padding: 16px 8px;
-      color: var(--text-muted);
-      font-size: 12px;
-      border: 1px dashed var(--border);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.02);
-    }
+.notification-panel-header small {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
 
-    @media (max-width: 980px) {
-      .hero-panel {
-        grid-template-columns: 1fr;
-      }
+.notification-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 
-      .stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+.notification-search {
+  width: 100%;
+  box-sizing: border-box;
 
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-    }
+  border: 1px solid var(--border);
+  border-radius: 999px;
 
-    @media (max-width: 640px) {
-      .stats-grid,
-      .subject-grid {
-        grid-template-columns: 1fr;
-      }
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
 
-      .hero-panel,
-      .learning-hub-shell {
-        padding: 18px;
-      }
+  padding: 10px 13px;
+  font-size: 12px;
 
-      .hero-title {
-        font-size: 24px;
-      }
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
 
-      .nav-right {
-        position: relative;
-      }
+.notification-search:focus {
+  border-color: rgba(0, 243, 255, 0.35);
+  background: rgba(0, 243, 255, 0.05);
+}
 
-      .notification-panel {
-        width: min(360px, calc(100vw - 24px));
-        min-width: 0;
-        max-width: calc(100vw - 24px);
-        right: 0;
-        top: 48px;
-        box-sizing: border-box;
-        max-height: min(70vh, 560px);
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
+.notification-chip {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
 
-      .notification-panel-header {
-        align-items: flex-start;
-      }
+  border-radius: 999px;
+  padding: 6px 10px;
 
-      .notification-item {
-        grid-template-columns: auto minmax(0, 1fr);
-      }
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
 
-      .notification-item > div:last-child {
-        grid-column: 2;
-        justify-self: start;
-      }
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
 
-      .notification-item-title,
-      .notification-item-message,
-      .notification-item-meta {
-        overflow-wrap: anywhere;
-        word-break: break-word;
-      }
-    }
+.notification-chip:hover {
+  border-color: rgba(0, 243, 255, 0.25);
+  color: var(--cyan);
+}
 
+.notification-chip.active {
+  background: rgba(0, 243, 255, 0.13);
+  color: var(--cyan);
+  border-color: rgba(0, 243, 255, 0.28);
+}
+
+/* Scrollable notification list */
+.notification-list {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  padding-right: 3px;
+}
+
+.notification-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 243, 255, 0.2);
+  border-radius: 999px;
+}
+
+/* Notification card */
+.notification-item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+
+  padding: 12px;
+
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.notification-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 243, 255, 0.2);
+  background: rgba(0, 243, 255, 0.055);
+}
+
+.notification-item.unread {
+  border-color: rgba(0, 243, 255, 0.25);
+  background: rgba(0, 243, 255, 0.08);
+}
+
+.notification-item-icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+  background: rgba(0, 243, 255, 0.08);
+
+  font-size: 17px;
+}
+
+.notification-item-content {
+  min-width: 0;
+}
+
+.notification-item-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-primary);
+
+  margin-bottom: 4px;
+}
+
+.notification-unread-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 243, 255, 0.7);
+}
+
+.notification-type-badge {
+  display: inline-flex;
+  align-items: center;
+
+  margin-bottom: 5px;
+  padding: 3px 7px;
+
+  border-radius: 999px;
+
+  background: rgba(0, 243, 255, 0.08);
+  color: var(--cyan);
+
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.notification-item-message {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+
+  margin-bottom: 7px;
+}
+
+.notification-item-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.notification-item-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+
+  margin-top: 8px;
+}
+
+.notification-open-btn {
+  border: 1px solid rgba(0, 243, 255, 0.18);
+  background: rgba(0, 243, 255, 0.06);
+
+  color: var(--cyan);
+
+  border-radius: 8px;
+  padding: 6px 9px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.notification-read-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+
+  color: var(--text-secondary);
+
+  border-radius: 8px;
+  padding: 6px 9px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.notification-empty {
+  text-align: center;
+  padding: 30px 16px;
+
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* =========================================
+   NOTIFICATION DETAIL MODAL
+   ========================================= */
+
+.notification-detail-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+
+  width: 100vw;
+  height: 100vh;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+
+  z-index: 99999;
+}
+
+.notification-detail-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.notification-detail-modal {
+  position: relative;
+
+  width: min(680px, 100%);
+  max-width: 680px;
+
+  max-height: calc(100vh - 48px);
+
+  margin: auto;
+
+  display: flex;
+  flex-direction: column;
+
+  box-sizing: border-box;
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(13, 21, 39, 0.99),
+      rgba(8, 15, 29, 0.99)
+    );
+
+  border: 1px solid rgba(0, 243, 255, 0.18);
+
+  box-shadow:
+    0 30px 100px rgba(0, 0, 0, 0.65),
+    0 0 50px rgba(0, 243, 255, 0.08);
+
+  overflow: hidden;
+
+  transform: translateY(0);
+}
+
+.notification-detail-header {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  padding: 20px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.notification-detail-heading {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 13px;
+
+  min-width: 0;
+}
+
+.notification-detail-icon {
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: rgba(0, 243, 255, 0.09);
+  border: 1px solid rgba(0, 243, 255, 0.12);
+
+  font-size: 20px;
+}
+
+.notification-detail-type {
+  margin-bottom: 5px;
+
+  color: var(--cyan);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.notification-detail-title {
+  margin: 0;
+
+  color: var(--text-primary);
+
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 850;
+
+  overflow-wrap: anywhere;
+}
+
+.notification-detail-close {
+  width: 36px;
+  height: 36px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--border);
+
+  background: rgba(255, 255, 255, 0.04);
+
+  color: var(--text-secondary);
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font-size: 20px;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.notification-detail-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+
+  color: var(--text-primary);
+
+  border-color: rgba(0, 243, 255, 0.25);
+}
+
+.notification-detail-body {
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+}
+
+.notification-detail-message {
+  color: var(--text-secondary);
+
+  font-size: 13px;
+  line-height: 1.8;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.notification-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-top: 20px;
+  padding-top: 16px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.notification-detail-meta-item {
+  padding: 6px 9px;
+
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  color: var(--text-muted);
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   MOBILE MODAL
+   ========================================= */
+
+@media (max-width: 640px) {
+
+  .notification-detail-overlay {
+    padding: 12px;
+
+    align-items: center;
+  }
+
+  .notification-detail-modal {
+    width: 100%;
+
+    max-width: none;
+
+    max-height: calc(100vh - 24px);
+
+    border-radius: 18px;
+  }
+
+  .notification-detail-header {
+    padding: 16px;
+  }
+
+  .notification-detail-body {
+    padding: 16px;
+  }
+
+  .notification-detail-title {
+    font-size: 17px;
+  }
+
+  .notification-detail-message {
+    font-size: 12px;
+    line-height: 1.7;
+  }
+}
     /* Player Profile Card */
     .profile-card {
       grid-row: 1;
@@ -3899,6 +4345,7 @@
         <span class="nav-bell-badge" id="nav-bell-badge">0</span>
       </button>
       <div class="notification-panel" id="notification-panel"></div>
+     
       <div class="nav-xp-badge" id="nav-xp-btn">
         <span>⚡</span>
         <span id="nav-xp"></span>
@@ -3957,6 +4404,72 @@
       </div>
     </div>
   </nav>
+   <!-- Notification Detail Modal -->
+<div
+  class="notification-detail-overlay"
+  id="notification-detail-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="notification-detail-title"
+>
+  <div class="notification-detail-modal">
+
+    <div class="notification-detail-header">
+
+      <div class="notification-detail-heading">
+
+        <div
+          class="notification-detail-icon"
+          id="notification-detail-icon"
+        >
+          🔔
+        </div>
+
+        <div>
+          <div
+            class="notification-detail-type"
+            id="notification-detail-type"
+          >
+            Notification
+          </div>
+
+          <h2
+            class="notification-detail-title"
+            id="notification-detail-title"
+          >
+            Notification
+          </h2>
+        </div>
+
+      </div>
+
+      <button
+        type="button"
+        class="notification-detail-close"
+        onclick="closeNotificationDetails()"
+        aria-label="Close notification"
+      >
+        ×
+      </button>
+
+    </div>
+
+    <div class="notification-detail-body">
+
+      <div
+        class="notification-detail-message"
+        id="notification-detail-message"
+      ></div>
+
+      <div
+        class="notification-detail-meta"
+        id="notification-detail-meta"
+      ></div>
+
+    </div>
+
+  </div>
+</div>
 
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
@@ -4064,14 +4577,7 @@
                 <div class="stat-trend" id="stat-cases-trend">Growing archive</div>
               </div>
             </div>
-            <div class="stat-card">
-              <div class="stat-icon">✅</div>
-              <div class="stat-content">
-                <div class="stat-label">Assignments done</div>
-                <div class="stat-value" id="stat-assignments-value">0</div>
-                <div class="stat-trend" id="stat-assignments-trend">On track</div>
-              </div>
-            </div>
+            
           </div>
 
           <div class="learning-hub-shell" style="display:none;">
@@ -4759,7 +5265,8 @@
         icon: item.type === 'assignment' ? '📚' : item.type === 'critical' ? '🚨' : item.type === 'important' ? '📢' : '🔔',
         meta: item.created_at ? new Date(item.created_at).toLocaleString('en-IN') : '',
         read: Boolean(item.is_read),
-        createdAt: item.created_at
+        createdAt: item.created_at,
+        assignment_id: item.assignment_id || null
       };
     }
 
@@ -4793,12 +5300,56 @@
         const userId = sessionData?.session?.user?.id;
         if (!userId) return;
 
-        const { data, error } = await supabase
-          .from('notifications')
-          .select('id,title,message,type,sender_id,recipient_id,is_read,created_at')
-          .eq('recipient_id', userId)
-          .order('created_at', { ascending: false });
+        let data;
+let error;
 
+// First load using the columns that exist in the current
+// notifications table.
+const baseQuery = await supabase
+  .from('notifications')
+  .select(
+    'id,title,message,type,sender_id,recipient_id,is_read,created_at'
+  )
+  .eq('recipient_id', userId)
+  .order('created_at', { ascending: false });
+
+data = baseQuery.data;
+error = baseQuery.error;
+
+if (error) {
+  throw error;
+}
+
+// assignment_id is optional. If the database migration has
+// already added it, enrich the notifications with it.
+// If it doesn't exist yet, notifications still load normally.
+try {
+  const { data: assignmentData, error: assignmentError } =
+    await supabase
+      .from('notifications')
+      .select('id,assignment_id')
+      .eq('recipient_id', userId);
+
+  if (!assignmentError && Array.isArray(assignmentData)) {
+    const assignmentMap = new Map(
+      assignmentData.map(row => [
+        row.id,
+        row.assignment_id || null
+      ])
+    );
+
+    data = (data || []).map(notification => ({
+      ...notification,
+      assignment_id:
+        assignmentMap.get(notification.id) || null
+    }));
+  }
+} catch (assignmentLookupError) {
+  console.warn(
+    '[Notifications] assignment_id is not available yet; continuing without it.',
+    assignmentLookupError
+  );
+}
         if (error) throw error;
 
         state.notifications = Array.isArray(data) ? data.map(normalizeSupabaseNotification) : [];
@@ -4911,63 +5462,391 @@
       }
     }
 
-    function renderNotifications() {
-      const panel = getEl('notification-panel');
-      if (!panel) return;
-      const unreadCount = state.notifications.filter(item => !item.read).length;
-      const badge = getEl('nav-bell-badge');
-      if (badge) {
-        badge.textContent = unreadCount;
-        badge.classList.toggle('active', unreadCount > 0);
+    function escapeNotificationHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getNotificationTypeLabel(type) {
+  const labels = {
+    assignment: 'New Assignment',
+    broadcast: 'Announcement',
+    important: 'Important',
+    critical: 'Critical Alert'
+  };
+
+  return labels[type] || 'Notification';
+}
+
+function getNotificationTypeIcon(type) {
+  const icons = {
+    assignment: '📚',
+    broadcast: '📢',
+    important: '📢',
+    critical: '🚨'
+  };
+
+  return icons[type] || '🔔';
+}
+
+function renderNotifications() {
+  const panel = getEl('notification-panel');
+  if (!panel) return;
+
+  const unreadCount = state.notifications.filter(
+    item => !item.read
+  ).length;
+
+  const badge = getEl('nav-bell-badge');
+
+  if (badge) {
+    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    badge.classList.toggle('active', unreadCount > 0);
+  }
+
+  const filtered = state.notifications.filter(item => {
+
+    const matchesFilter =
+      state.notificationFilter === 'all'
+        ? true
+        : state.notificationFilter === 'unread'
+          ? !item.read
+          : state.notificationFilter === 'important'
+            ? ['assignment', 'broadcast', 'important', 'critical'].includes(item.type)
+            : true;
+
+    const haystack = [
+      item.title,
+      item.message,
+      item.type,
+      item.meta
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    const matchesQuery =
+      !state.notificationQuery ||
+      haystack.includes(state.notificationQuery);
+
+    return matchesFilter && matchesQuery;
+  });
+
+  const notificationCountText =
+    unreadCount > 0
+      ? `${unreadCount} unread`
+      : 'You’re all caught up';
+
+  panel.innerHTML = `
+    <div class="notification-panel-header">
+
+      <div>
+        <h3 style="margin:0;">Notifications</h3>
+        <small>${notificationCountText}</small>
+      </div>
+
+      <div class="notification-controls">
+
+        <button
+          class="btn btn-ghost"
+          type="button"
+          onclick="markAllNotificationsRead()"
+          style="padding:6px 9px; font-size:10px;"
+        >
+          Mark all read
+        </button>
+
+        <button
+          class="btn btn-ghost"
+          type="button"
+          onclick="archiveReadNotifications()"
+          style="padding:6px 9px; font-size:10px;"
+        >
+          Archive
+        </button>
+
+      </div>
+
+    </div>
+
+    <input
+      class="notification-search"
+      type="search"
+      placeholder="Search notifications..."
+      value="${escapeNotificationHtml(state.notificationQuery)}"
+      oninput="setNotificationQuery(this.value)"
+    >
+
+    <div class="notification-controls">
+
+      <button
+        class="notification-chip ${state.notificationFilter === 'all' ? 'active' : ''}"
+        type="button"
+        onclick="setNotificationFilter('all')"
+      >
+        All
+      </button>
+
+      <button
+        class="notification-chip ${state.notificationFilter === 'unread' ? 'active' : ''}"
+        type="button"
+        onclick="setNotificationFilter('unread')"
+      >
+        Unread
+      </button>
+
+      <button
+        class="notification-chip ${state.notificationFilter === 'important' ? 'active' : ''}"
+        type="button"
+        onclick="setNotificationFilter('important')"
+      >
+        Important
+      </button>
+
+    </div>
+
+    <div class="notification-list">
+
+      ${
+        filtered.length
+          ? filtered.map(item => {
+
+              const icon =
+                item.icon ||
+                getNotificationTypeIcon(item.type);
+
+              const typeLabel =
+                getNotificationTypeLabel(item.type);
+
+              return `
+                <div
+                  class="notification-item ${item.read ? '' : 'unread'}"
+                  data-id="${escapeNotificationHtml(item.id)}"
+                  onclick="openNotificationDetails('${escapeNotificationHtml(item.id)}')"
+                >
+
+                  <div class="notification-item-icon">
+                    ${escapeNotificationHtml(icon)}
+                  </div>
+
+                  <div class="notification-item-content">
+
+                    <div class="notification-type-badge">
+                      ${escapeNotificationHtml(typeLabel)}
+                    </div>
+
+                    <div class="notification-item-title">
+
+                      ${
+                        !item.read
+                          ? '<span class="notification-unread-dot"></span>'
+                          : ''
+                      }
+
+                      ${escapeNotificationHtml(item.title || 'Notification')}
+
+                    </div>
+
+                    <div class="notification-item-message">
+                      ${escapeNotificationHtml(item.message || '')}
+                    </div>
+
+                    <div class="notification-item-meta">
+                      ${escapeNotificationHtml(item.meta || '')}
+                    </div>
+
+                    <div class="notification-item-actions">
+
+                      <button
+                        class="notification-open-btn"
+                        type="button"
+                        onclick="event.stopPropagation(); openNotificationDetails('${escapeNotificationHtml(item.id)}')"
+                      >
+                        View details
+                      </button>
+
+                      <button
+                        class="notification-read-btn"
+                        type="button"
+                        onclick="event.stopPropagation(); markNotificationRead('${escapeNotificationHtml(item.id)}')"
+                      >
+                        ${item.read ? 'Read' : 'Mark read'}
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              `;
+            }).join('')
+          : `
+            <div class="notification-empty">
+
+              ${
+                state.notificationQuery
+                  ? `
+                    <strong>No notifications found</strong><br>
+                    No notifications match your search.
+                  `
+                  : state.notificationFilter === 'unread'
+                    ? `
+                      <strong>You're all caught up.</strong><br>
+                      There are no unread notifications.
+                    `
+                    : `
+                      <strong>No notifications yet.</strong><br>
+                      Stay tuned for study updates.
+                    `
+              }
+
+            </div>
+          `
       }
 
-      const filtered = state.notifications.filter(item => {
-        const matchesFilter = state.notificationFilter === 'all'
-          ? true
-          : state.notificationFilter === 'unread'
-            ? !item.read
-            : state.notificationFilter === 'important'
-              ? ['assignment', 'broadcast'].includes(item.type)
-              : true;
-        const haystack = `${item.title} ${item.message} ${item.meta || ''}`.toLowerCase();
-        const matchesQuery = !state.notificationQuery || haystack.includes(state.notificationQuery);
-        return matchesFilter && matchesQuery;
-      });
+    </div>
+  `;
+}
+function openNotificationDetails(id) {
+  const item = state.notifications.find(
+    notification => notification.id === id
+  );
 
-      if (!state.notifications.length) {
-        panel.innerHTML = '<div class="notification-empty">No notifications yet. Stay tuned for study updates.</div>';
-        return;
-      }
+  if (!item) return;
 
-      panel.innerHTML = `
-        <div class="notification-panel-header">
-          <h3 style="margin:0; font-size:14px;">Notifications</h3>
-          <div class="notification-controls">
-            <button class="btn btn-ghost" type="button" onclick="markAllNotificationsRead()" style="padding:6px 10px; font-size:11px;">Mark all read</button>
-            <button class="btn btn-ghost" type="button" onclick="archiveReadNotifications()" style="padding:6px 10px; font-size:11px;">Archive</button>
-          </div>
-        </div>
-        <input class="notification-search" type="search" placeholder="Search notifications" value="${state.notificationQuery}" oninput="setNotificationQuery(this.value)">
-        <div class="notification-controls">
-          <button class="notification-chip ${state.notificationFilter === 'all' ? 'active' : ''}" type="button" onclick="setNotificationFilter('all')">All</button>
-          <button class="notification-chip ${state.notificationFilter === 'unread' ? 'active' : ''}" type="button" onclick="setNotificationFilter('unread')">Unread</button>
-          <button class="notification-chip ${state.notificationFilter === 'important' ? 'active' : ''}" type="button" onclick="setNotificationFilter('important')">Important</button>
-        </div>
-        ${filtered.length ? filtered.map(item => `
-          <div class="notification-item ${item.read ? '' : 'unread'}" data-id="${item.id}">
-            <div class="notification-item-icon">${item.icon || '🔔'}</div>
-            <div>
-              <div class="notification-item-title">${item.title}</div>
-              <div class="notification-item-message">${item.message}</div>
-              <div class="notification-item-meta">${item.meta || ''}</div>
-            </div>
-            <div>
-              <button class="btn btn-ghost" type="button" onclick="markNotificationRead('${item.id}')" style="padding:6px 8px; font-size:10px;">${item.read ? 'Done' : 'Read'}</button>
-            </div>
-          </div>
-        `).join('') : '<div class="notification-empty">No matching notifications.</div>'}
-      `;
+  const overlay = getEl('notification-detail-overlay');
+
+  if (!overlay) return;
+
+  const icon =
+    item.icon ||
+    getNotificationTypeIcon(item.type);
+
+  const typeLabel =
+    getNotificationTypeLabel(item.type);
+
+  const titleEl =
+    getEl('notification-detail-title');
+
+  const typeEl =
+    getEl('notification-detail-type');
+
+  const iconEl =
+    getEl('notification-detail-icon');
+
+  const messageEl =
+    getEl('notification-detail-message');
+
+  const metaEl =
+    getEl('notification-detail-meta');
+
+  if (titleEl) {
+    titleEl.textContent =
+      item.title || 'Notification';
+  }
+
+  if (typeEl) {
+    typeEl.textContent = typeLabel;
+  }
+
+  if (iconEl) {
+    iconEl.textContent = icon;
+  }
+
+  if (messageEl) {
+    messageEl.textContent =
+      item.message || 'No additional information provided.';
+  }
+
+  if (metaEl) {
+
+    const metaParts = [];
+
+    if (item.meta) {
+      metaParts.push(item.meta);
     }
+
+    if (item.createdAt) {
+      metaParts.push(
+        new Date(item.createdAt).toLocaleString('en-IN')
+      );
+    }
+
+    metaParts.push(
+      item.read ? 'Read' : 'Unread'
+    );
+
+    metaEl.innerHTML = metaParts
+      .map(
+        value => `
+          <span class="notification-detail-meta-item">
+            ${escapeNotificationHtml(value)}
+          </span>
+        `
+      )
+      .join('');
+
+    if (item.assignment_id) {
+      metaEl.innerHTML += `
+        <button type="button" class="notification-open-btn" style="margin-left:auto;" onclick="openAssignmentFromNotification('${escapeNotificationHtml(item.assignment_id)}')">
+          📚 Open Assignment
+        </button>`;
+    }
+  }
+
+  overlay.classList.add('active');
+
+  document.body.style.overflow = 'hidden';
+
+  /*
+   * Opening a notification marks it as read.
+   */
+  if (!item.read) {
+    markNotificationRead(id);
+  }
+}
+
+function openAssignmentFromNotification(assignmentId) {
+  closeNotificationDetails();
+  showScreen('dashboard');
+  setTimeout(() => {
+    const target = document.getElementById('assignments-list') || document.getElementById('assignment-widget-list');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 120);
+}
+
+function closeNotificationDetails() {
+  const overlay =
+    getEl('notification-detail-overlay');
+
+  if (!overlay) return;
+
+  overlay.classList.remove('active');
+
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    closeNotificationDetails();
+  }
+});
+
+document.addEventListener('click', event => {
+  const overlay =
+    getEl('notification-detail-overlay');
+
+  if (
+    overlay &&
+    event.target === overlay
+  ) {
+    closeNotificationDetails();
+  }
+});
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) loadNotificationsFromSupabase();
@@ -5018,11 +5897,27 @@
       return { label: 'Pending', className: 'pending' };
     }
 
-    function toggleAssignmentSubmission(id) {
-      state.assignments = state.assignments.map(assignment => assignment.id === id ? { ...assignment, submitted: !assignment.submitted } : assignment);
+    async function toggleAssignmentSubmission(id) {
+      const assignment = state.assignments.find(item => item.id === id);
+      if (!assignment) return;
+      const nextSubmitted = !assignment.submitted;
+      state.assignments = state.assignments.map(item => item.id === id ? { ...item, submitted: nextSubmitted, submittedAt: nextSubmitted ? new Date().toISOString() : null } : item);
       setStoredValue('codeDetectiveAssignments', state.assignments);
       renderLearningHub();
-      showToast('success', '✅', 'Assignment status updated.');
+      updateDashboard();
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (userId) {
+          const { error } = await supabase.from('assignment_recipients').update({ submitted: nextSubmitted, submitted_at: nextSubmitted ? new Date().toISOString() : null }).eq('assignment_id', id).eq('recipient_id', userId);
+          if (error) throw error;
+        }
+        showToast('success', '✅', nextSubmitted ? 'Assignment marked submitted.' : 'Assignment returned to pending.');
+      } catch (error) {
+        console.error('[Assignments] Failed to sync submission:', error);
+        showToast('error', '⚠️', 'Could not sync assignment status.');
+      }
     }
 
     function getSubjectData() {
@@ -5330,34 +6225,77 @@
       // Mobile navigation history
 const screenHistory = [];
 
-    function showScreen(screenId) 
-    {
-      // Remember the previous screen for Android Back navigation
-if (
-  !isBackNavigation &&
-  state.currentScreen &&
-  state.currentScreen !== screenId
-) {
-  screenHistory.push(state.currentScreen);
+    function showScreen(screenId, isBackNavigation = false)
+{
+  // Close notification details before navigating
+  if (typeof closeNotificationDetails === 'function') {
+    closeNotificationDetails();
+  }
+
+  // Close notification dropdown
+  const notificationPanel =
+    document.getElementById('notification-panel');
+
+  if (notificationPanel) {
+    notificationPanel.classList.remove('active');
+  }
+
+  state.notificationsOpen = false;
+
+  // Remember the previous screen for Android Back navigation
+  if (
+    !isBackNavigation &&
+    state.currentScreen &&
+    state.currentScreen !== screenId
+  ) {
+    screenHistory.push(state.currentScreen);
+  }
+
+  // Remove active state from all screens
+  document
+    .querySelectorAll('.screen')
+    .forEach(s => s.classList.remove('active'));
+
+  // Remove active state from all navigation tabs
+  document
+    .querySelectorAll('.nav-tab')
+    .forEach(t => t.classList.remove('active'));
+
+  // Activate requested screen
+  const screen =
+    document.getElementById(`screen-${screenId}`);
+
+  const tab =
+    document.getElementById(`tab-${screenId}`);
+
+  if (screen) {
+    screen.classList.add('active');
+  }
+
+  if (tab) {
+    tab.classList.add('active');
+  }
+
+  state.currentScreen = screenId;
+
+  // Render screen-specific content
+  if (screenId === 'crime-scene') {
+    renderCrimeScene();
+  }
+
+  if (screenId === 'criminal-db') {
+    renderCriminalDatabase();
+    renderCaseLibrary();
+  }
+
+  if (screenId === 'mastery') {
+    renderMasteryBoard();
+  }
+
+  if (screenId === 'dashboard') {
+    updateDashboard();
+  }
 }
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-
-      const screen = document.getElementById(`screen-${screenId}`);
-      const tab = document.getElementById(`tab-${screenId}`);
-
-      if (screen) screen.classList.add('active');
-      if (tab) tab.classList.add('active');
-      state.currentScreen = screenId;
-
-      if (screenId === 'crime-scene') renderCrimeScene();
-      if (screenId === 'criminal-db') {
-        renderCriminalDatabase();
-        renderCaseLibrary();
-      }
-      if (screenId === 'mastery') renderMasteryBoard();
-      if (screenId === 'dashboard') updateDashboard();
-    }
     // ==========================================
 // ANDROID BACK BUTTON
 // ==========================================
@@ -5429,16 +6367,71 @@ setupAndroidBackButton();
       toggleNotifications();
       document.getElementById('profile-dropdown').classList.remove('active');
     });
-    document.addEventListener('click', () => {
-      document.getElementById('profile-dropdown').classList.remove('active');
-      setNotificationPanelVisibility(false);
-    });
+   document.addEventListener('click', (event) => {
+  const profileDropdown =
+    document.getElementById('profile-dropdown');
 
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        if (tab.dataset.screen) showScreen(tab.dataset.screen);
-      });
-    });
+  const notificationPanel =
+    document.getElementById('notification-panel');
+
+  const notificationButton =
+    document.getElementById('nav-bell-btn');
+
+  if (
+    profileDropdown &&
+    !profileDropdown.contains(event.target)
+  ) {
+    profileDropdown.classList.remove('active');
+  }
+
+  if (
+    notificationPanel &&
+    notificationButton &&
+    !notificationPanel.contains(event.target) &&
+    !notificationButton.contains(event.target)
+  ) {
+    setNotificationPanelVisibility(false);
+    state.notificationsOpen = false;
+  }
+});
+
+ document.querySelectorAll('.nav-tab').forEach(tab => {
+
+  tab.addEventListener('click', (event) => {
+
+    const screenId = tab.dataset.screen;
+
+    if (!screenId) return;
+
+    event.preventDefault();
+
+    // Close notification UI
+    if (typeof closeNotificationDetails === 'function') {
+      closeNotificationDetails();
+    }
+
+    const notificationPanel =
+      document.getElementById('notification-panel');
+
+    if (notificationPanel) {
+      notificationPanel.classList.remove('active');
+    }
+
+    state.notificationsOpen = false;
+
+    // Close profile dropdown
+    const profileDropdown =
+      document.getElementById('profile-dropdown');
+
+    if (profileDropdown) {
+      profileDropdown.classList.remove('active');
+    }
+
+    showScreen(screenId);
+
+  });
+
+});
 
     document.getElementById('profile-option')?.addEventListener('click', () => {
       document.getElementById('profile-dropdown').classList.remove('active');
@@ -5767,6 +6760,117 @@ console.log("[DXP DEBUG] Save Error:", error);
       if (unsolvedSub) unsolvedSub.textContent = `${unsolvedCases} / ${totalCases}`;
     }
 
+    function renderProfileModal() {
+      // The current build uses a dynamic profile drawer instead of a static
+      // profile-modal element. Keep this renderer lightweight and idempotent.
+      let modal = document.getElementById('profile-detail-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'profile-detail-modal';
+        modal.className = 'notification-detail-overlay';
+        modal.innerHTML = `
+          <div class="notification-detail-modal" style="max-width:560px;">
+            <div class="notification-detail-header">
+              <div class="notification-detail-heading">
+                <div class="notification-detail-icon" id="profile-detail-avatar">🕵️</div>
+                <div><div class="notification-detail-type">Detective Profile</div><h2 class="notification-detail-title" id="profile-detail-name">Detective</h2></div>
+              </div>
+              <button class="notification-detail-close" type="button" aria-label="Close" onclick="closeProfileModal()">×</button>
+            </div>
+            <div class="notification-detail-body">
+              <div class="notification-detail-message" id="profile-detail-content"></div>
+            </div>
+          </div>`;
+        document.body.appendChild(modal);
+      }
+      const name = state.profileDisplayName || 'Detective';
+      const avatar = state.profileAvatar || '🕵️';
+      const avatarEl = document.getElementById('profile-detail-avatar');
+      const nameEl = document.getElementById('profile-detail-name');
+      const contentEl = document.getElementById('profile-detail-content');
+      if (avatarEl) avatarEl.textContent = avatar;
+      if (nameEl) nameEl.textContent = name;
+      if (contentEl) {
+        contentEl.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+            <div class="notification-detail-meta-item">XP: ${formatXP(state.totalXP)}</div>
+            <div class="notification-detail-meta-item">Cases: ${state.casesCompleted}</div>
+            <div class="notification-detail-meta-item">Streak: ${state.streak} days</div>
+            <div class="notification-detail-meta-item">Accuracy: ${state.accuracy}%</div>
+            <div class="notification-detail-meta-item">Rank: ${state.rank || 'Rookie'}</div>
+            <div class="notification-detail-meta-item">Username: ${escapeNotificationHtml(state.profileUsername || '—')}</div>
+          </div>`;
+      }
+    }
+
+    function openProfileModal() {
+      renderProfileModal();
+      const modal = document.getElementById('profile-detail-modal');
+      if (modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+    }
+
+    function closeProfileModal() {
+      const modal = document.getElementById('profile-detail-modal');
+      if (modal) modal.classList.remove('active');
+      if (!document.getElementById('notification-detail-overlay')?.classList.contains('active')) document.body.style.overflow = '';
+    }
+
+    async function loadAssignmentsFromSupabase() {
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) return false;
+        const { data, error } = await supabase
+          .from('assignment_recipients')
+          .select('assignment_id, submitted, submitted_at, assignments(id,title,subject,description,difficulty,due_date,due_time,max_marks,instructions,attachment,created_at,updated_at)')
+          .eq('recipient_id', userId);
+        if (error) {
+          console.warn('[Assignments] Remote assignments unavailable; using local fallback.', error.message);
+          return false;
+        }
+        state.assignments = (data || []).filter(row => row.assignments).map(row => ({
+          id: row.assignments.id,
+          title: row.assignments.title,
+          subject: row.assignments.subject,
+          description: row.assignments.description || '',
+          difficulty: row.assignments.difficulty || '',
+          dueDate: row.assignments.due_date,
+          dueTime: row.assignments.due_time,
+          maxMarks: Number(row.assignments.max_marks || 0),
+          instructions: row.assignments.instructions || '',
+          attachment: row.assignments.attachment || '',
+          submitted: Boolean(row.submitted),
+          submittedAt: row.submitted_at || null
+        }));
+        setStoredValue('codeDetectiveAssignments', state.assignments);
+        renderLearningHub();
+        renderAssignmentWidget();
+        updateDashboard();
+        return true;
+      } catch (error) {
+        console.warn('[Assignments] Remote load failed:', error);
+        return false;
+      }
+    }
+
+    async function initAssignmentRealtime() {
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) return;
+        if (window.__codeDetectiveAssignmentChannel) await supabase.removeChannel(window.__codeDetectiveAssignmentChannel);
+        window.__codeDetectiveAssignmentChannel = supabase
+          .channel(`code-detective-assignments-${userId}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'assignment_recipients', filter: `recipient_id=eq.${userId}` }, () => loadAssignmentsFromSupabase())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, () => loadAssignmentsFromSupabase())
+          .subscribe();
+      } catch (error) {
+        console.warn('[Assignments] Realtime unavailable:', error);
+      }
+    }
+
     function updateDashboard() {
       const rank = getRank(state.totalXP);
       const rankName = rank.name;
@@ -5777,9 +6881,13 @@ console.log("[DXP DEBUG] Save Error:", error);
       const pct = nextRank
         ? ((state.totalXP - rank.threshold) / (nextRank.threshold - rank.threshold)) * 100
         : 100;
-      const overallProgress = nextRank ? Math.max(0, Math.min(100, pct)) : 100;
+      const rankProgress = nextRank ? Math.max(0, Math.min(100, pct)) : 100;
+      const totalCaseCount = Array.isArray(CASES) ? CASES.length : 0;
+      const overallProgress = totalCaseCount > 0
+        ? Math.max(0, Math.min(100, Math.round((state.casesCompleted / totalCaseCount) * 100)))
+        : 0;
       const assignmentsCompleted = state.assignments.filter(item => item.submitted).length;
-      const studyTimeHours = Math.max(6, Math.min(32, 6 + state.casesCompleted + assignmentsCompleted));
+      const pendingAssignments = Math.max(0, state.assignments.length - assignmentsCompleted);
 
       setText('profile-name', state.profileDisplayName || '');
       setText('profile-rank', rankName);
@@ -5815,7 +6923,7 @@ console.log("[DXP DEBUG] Save Error:", error);
       const heroLevel = getEl('hero-level');
       if (heroLevel) heroLevel.textContent = `Level ${Math.max(1, Math.floor(state.totalXP / 1000) + 1)}`;
       const heroGoal = getEl('hero-goal');
-      if (heroGoal) heroGoal.textContent = `${Math.max(1, 3 - assignmentsCompleted)} focus tasks left`;
+      if (heroGoal) heroGoal.textContent = `${pendingAssignments} assignment${pendingAssignments === 1 ? '' : 's'} pending`;
       const heroMission = getEl('hero-mission');
       if (heroMission) heroMission.textContent = `Today's mission • ${rankName}`;
       const heroMissionText = getEl('hero-mission-text');
@@ -5827,7 +6935,7 @@ console.log("[DXP DEBUG] Save Error:", error);
       const statXpValue = getEl('stat-xp-value');
       if (statXpValue) statXpValue.textContent = formatXP(state.totalXP);
       const statXpTrend = getEl('stat-xp-trend');
-      if (statXpTrend) statXpTrend.textContent = `+${Math.max(20, 50 - assignmentsCompleted)} today`;
+      if (statXpTrend) statXpTrend.textContent = `Rank: ${rankName}`;
       const statCasesValue = getEl('stat-cases-value');
       if (statCasesValue) statCasesValue.textContent = state.casesCompleted;
       const statCasesTrend = getEl('stat-cases-trend');
@@ -5835,7 +6943,7 @@ console.log("[DXP DEBUG] Save Error:", error);
       const statAssignmentsValue = getEl('stat-assignments-value');
       if (statAssignmentsValue) statAssignmentsValue.textContent = assignmentsCompleted;
       const statAssignmentsTrend = getEl('stat-assignments-trend');
-      if (statAssignmentsTrend) statAssignmentsTrend.textContent = `${studyTimeHours}h study time`;
+      if (statAssignmentsTrend) statAssignmentsTrend.textContent = pendingAssignments ? `${pendingAssignments} pending` : 'All caught up';
 
       const profileLevel = getEl('profile-level');
       if (profileLevel) profileLevel.textContent = `${Math.max(1, Math.floor(state.totalXP / 1000) + 1)}`;
@@ -5875,7 +6983,7 @@ console.log("[DXP DEBUG] Save Error:", error);
       }
 
       const xpBar = getEl('xp-bar');
-      if (xpBar) xpBar.style.width = `${pct}%`;
+      if (xpBar) xpBar.style.width = `${rankProgress}%`;
 
       if (nextRank) {
         setHtml('xp-to-next', `${formatXP(nextRank.threshold - state.totalXP)} DXP to <strong style="color:var(--amber)">${nextRank.name}</strong>`);
@@ -6111,18 +7219,30 @@ console.log("[DXP DEBUG] Save Error:", error);
       }
 
       const c = CASES[state.currentCaseIndex];
+      if (!c) {
+        console.error('[Crime Scene] No case found for index', state.currentCaseIndex);
+        return;
+      }
       resetCaseState();
       renderInvestigationBriefing(c);
 
       // Header
-      document.getElementById('crime-case-id').textContent = `CASE ${c.id} — ${c.topic.toUpperCase()} DIVISION`;
-      document.getElementById('crime-case-title').textContent = c.title;
-      document.getElementById('banner-case-title').textContent = `Case ${c.id}: ${c.title}`;
-      document.getElementById('banner-case-subtitle').innerHTML = `
-        <span class="text-muted">${c.filename}</span>
-        <span class="text-crimson"> — ${c.description}</span>
+      const crimeCaseId = document.getElementById('crime-case-id');
+      if (crimeCaseId) crimeCaseId.textContent = `CASE ${c.id} — ${String(c.topic || '').toUpperCase()} DIVISION`;
+      const crimeCaseTitle = document.getElementById('crime-case-title');
+      if (crimeCaseTitle) crimeCaseTitle.textContent = c.title || 'Untitled Case';
+
+      // Older builds had banner-case-* nodes; the current Crime Scene does not.
+      // Keep them optional so a missing legacy node can never stop the case renderer.
+      const bannerCaseTitle = document.getElementById('banner-case-title');
+      if (bannerCaseTitle) bannerCaseTitle.textContent = `Case ${c.id}: ${c.title}`;
+      const bannerCaseSubtitle = document.getElementById('banner-case-subtitle');
+      if (bannerCaseSubtitle) bannerCaseSubtitle.innerHTML = `
+        <span class="text-muted">${c.filename || ''}</span>
+        <span class="text-crimson">${c.description ? ` — ${c.description}` : ''}</span>
       `;
-      document.getElementById('terminal-filename').textContent = c.filename;
+      const terminalFilename = document.getElementById('terminal-filename');
+      if (terminalFilename) terminalFilename.textContent = c.filename || '';
 
       // Tags
       const tagsEl = document.getElementById('crime-case-tags');
@@ -7117,6 +8237,8 @@ console.log("[DXP DEBUG] Save Error:", error);
       }
 
       seedLearningData();
+      await loadAssignmentsFromSupabase();
+      await initAssignmentRealtime();
       await loadNotificationsFromSupabase();
       await initNotificationRealtime();
       initThemeSystem();
