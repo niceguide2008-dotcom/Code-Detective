@@ -12,6 +12,13 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet" />
+    <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5B942">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Code Detective">
+
   <style>
     /* =============================================
        DESIGN TOKENS & ROOT VARIABLES
@@ -4013,6 +4020,39 @@
     }
 
     /* =============================================
+   PWA INSTALL BUTTON
+============================================= */
+
+.install-app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid rgba(245, 185, 66, 0.35);
+  border-radius: 10px;
+  color: var(--text-primary);
+  background: rgba(245, 185, 66, 0.10);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+
+
+.install-app-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(245, 185, 66, 0.18);
+  border-color: rgba(245, 185, 66, 0.60);
+  box-shadow: 0 0 18px rgba(245, 185, 66, 0.16);
+}
+
+.install-app-btn:active {
+  transform: translateY(0);
+}
+    /* =============================================
        RESPONSIVE — TABLET (≤900px)
     ============================================= */
     @media (max-width: 900px) {
@@ -4302,6 +4342,20 @@
     .badge-amber { border-color: rgba(255,209,102,.25); }
     .badge-crimson { border-color: rgba(255,93,115,.25); }
     .badge-green { border-color: rgba(56,211,159,.25); }
+    
+
+@media (max-width: 700px) {
+  .install-app-btn {
+    width: 38px;
+    min-width: 38px;
+    padding: 0;
+    border-radius: 10px;
+  }
+
+  .install-app-btn span {
+    display: none;
+  }
+}
   </style>
 </head>
 
@@ -4340,6 +4394,8 @@
     </div>
 
     <div class="nav-right" style="position: relative;">
+      <button id="install-app-btn" class="install-app-btn" type="button" title="Install Code Detective" >📲 <span>Install App</span>
+</button>
       <button class="nav-bell" id="nav-bell-btn" type="button" title="Notifications">
         🔔
         <span class="nav-bell-badge" id="nav-bell-badge">0</span>
@@ -5090,6 +5146,7 @@
     const activeCase = caseData || (typeof CASES !== 'undefined' && typeof state !== 'undefined' ? CASES[state.currentCaseIndex] : null);
     return Number(activeCase?.xpReward) || CASE_COMPLETION_TOTAL_XP;
   }
+  
   </script>
 
   <script>
@@ -8255,7 +8312,113 @@ console.log("[DXP DEBUG] Save Error:", error);
 
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', init);
+    
   </script>
+
+<script>
+(() => {
+  let deferredInstallPrompt = null;
+
+  const getInstallButton = () =>
+    document.getElementById("install-app-btn");
+
+  // Register the service worker once.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          console.log(
+            "[Code Detective PWA] Service worker registered:",
+            registration.scope
+          );
+        })
+        .catch((error) => {
+          console.error(
+            "[Code Detective PWA] Service worker registration failed:",
+            error
+          );
+        });
+    });
+  }
+
+  // Browser makes the PWA installable.
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+
+    const button = getInstallButton();
+    if (button) {
+      button.style.display = "inline-flex";
+    }
+
+    console.log("[Code Detective PWA] Install prompt available.");
+  });
+
+  // Install button.
+  document.addEventListener("DOMContentLoaded", () => {
+    const button = getInstallButton();
+
+    if (!button) {
+      console.warn("[Code Detective PWA] Install button not found.");
+      return;
+    }
+
+    button.addEventListener("click", async () => {
+      // Chrome / Edge / Android.
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+
+        const result = await deferredInstallPrompt.userChoice;
+
+        console.log(
+          "[Code Detective PWA] Install result:",
+          result.outcome
+        );
+
+        deferredInstallPrompt = null;
+        return;
+      }
+
+      // iPhone / iPad Safari.
+      const isIOS =
+        /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+      const isStandalone =
+        navigator.standalone === true ||
+        window.matchMedia("(display-mode: standalone)").matches;
+
+      if (isIOS && !isStandalone) {
+        alert(
+          "Install Code Detective:\n\n" +
+          "1. Tap the Share button in Safari.\n" +
+          "2. Select 'Add to Home Screen'.\n" +
+          "3. Tap 'Add'."
+        );
+        return;
+      }
+
+      // Browser has no active native prompt.
+      alert(
+        "To install Code Detective, open your browser menu " +
+        "and choose 'Install app' or 'Add to Home Screen'."
+      );
+    });
+  });
+
+  // Installation completed.
+  window.addEventListener("appinstalled", () => {
+    console.log("[Code Detective PWA] App installed.");
+
+    deferredInstallPrompt = null;
+
+    const button = getInstallButton();
+    if (button) {
+      button.style.display = "none";
+    }
+  });
+})();
+</script>
 
 </body>
 
