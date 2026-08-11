@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script type="module" src="/@vite/client"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Detective | Authentication</title>
@@ -203,76 +205,6 @@
         #message.error { color: #FF5D73; border-color: rgba(255,93,115,.25); background: rgba(255,93,115,.08); }
         #message.success { color: #38D39F; border-color: rgba(56,211,159,.25); background: rgba(56,211,159,.08); }
 
-
-        .auth-link {
-            display: inline-block;
-            margin-top: 10px;
-            border: 0;
-            padding: 0;
-            color: #F5B942;
-            background: transparent;
-            font: inherit;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .auth-link:hover { text-decoration: underline; }
-        .auth-divider {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 20px 0 14px;
-            color: #68778a;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .12em;
-        }
-        .auth-divider::before, .auth-divider::after {
-            content: "";
-            height: 1px;
-            flex: 1;
-            background: #303B4D;
-        }
-        .google-btn {
-            width: 100%;
-            padding: 13px 14px;
-            border: 1px solid #303B4D;
-            border-radius: 10px;
-            cursor: pointer;
-            color: #FFFFFF;
-            background: #222B3A;
-            font-size: 14px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .google-btn:hover { border-color: #F5B942; }
-        .google-btn:disabled { cursor: not-allowed; opacity: .6; }
-        .google-mark {
-            width: 18px;
-            height: 18px;
-            display: inline-block;
-            flex: 0 0 18px;
-        }
-        .google-mark path {
-            stroke: none;
-        }
-        #forgotPanel { display: none; }
-        #forgotPanel.active { display: block; }
-        .back-to-login {
-            display: block;
-            margin: 14px auto 0;
-            border: 0;
-            background: transparent;
-            color: #8fa3b7;
-            cursor: pointer;
-            font: inherit;
-            font-size: 12px;
-        }
-        .back-to-login:hover { color: #F5B942; }
-
         @media (max-width: 520px) {
             body {
                 align-items: flex-start;
@@ -297,9 +229,6 @@
             body { align-items: flex-start; }
         }
     </style>
-  <script type="module" crossorigin src="/assets/login-BX4hxok8.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/supabase-C0Bv1Tz9.js">
-  <link rel="modulepreload" crossorigin href="/assets/auth-utils-DKaVkJqi.js">
 </head>
 
 <body>
@@ -364,39 +293,11 @@
             </div>
         </div>
 
-        <button id="forgotPasswordBtn" class="auth-link" type="button">Forgot Password?</button>
-
         <button id="submitBtn" class="submit-btn" type="submit">
             ENTER HEADQUARTERS
         </button>
 
     </form>
-
-    <div class="auth-divider"><span>or</span></div>
-    <button id="googleBtn" class="google-btn" type="button">
-        <svg class="google-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-  <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.649 32.657 29.193 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.153 7.957 3.043l5.657-5.657C34.046 6.053 29.18 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-  <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 12 24 12c3.059 0 5.842 1.153 7.957 3.043l5.657-5.657C34.046 6.053 29.18 4 24 4c-7.682 0-14.309 4.337-17.694 10.691z"/>
-  <path fill="#4CAF50" d="M24 44c5.083 0 9.857-1.947 13.409-5.116l-6.191-5.238C29.211 35.091 26.715 36 24 36c-5.172 0-9.618-3.323-11.283-7.946l-6.522 5.025C9.69 39.556 16.409 44 24 44z"/>
-  <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-1.36 3.927-4.968 6.957-9.303 7.999V44h12.48C41.73 40.447 44 32.941 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-</svg>
-        <span id="googleBtnLabel">Continue with Google</span>
-    </button>
-
-    <section id="forgotPanel" aria-hidden="true">
-        <h2 style="font-size:18px;margin-bottom:8px;">Reset your password</h2>
-        <p style="font-size:12px;line-height:1.6;color:#7B8798;margin-bottom:16px;">
-            Enter your account email. If an account exists, we'll send a secure password-reset link.
-        </p>
-        <form id="forgotForm">
-            <div class="field">
-                <label for="forgotEmail">EMAIL</label>
-                <input id="forgotEmail" type="email" autocomplete="email" placeholder="detective@example.com" required>
-            </div>
-            <button id="forgotSubmitBtn" class="submit-btn" type="submit">SEND RESET LINK</button>
-        </form>
-        <button id="backToLoginBtn" class="back-to-login" type="button">← Back to login</button>
-    </section>
 
     <div id="message"></div>
 
@@ -406,6 +307,7 @@
 
 </div>
 
+<script type="module" src="/auth.js"></script>
 
 </body>
 </html>

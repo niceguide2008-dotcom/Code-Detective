@@ -27,3 +27,7 @@ Run `FINAL_UPGRADE.sql` in the project's Supabase SQL Editor. The frontend inten
 The Capacitor Android project is preserved. A release APK/AAB was not regenerated in this environment because the Android SDK/signing configuration belongs to the development machine. After the backend setup and web testing are complete, build with `gradlew.bat assembleRelease` and `gradlew.bat bundleRelease` from `android/`.
 
 Do not commit `android/local.properties`; use `android/local.properties.example`.
+
+
+## Features 5–8 implementation
+Run `AUTH_ADMIN_SECURITY_UPGRADE.sql` after `FINAL_UPGRADE.sql`. Enable Google provider in Supabase Auth and add the deployed `index.html` and `reset-password.html` URLs to the Auth redirect allow-list.

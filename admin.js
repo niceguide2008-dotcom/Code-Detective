@@ -1,4 +1,6 @@
 import { supabase } from './supabase.js';
+import { isCurrentUserAdmin } from './auth-utils.js';
+import { generateHomework, generateAssignment } from './ai-client.js';
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value = '') => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -15,7 +17,9 @@ const state = {
   notifications: [],
   atRisk: [],
   editingAssignmentId: null,
-  themePreference: 'system'
+  themePreference: 'system',
+  analytics: null,
+  activeSection: 'dashboard'
 };
 
 function getStoredValue(key, fallback) {
@@ -49,12 +53,13 @@ function injectAdminStyles() {
     .admin-panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}.admin-panel-head h3{margin:0;font-size:18px}.admin-panel-head p{margin:5px 0 0;font-size:12px;color:var(--muted)}
     .admin-form{display:grid;gap:11px}.admin-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.admin-form input,.admin-form textarea,.admin-form select{width:100%;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:11px;padding:11px 12px;color:var(--text);font:inherit;outline:none}.admin-form textarea{min-height:96px;resize:vertical}.admin-form input:focus,.admin-form textarea:focus,.admin-form select:focus{border-color:rgba(0,243,255,.45);box-shadow:0 0 0 3px rgba(0,243,255,.05)}
     .admin-actions{display:flex;gap:9px;flex-wrap:wrap}.admin-actions button,.admin-btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;font-weight:700}.admin-btn.primary{background:var(--amber);color:#0e1117;border-color:var(--amber)}.admin-btn.danger{color:#ff9aa6;border-color:rgba(255,93,115,.35)}
+    .ai-generator{display:grid;gap:14px}.ai-generator-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ai-generator input,.ai-generator textarea,.ai-generator select{width:100%;box-sizing:border-box;background:rgba(255,255,255,.035);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit}.ai-generator textarea{min-height:120px;resize:vertical}.ai-result{white-space:pre-wrap;background:rgba(0,0,0,.12);border:1px solid var(--line);border-radius:12px;padding:13px;line-height:1.55}.ai-q{padding:10px 0;border-bottom:1px solid var(--line)}.ai-q:last-child{border-bottom:0}@media(max-width:760px){.ai-generator-grid{grid-template-columns:1fr}}
     .admin-list{display:grid;gap:10px;margin-top:12px}.admin-list-item{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.025)}
     .admin-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.admin-kpi{padding:16px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}.admin-kpi strong{font-size:28px;display:block;margin-top:5px}.admin-kpi small{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-size:10px}
     .recipient-picker{display:grid;gap:8px;max-height:190px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:11px;background:rgba(0,0,0,.08)}.recipient-row{display:flex;gap:9px;align-items:center;font-size:12px;color:var(--text)}.recipient-row small{color:var(--muted);margin-left:auto}.streak-risk{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.streak-risk strong{display:block}.streak-risk span{font-size:11px;color:var(--muted)}
     .admin-muted{color:var(--muted);font-size:12px;line-height:1.6}.admin-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;background:rgba(245,185,66,.1);color:var(--amber);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
-    @media(max-width:950px){.admin-grid-2{grid-template-columns:1fr}.admin-form-grid{grid-template-columns:1fr}}
-    @media(max-width:650px){#admin-extensions .admin-panel{padding:15px}.admin-panel-head{flex-direction:column}.streak-risk{grid-template-columns:1fr}.admin-tabs{overflow:auto;flex-wrap:nowrap}.admin-tabs button{white-space:nowrap}}
+    .notes-admin-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:16px}.notes-admin-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(255,255,255,.025)}.notes-admin-card h4{margin:0 0 5px;font-size:14px}.notes-admin-card p{margin:0 0 13px;color:var(--muted);font-size:11px;line-height:1.5}.notes-drop{border:1px dashed rgba(245,185,66,.42);border-radius:13px;padding:18px;background:rgba(245,185,66,.035);text-align:center}.notes-drop strong{display:block;font-size:13px}.notes-drop span{display:block;color:var(--muted);font-size:10px;margin-top:5px}.notes-file{width:100%;padding:12px;border:1px dashed var(--line);border-radius:10px;background:rgba(0,0,0,.08);color:var(--text);margin-top:10px}.notes-file::file-selector-button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-right:9px;cursor:pointer}.notes-admin-list{display:grid;gap:8px;max-height:430px;overflow:auto}.notes-admin-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:11px;background:rgba(255,255,255,.02)}.notes-admin-item strong{display:block;font-size:12px}.notes-admin-item span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.notes-admin-item button{flex:0 0 auto}.notes-admin-status{min-height:18px;color:var(--muted);font-size:11px}.notes-admin-status.success{color:var(--green)}.notes-admin-status.error{color:#ff9aa6}@media(max-width:950px){.notes-admin-grid{grid-template-columns:1fr}}    @media(max-width:950px){.admin-grid-2{grid-template-columns:1fr}.admin-form-grid{grid-template-columns:1fr}}
+    @media(max-width:650px){#admin-extensions .admin-panel{padding:15px}.admin-panel-head{flex-direction:column}.streak-risk{grid-template-columns:1fr}.admin-tabs{overflow:auto;flex-wrap:nowrap}.admin-tabs button{white-space:nowrap}} #admin-extensions.catalog-view .admin-tabs{display:none}
   </style>`);
 }
 
@@ -65,14 +70,85 @@ function ensureAdminExtensions() {
   wrapper.id = 'admin-extensions';
   wrapper.innerHTML = `
     <div class="admin-tabs">
-      <button class="active" data-view="notifications">🔔 Notifications</button>
-      <button data-view="assignments">📚 Assignments</button>
+      <button class="active" data-view="overview">📊 Overview</button>
+      <button data-view="notifications">🔔 Notifications</button>
+      <button data-view="assignments">📝 Assignments</button>
       <button data-view="streaks">🔥 Streak Protection</button>
-      <button data-view="overview">📊 Overview</button>
+      <button data-view="ai-homework">🤖 AI Homework</button>
+      <button data-view="ai-assignment">📝 AI Assignment</button>
     </div>
 
-    <div class="admin-panel" data-panel="notifications">
-      <div class="admin-panel-head"><div><h3>Send Notification</h3><p>Send a clear, targeted notification without cluttering the student dashboard.</p></div><span class="admin-chip">Instant delivery</span></div>
+    <div class="admin-panel" data-panel="overview">
+      <div class="admin-panel-head"><div><h3>Learning Operations</h3><p>Live administrative overview from Supabase.</p></div><span class="admin-chip">Live data</span></div>
+      <div class="admin-grid-2">
+        <div class="admin-kpi"><small>Assignments</small><strong id="overview-assignment-count">—</strong><div class="admin-muted">Existing assignment records</div></div>
+        <div class="admin-kpi"><small>Notifications</small><strong id="overview-notification-count">—</strong><div class="admin-muted">Notification records visible to administrators</div></div>
+        <div class="admin-kpi"><small>At-risk streaks</small><strong id="overview-risk-count">—</strong><div class="admin-muted">Students currently needing attention</div></div>
+        <div class="admin-kpi"><small>Completed cases</small><strong id="overview-case-count">—</strong><div class="admin-muted">All completed case-progress records</div></div>
+      </div>
+    </div>
+
+    <div class="admin-panel" data-panel="notes" hidden>
+      <div class="admin-panel-head"><div><h3>📚 Notes Library</h3><p>Publish study notes once from the admin console and make them available to every signed-in student.</p></div><span class="admin-chip">Shared with students</span></div>
+      <div class="notes-admin-grid">
+        <div class="notes-admin-card">
+          <h4>Add a study note</h4>
+          <p>Upload PDF or DOCX and Code Detective will extract the text automatically. TXT/MD and other text files are also supported. Legacy DOC is accepted by the picker but must be converted to DOCX/PDF for browser extraction.</p>
+          <form id="admin-note-form" class="admin-form">
+            <div class="admin-form-grid">
+              <input id="admin-note-title" placeholder="Note title (e.g. Java Inheritance)" required>
+              <input id="admin-note-subject" placeholder="Subject (e.g. Java Programming)" value="General">
+            </div>
+            <div class="notes-drop">
+              <strong>📄 Choose a note file</strong>
+              <span>PDF · DOCX · DOC · TXT · MD · code/text files</span>
+              <input id="admin-note-file" class="notes-file" type="file" accept=".pdf,.docx,.doc,.txt,.md,.markdown,.csv,.json,.html,.css,.js,.ts,.tsx,.jsx,.java,.py,.c,.cpp,.h,.hpp,.sql,.xml,.yaml,.yml,.log,text/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword">
+            </div>
+            <textarea id="admin-note-content" placeholder="Or paste the note content here…"></textarea>
+            <div class="admin-actions"><button class="admin-btn primary" id="admin-note-save" type="submit">＋ Publish Note</button><button class="admin-btn" id="admin-note-clear" type="button">Clear</button></div>
+            <div id="admin-note-status" class="notes-admin-status" aria-live="polite"></div>
+          </form>
+        </div>
+        <div class="notes-admin-card">
+          <h4>Published notes</h4>
+          <p>These notes appear inside the student's <strong>Available Notes</strong> dropdown.</p>
+          <div id="admin-notes-list" class="notes-admin-list"><div class="admin-muted">Loading notes…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-panel" data-panel="ai-homework" hidden>
+      <div class="admin-panel-head"><div><h3>🤖 AI Homework Generator</h3><p>Give the AI a topic, choose difficulty, generate questions + answers, then use the result in the homework form.</p></div><span class="admin-chip">AI powered</span></div>
+      <div class="ai-generator">
+        <div class="ai-generator-grid">
+          <input id="ai-homework-topic" placeholder="Topic (e.g. Java inheritance)" />
+          <input id="ai-homework-subject" value="Java Programming" placeholder="Subject" />
+          <select id="ai-homework-difficulty"><option>Easy</option><option selected>Medium</option><option>Hard</option></select>
+          <input id="ai-homework-count" type="number" min="1" max="20" value="5" />
+          <input id="ai-homework-due-date" type="date" />
+          <input id="ai-homework-due-time" type="time" value="23:59" />
+        </div>
+        <div class="admin-actions"><button class="admin-btn primary" id="ai-generate-homework" type="button">✨ Generate Homework</button><button class="admin-btn" id="ai-use-homework" type="button" disabled>Use in Assignment Form</button><button class="admin-btn primary" id="ai-send-homework" type="button" disabled>📤 Create & Send to Students</button></div>
+        <div id="ai-homework-result" class="ai-result admin-muted">No generated homework yet.</div>
+      </div>
+    </div>
+
+    <div class="admin-panel" data-panel="ai-assignment" hidden>
+      <div class="admin-panel-head"><div><h3>📝 AI Assignment Generator</h3><p>Generate assignment questions only. Answers are intentionally excluded from the student-facing content.</p></div><span class="admin-chip">AI powered</span></div>
+      <div class="ai-generator">
+        <div class="ai-generator-grid">
+          <input id="ai-assignment-topic" placeholder="Topic (e.g. OOP concepts)" />
+          <input id="ai-assignment-subject" value="Java Programming" placeholder="Subject" />
+          <select id="ai-assignment-difficulty"><option>Easy</option><option selected>Medium</option><option>Hard</option></select>
+          <input id="ai-assignment-count" type="number" min="1" max="20" value="5" />
+        </div>
+        <div class="admin-actions"><button class="admin-btn primary" id="ai-generate-assignment" type="button">✨ Generate Assignment Questions</button><button class="admin-btn" id="ai-use-assignment" type="button" disabled>Use in Assignment Form</button></div>
+        <div id="ai-assignment-result" class="ai-result admin-muted">No generated assignment yet.</div>
+      </div>
+    </div>
+
+    <div class="admin-panel" data-panel="notifications" hidden>
+      <div class="admin-panel-head"><div><h3>Notification Control</h3><p>Send and review real notifications without introducing local-only history.</p></div><span class="admin-chip">Supabase synced</span></div>
       <form id="broadcast-form" class="admin-form">
         <div class="admin-form-grid">
           <input id="broadcast-title" placeholder="Notification title" required>
@@ -84,12 +160,12 @@ function ensureAdminExtensions() {
         <textarea id="broadcast-message" placeholder="Write the complete notification message..." required></textarea>
         <div class="admin-actions"><button class="admin-btn primary" type="submit">📢 Send notification</button><button class="admin-btn" type="button" id="clear-broadcast">Clear</button></div>
       </form>
-      <div class="admin-panel-head" style="margin-top:24px"><div><h3>Notification history</h3><p>Recent notifications sent through Supabase.</p></div><button class="admin-btn" type="button" id="refresh-notifications">↻ Refresh</button></div>
+      <div class="admin-panel-head" style="margin-top:24px"><div><h3>Notification history</h3><p>Recent notification records.</p></div><button class="admin-btn" type="button" id="refresh-notifications">↻ Refresh</button></div>
       <div id="notification-history" class="admin-list"></div>
     </div>
 
     <div class="admin-panel" data-panel="assignments" hidden>
-      <div class="admin-panel-head"><div><h3>Assignment Control Center</h3><p>Create, edit, delete and distribute assignments from one place.</p></div><span class="admin-chip">Supabase synced</span></div>
+      <div class="admin-panel-head"><div><h3>Assignment Control Center</h3><p>Create, edit, delete and distribute assignments using the existing Supabase schema.</p></div><span class="admin-chip">Supabase synced</span></div>
       <form id="assignment-form" class="admin-form">
         <input type="hidden" id="assignment-id">
         <div class="admin-form-grid">
@@ -119,22 +195,32 @@ function ensureAdminExtensions() {
       <div id="streak-risk-list" class="admin-list"></div>
     </div>
 
-    <div class="admin-panel" data-panel="overview" hidden>
-      <div class="admin-panel-head"><div><h3>Learning Operations</h3><p>Live administrative overview.</p></div></div>
-      <div class="admin-grid-2">
-        <div class="admin-kpi"><small>Assignments</small><strong id="overview-assignment-count">0</strong><div class="admin-muted">Supabase-backed assignments</div></div>
-        <div class="admin-kpi"><small>Notifications</small><strong id="overview-notification-count">0</strong><div class="admin-muted">Recent notification records</div></div>
-        <div class="admin-kpi"><small>At-risk streaks</small><strong id="overview-risk-count">0</strong><div class="admin-muted">Students needing a reminder</div></div>
-        <div class="admin-kpi"><small>Registered users</small><strong id="overview-user-count">0</strong><div class="admin-muted">Current detective registry</div></div>
-      </div>
+    <div class="admin-panel" data-panel="questions" hidden>
+      <div class="admin-panel-head"><div><h3>Question Bank</h3><p>Reusable academic question data currently shipped with Code Detective.</p></div><span class="admin-chip" id="question-bank-version">Schema —</span></div>
+      <div id="question-bank-admin-content" class="admin-page-panel"><div class="admin-muted">Loading question bank…</div></div>
+    </div>
+
+    <div class="admin-panel" data-panel="units" hidden>
+      <div class="admin-panel-head"><div><h3>Units & Academic Content</h3><p>Inspect the current reusable unit structure without altering the student-facing catalog.</p></div><span class="admin-chip">Catalog view</span></div>
+      <div id="unit-admin-content" class="admin-page-panel"><div class="admin-muted">Loading academic units…</div></div>
+    </div>
+
+    <div class="admin-panel" data-panel="analytics" hidden>
+      <div class="admin-panel-head"><div><h3>Analytics & Statistics</h3><p>Aggregated learning activity calculated from live case-progress and profile records.</p></div><button class="admin-btn" type="button" id="refresh-analytics">↻ Refresh</button></div>
+      <div id="analytics-admin-content" class="admin-page-panel"><div class="admin-muted">Loading analytics…</div></div>
+    </div>
+
+    <div class="admin-panel" data-panel="settings" hidden>
+      <div class="admin-panel-head"><div><h3>Admin Settings</h3><p>Workspace controls that do not alter student permissions or authentication rules.</p></div></div>
+      <div id="settings-admin-content" class="admin-page-panel"></div>
     </div>`;
 
   const shell = document.querySelector('.shell');
-  const hero = shell?.querySelector('.hero');
-  const stats = shell?.querySelector('.stats');
-  if (stats) shell.insertBefore(wrapper, stats); else if (hero) hero.after(wrapper); else shell?.prepend(wrapper);
+  shell?.appendChild(wrapper);
 
-  wrapper.querySelectorAll('.admin-tabs button').forEach(button => button.addEventListener('click', () => switchPanel(button.dataset.view)));
+  wrapper.querySelectorAll('.admin-tabs button').forEach(button =>
+    button.addEventListener('click', () => switchPanel(button.dataset.view))
+  );
   $('#broadcast-form')?.addEventListener('submit', e => { e.preventDefault(); sendBroadcast(); });
   $('#clear-broadcast')?.addEventListener('click', () => $('#broadcast-form')?.reset());
   $('#refresh-notifications')?.addEventListener('click', loadAdminNotifications);
@@ -144,13 +230,213 @@ function ensureAdminExtensions() {
   $('#assignment-form')?.addEventListener('submit', e => { e.preventDefault(); saveAssignmentFromForm(); });
   $('#cancel-assignment-edit')?.addEventListener('click', resetAssignmentForm);
   $('#send-streak-reminders')?.addEventListener('click', sendStreakReminders);
+  $('#ai-generate-homework')?.addEventListener('click', generateHomeworkForAdmin);
+  $('#ai-generate-assignment')?.addEventListener('click', generateAssignmentForAdmin);
+  $('#ai-use-homework')?.addEventListener('click', useGeneratedHomework);
+  $('#ai-send-homework')?.addEventListener('click', sendGeneratedHomework);
+  $('#ai-use-assignment')?.addEventListener('click', useGeneratedAssignment);
+  $('#refresh-analytics')?.addEventListener('click', loadAdminAnalytics);
+
+  renderQuestionBank();
+  renderUnitCatalog();
+  renderSettings();
 }
 
 function switchPanel(name) {
-  document.querySelectorAll('#admin-extensions .admin-tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
-  document.querySelectorAll('#admin-extensions [data-panel]').forEach(p => p.hidden = p.dataset.panel !== name);
+  document.querySelectorAll('#admin-extensions .admin-tabs button').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === name)
+  );
+  document.querySelectorAll('#admin-extensions [data-panel]').forEach(p =>
+    p.hidden = p.dataset.panel !== name
+  );
   if (name === 'streaks') loadStreakRisk();
   if (name === 'notifications') loadAdminNotifications();
+  if (name === 'analytics') loadAdminAnalytics();
+}
+
+function setAdminSection(name, { updateHash = true } = {}) {
+  const valid = ['dashboard','users','questions','units','notes','assignments','ai-homework','ai-assignment','analytics','settings'];
+  const section = valid.includes(name) ? name : 'dashboard';
+  state.activeSection = section;
+
+  if (updateHash) {
+    history.replaceState(null, '', `#${section}`);
+  }
+
+  document.querySelectorAll('[data-admin-route]').forEach(button =>
+    button.classList.toggle('active', button.dataset.adminRoute === section)
+  );
+
+  const hero = $('#admin-hero');
+  const stats = $('#admin-stats');
+  const registry = $('#user-registry-section');
+  const extensions = $('#admin-extensions');
+
+  if (!extensions) return;
+
+  extensions.hidden = section === 'users';
+
+  const catalogView = !['dashboard','assignments','ai-homework','ai-assignment'].includes(section);
+  extensions.classList.toggle('catalog-view', catalogView);
+
+  if (section === 'users') {
+    hero.hidden = false;
+    stats.hidden = false;
+    registry.hidden = false;
+    switchPanel('overview');
+    return;
+  }
+
+  registry.hidden = true;
+
+  if (section === 'dashboard') {
+    hero.hidden = false;
+    stats.hidden = false;
+    switchPanel('overview');
+    return;
+  }
+
+  hero.hidden = true;
+  stats.hidden = true;
+  switchPanel(section);
+}
+
+function initAdminNavigation() {
+  document.querySelectorAll('[data-admin-route]').forEach(button => {
+    button.addEventListener('click', () => setAdminSection(button.dataset.adminRoute));
+  });
+  const initial = (window.location.hash || '#dashboard').slice(1).toLowerCase();
+  setAdminSection(initial, { updateHash: false });
+  window.addEventListener('hashchange', () => {
+    setAdminSection((window.location.hash || '#dashboard').slice(1).toLowerCase(), { updateHash: false });
+  });
+}
+
+
+function renderQuestionBank() {
+  const el = $('#question-bank-admin-content');
+  const bank = window.CODE_DETECTIVE_QUESTION_BANK;
+  const version = bank?.schemaVersion ?? '—';
+  $('#question-bank-version') && ($('#question-bank-version').textContent = `Schema v${version}`);
+  if (!el) return;
+
+  const units = Object.values(bank?.units || {});
+  if (!units.length) {
+    el.innerHTML = '<div class="empty">No question-bank units are currently available.</div>';
+    return;
+  }
+
+  const rows = units.flatMap(unit => (unit.questions || []).map(q => ({ ...q, unitTitle: unit.title })));
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty">No questions are currently available.</div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Unit</th><th>Question</th><th>Marks</th><th>Difficulty</th><th>Topics</th></tr></thead>
+        <tbody>${rows.map(q => `
+          <tr>
+            <td>${esc(q.unitTitle || q.unitId)}</td>
+            <td><strong>${esc(q.question)}</strong><div class="admin-muted" style="margin-top:6px">${esc(q.id)}</div></td>
+            <td>${Number(q.marks || 0)}</td>
+            <td><span class="admin-pill">${esc(q.difficulty || '—')}</span></td>
+            <td>${esc((q.topics || []).join(', ') || '—')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderUnitCatalog() {
+  const el = $('#unit-admin-content');
+  const bank = window.CODE_DETECTIVE_QUESTION_BANK;
+  if (!el) return;
+
+  const units = Object.values(bank?.units || {});
+  if (!units.length) {
+    el.innerHTML = '<div class="empty">No academic unit metadata is currently available.</div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="admin-catalog-grid">
+      ${units.map(unit => `
+        <article class="admin-catalog-card">
+          <h3>${esc(unit.title || unit.id)}</h3>
+          <p><strong>${esc(unit.id)}</strong> · ${(unit.questions || []).length} structured questions.</p>
+          <p style="margin-top:8px">Question schema v${esc(bank?.schemaVersion ?? '—')} · Ready for future unit extensions.</p>
+        </article>`).join('')}
+    </div>
+    <div class="admin-list" style="margin-top:16px">
+      <div class="admin-list-item admin-muted">
+        The existing case catalog remains owned by the student application. This admin view intentionally does not duplicate or rewrite it.
+      </div>
+    </div>`;
+}
+
+async function loadAdminAnalytics() {
+  const el = $('#analytics-admin-content');
+  if (el) el.innerHTML = '<div class="admin-muted">Loading live analytics…</div>';
+
+  const { data, error } = await supabase.rpc('admin_analytics');
+  if (error) {
+    state.analytics = null;
+    if (el) el.innerHTML = `<div class="admin-list-item admin-muted">Could not load analytics: ${esc(error.message)}</div>`;
+    return;
+  }
+
+  state.analytics = data || {};
+  renderAdminAnalytics();
+}
+
+function renderAdminAnalytics() {
+  const el = $('#analytics-admin-content');
+  const a = state.analytics || {};
+  if (!el) return;
+
+  const daily = Array.isArray(a.completions_by_day) ? a.completions_by_day : [];
+  const max = Math.max(1, ...daily.map(row => Number(row.count || 0)));
+
+  el.innerHTML = `
+    <div class="admin-grid-2">
+      <div class="admin-kpi"><small>Registered users</small><strong>${Number(a.total_users || 0).toLocaleString('en-IN')}</strong><div class="admin-muted">Profiles currently in the database</div></div>
+      <div class="admin-kpi"><small>Completed cases</small><strong>${Number(a.completed_cases || 0).toLocaleString('en-IN')}</strong><div class="admin-muted">Completed case-progress records</div></div>
+      <div class="admin-kpi"><small>Active · 7 days</small><strong>${Number(a.active_users_7d || 0).toLocaleString('en-IN')}</strong><div class="admin-muted">Users with a completed case in the last seven days</div></div>
+      <div class="admin-kpi"><small>Total DXP</small><strong>${Number(a.total_dxp || 0).toLocaleString('en-IN')}</strong><div class="admin-muted">Sum of stored profile DXP values</div></div>
+    </div>
+    <div class="admin-panel" style="margin-top:16px">
+      <div class="admin-panel-head"><div><h3>Case completions · last 14 days</h3><p>Aggregated from case_progress.completed_at.</p></div></div>
+      <div class="analytics-chart">
+        ${daily.length ? daily.map(row => {
+          const count = Number(row.count || 0);
+          const width = Math.round((count / max) * 100);
+          return `<div class="analytics-row"><span>${esc(row.day)}</span><div class="track"><i style="width:${width}%"></i></div><strong>${count}</strong></div>`;
+        }).join('') : '<div class="admin-muted">No completed cases are recorded for this period.</div>'}
+      </div>
+    </div>`;
+  $('#overview-case-count') && ($('#overview-case-count').textContent = Number(a.completed_cases || 0).toLocaleString('en-IN'));
+}
+
+function renderSettings() {
+  const el = $('#settings-admin-content');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="settings-list">
+      <div class="settings-item"><div><strong>Workspace theme</strong><span>Uses the existing Code Detective admin theme preference.</span></div>
+        <div class="admin-actions">
+          <button type="button" data-admin-theme="system">System</button>
+          <button type="button" data-admin-theme="dark">Dark</button>
+          <button type="button" data-admin-theme="light">Light</button>
+        </div>
+      </div>
+      <div class="settings-item"><div><strong>Authorization</strong><span>Administrator access is resolved by the secure Supabase is_admin() function.</span></div><span class="admin-chip">Protected</span></div>
+      <div class="settings-item"><div><strong>Question bank schema</strong><span>Reusable schema is loaded from the project question-bank module.</span></div><span class="admin-chip">v${esc(window.CODE_DETECTIVE_QUESTION_BANK?.schemaVersion ?? '—')}</span></div>
+    </div>`;
+  el.querySelectorAll('[data-admin-theme]').forEach(button =>
+    button.addEventListener('click', () => applyAdminTheme(button.dataset.adminTheme))
+  );
 }
 
 function getUserName(user) { return String(user?.display_name || user?.username || user?.email?.split('@')[0] || 'Detective').trim(); }
@@ -181,14 +467,7 @@ function renderRecipientPickers() {
 }
 
 async function checkAdmin() {
-  const { data: rpcData, error: rpcError } = await supabase.rpc('is_admin');
-  if (!rpcError && rpcData === true) return true;
-  const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData?.session?.user?.id;
-  if (!userId) return false;
-  const { data: roleRows, error } = await supabase.from('user_roles').select('role').eq('user_id', userId);
-  if (error) return false;
-  return roleRows?.some(row => String(row.role).toLowerCase() === 'admin') || false;
+  return isCurrentUserAdmin(supabase);
 }
 
 async function boot() {
@@ -196,15 +475,18 @@ async function boot() {
   if (error || !session) return location.replace('/index.html');
   $('#adminEmail').textContent = session.user.email || 'Administrator';
   if (!(await checkAdmin())) {
-    document.body.innerHTML = `<main class="denied"><div><span>⛔</span><h1>Admin access required</h1><p>This account is not authorized as a Code Detective administrator.</p><a href="/home.html">Return to dashboard</a></div></main>`;
+    window.location.replace(new URL('home.html', window.location.href).href);
     return;
   }
   initAdminTheme();
   ensureAdminHomeButton();
   ensureAdminExtensions();
+  initAdminNotes();
+  initAdminNavigation();
   await loadUsers();
-  await Promise.all([loadAssignments(), loadAdminNotifications(), loadStreakRisk()]);
+  await Promise.all([loadAssignments(), loadAdminNotifications(), loadStreakRisk(), loadAdminAnalytics(), loadAdminNotes()]);
   renderAdminModules();
+  setAdminSection((window.location.hash || '#dashboard').slice(1).toLowerCase(), { updateHash: false });
 }
 
 function ensureAdminHomeButton() {
@@ -312,6 +594,88 @@ function selectedAssignmentRecipients() {
   return [...document.querySelectorAll('[data-assignment-recipient]:checked')].map(el=>el.value);
 }
 
+
+let lastGeneratedHomework = null;
+let lastGeneratedAssignment = null;
+
+function renderAIGeneratedResult(containerId, result, includeAnswers) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const questions = Array.isArray(result?.questions) ? result.questions : [];
+  if (!questions.length) { el.textContent = 'The AI returned no questions. Try a more specific topic.'; return; }
+  el.innerHTML = questions.map((q, i) => `
+    <div class="ai-q">
+      <strong>${i + 1}. ${esc(q.question || '')}</strong>
+      ${q.marks ? `<div class="admin-muted">${Number(q.marks)} marks · ${esc(q.difficulty || '')}</div>` : ''}
+      ${includeAnswers && q.answer ? `<div style="margin-top:7px"><strong>Answer:</strong> ${esc(q.answer)}</div>` : ''}
+      ${q.explanation ? `<div class="admin-muted" style="margin-top:6px">${esc(q.explanation)}</div>` : ''}
+    </div>`).join('');
+}
+
+async function generateHomeworkForAdmin() {
+  const topic=$('#ai-homework-topic')?.value.trim(), subject=$('#ai-homework-subject')?.value.trim() || 'Java Programming';
+  const difficulty=$('#ai-homework-difficulty')?.value || 'Medium', count=Math.min(20,Math.max(1,Number($('#ai-homework-count')?.value||5)));
+  if(!topic) return alert('Enter a topic first.');
+  const btn=$('#ai-generate-homework'); btn.disabled=true; btn.textContent='Generating…';
+  try { lastGeneratedHomework=await generateHomework({topic,difficulty,count,subject}); renderAIGeneratedResult('ai-homework-result',lastGeneratedHomework,true); $('#ai-use-homework').disabled=false; $('#ai-send-homework').disabled=false; }
+  catch(e) { $('#ai-homework-result').textContent=e.message; }
+  finally { btn.disabled=false; btn.textContent='✨ Generate Homework'; }
+}
+
+async function generateAssignmentForAdmin() {
+  const topic=$('#ai-assignment-topic')?.value.trim(), subject=$('#ai-assignment-subject')?.value.trim() || 'Java Programming';
+  const difficulty=$('#ai-assignment-difficulty')?.value || 'Medium', count=Math.min(20,Math.max(1,Number($('#ai-assignment-count')?.value||5)));
+  if(!topic) return alert('Enter a topic first.');
+  const btn=$('#ai-generate-assignment'); btn.disabled=true; btn.textContent='Generating…';
+  try { lastGeneratedAssignment=await generateAssignment({topic,difficulty,count,subject}); renderAIGeneratedResult('ai-assignment-result',lastGeneratedAssignment,false); $('#ai-use-assignment').disabled=false; }
+  catch(e) { $('#ai-assignment-result').textContent=e.message; }
+  finally { btn.disabled=false; btn.textContent='✨ Generate Assignment Questions'; }
+}
+
+function questionsToText(result, includeAnswers) {
+  return (result?.questions || []).map((q,i) => {
+    const answer = includeAnswers && q.answer ? `\nAnswer: ${q.answer}` : '';
+    return `${i+1}. ${q.question}${q.marks ? ` (${q.marks} marks)` : ''}${answer}`;
+  }).join('\n\n');
+}
+async function sendGeneratedHomework() {
+  if(!lastGeneratedHomework) return;
+  const dueDate=$('#ai-homework-due-date')?.value;
+  const dueTime=$('#ai-homework-due-time')?.value || '23:59';
+  if(!dueDate) return alert('Choose a homework due date first.');
+  $('#assignment-id').value='';
+  $('#assignment-title').value = `${lastGeneratedHomework.topic || 'AI Generated'} Homework`;
+  $('#assignment-subject').value = lastGeneratedHomework.subject || $('#ai-homework-subject').value || 'Java Programming';
+  $('#assignment-difficulty').value = lastGeneratedHomework.difficulty || $('#ai-homework-difficulty').value;
+  $('#assignment-due-date').value = dueDate;
+  $('#assignment-due-time').value = dueTime;
+  $('#assignment-max-marks').value = Math.max(1,(lastGeneratedHomework.questions||[]).reduce((n,q)=>n+Number(q.marks||1),0));
+  $('#assignment-description').value = `AI-generated homework on ${lastGeneratedHomework.topic || 'the selected topic'}.`;
+  $('#assignment-instructions').value = questionsToText(lastGeneratedHomework,true);
+  $('#assignment-target').value = 'Students';
+  renderRecipientPickers();
+  await saveAssignmentFromForm();
+}
+
+function useGeneratedHomework() {
+  if(!lastGeneratedHomework) return;
+  $('#assignment-title').value = `${lastGeneratedHomework.topic || 'AI Generated'} Homework`;
+  $('#assignment-subject').value = lastGeneratedHomework.subject || $('#ai-homework-subject').value || 'Java Programming';
+  $('#assignment-difficulty').value = lastGeneratedHomework.difficulty || $('#ai-homework-difficulty').value;
+  $('#assignment-description').value = `AI-generated homework on ${lastGeneratedHomework.topic || 'the selected topic'}.`;
+  $('#assignment-instructions').value = questionsToText(lastGeneratedHomework,true);
+  switchPanel('assignments');
+}
+function useGeneratedAssignment() {
+  if(!lastGeneratedAssignment) return;
+  $('#assignment-title').value = `${lastGeneratedAssignment.topic || 'AI Generated'} Assignment`;
+  $('#assignment-subject').value = lastGeneratedAssignment.subject || $('#ai-assignment-subject').value || 'Java Programming';
+  $('#assignment-difficulty').value = lastGeneratedAssignment.difficulty || $('#ai-assignment-difficulty').value;
+  $('#assignment-description').value = `AI-generated assignment on ${lastGeneratedAssignment.topic || 'the selected topic'}.`;
+  $('#assignment-instructions').value = questionsToText(lastGeneratedAssignment,false);
+  switchPanel('assignments');
+}
+
 async function saveAssignmentFromForm() {
   const payload=assignmentPayloadFromForm();
   if(!payload.title||!payload.subject||!payload.due_date||!payload.due_time||payload.max_marks<=0){ alert('Please complete the required assignment fields.'); return; }
@@ -368,6 +732,16 @@ async function sendBroadcast(){
     const rows=recipients.map(recipient_id=>({title,message,type,sender_id,recipient_id,is_read:false}));
     const {error}=await supabase.from('notifications').insert(rows);
     if(error)throw error;
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      await fetch('/functions/v1/send-push', {
+        method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.session?.access_token || ''}`},
+        body:JSON.stringify({title,message,type,recipientIds:recipients})
+      });
+    } catch(pushError) {
+      console.warn('[Notifications] Native push delivery unavailable; in-app notification was still saved.', pushError);
+    }
     state.broadcasts=[{title,message,type,target,createdAt:new Date().toISOString()},...state.broadcasts];
     setStoredValue('codeDetectiveBroadcasts',state.broadcasts);
     $('#broadcast-form').reset();
@@ -444,7 +818,132 @@ async function sendStreakReminders(userIds=state.atRisk.map(u=>u.user_id)){
   try{const rows=userIds.map(id=>{const r=state.atRisk.find(x=>x.user_id===id);const days=Number(r?.streak||0);return{title:'🔥 Your streak is at risk',message:`Your ${days}-day streak is at risk. Complete at least one Code Detective case today to keep it alive.`,type:'streak',sender_id,recipient_id:id,is_read:false};});const {error}=await supabase.from('notifications').insert(rows);if(error)throw error;alert(`Streak reminder${rows.length===1?'':'s'} sent.`);}catch(error){alert(`Streak reminders failed: ${error.message}`);}}
 
 function renderAssignmentList(){const el=$('#assignment-list');if(!el)return;if(!state.assignments.length){el.innerHTML='<div class="admin-list-item admin-muted">No assignments yet. Create your first assignment above.</div>';return;}el.innerHTML=state.assignments.map(a=>`<div class="admin-list-item"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><span class="admin-chip">${esc(a.subject)}</span><h4 style="margin:8px 0 4px">${esc(a.title)}</h4><div class="admin-muted">${esc(a.difficulty)} · Due ${esc(a.due_date)} ${esc(a.due_time)} · ${Number(a.max_marks||0)} marks</div></div><div class="admin-actions"><button class="admin-btn" data-edit-assignment="${esc(a.id)}">Edit</button><button class="admin-btn danger" data-delete-assignment="${esc(a.id)}">Delete</button></div></div><div class="admin-muted" style="margin-top:9px">${esc(a.description||'No description')}<br><br>${esc(a.instructions||'No additional instructions')}</div><div class="admin-muted" style="margin-top:9px">Recipients: ${a.recipients?.length||0} · Submitted: ${a.recipients?.filter(r=>r.submitted).length||0}</div></div>`).join('');el.querySelectorAll('[data-edit-assignment]').forEach(b=>b.addEventListener('click',()=>editAssignment(b.dataset.editAssignment)));el.querySelectorAll('[data-delete-assignment]').forEach(b=>b.addEventListener('click',()=>deleteAssignment(b.dataset.deleteAssignment)));}
-function renderAdminModules(){renderAssignmentList();renderNotificationHistory();renderStreakRisk();$('#overview-assignment-count')&&($('#overview-assignment-count').textContent=state.assignments.length);$('#overview-notification-count')&&($('#overview-notification-count').textContent=state.notifications.length);$('#overview-risk-count')&&($('#overview-risk-count').textContent=state.atRisk.length);}
+async function loadAdminNotes() {
+  const el = $('#admin-notes-list');
+  if (!el) return;
+  el.innerHTML = '<div class="admin-muted">Loading notes…</div>';
+  const { data, error } = await supabase.from('global_notes').select('id,title,subject,file_name,created_at,updated_at').order('updated_at', { ascending: false });
+  if (error) {
+    el.innerHTML = `<div class="admin-muted">Could not load notes: ${esc(error.message)}</div>`;
+    return;
+  }
+  const rows = data || [];
+  if (!rows.length) {
+    el.innerHTML = '<div class="admin-muted">No shared notes published yet.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(n => `<div class="notes-admin-item"><div><strong>${esc(n.title)}</strong><span>${esc(n.subject || 'General')}${n.file_name ? ` · ${esc(n.file_name)}` : ''}</span></div><button type="button" class="admin-btn danger" data-delete-global-note="${esc(n.id)}">Delete</button></div>`).join('');
+  el.querySelectorAll('[data-delete-global-note]').forEach(btn => btn.addEventListener('click', () => deleteAdminNote(btn.dataset.deleteGlobalNote)));
+}
+
+async function loadNoteFileText(file) {
+  if (!file) return '';
+  const name = file.name.toLowerCase();
+  if (/\.(txt|md|markdown|csv|json|html?|css|js|ts|tsx|jsx|java|py|c|cpp|h|hpp|sql|xml|yaml|yml|log)$/i.test(name) || file.type.startsWith('text/')) {
+    return file.text();
+  }
+  if (name.endsWith('.pdf')) {
+    await loadAdminExternalScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');
+    const pdfjsLib = globalThis.pdfjsLib;
+    if (!pdfjsLib) throw new Error('PDF parser could not be initialized.');
+    if (pdfjsLib.GlobalWorkerOptions) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const pages = [];
+    for (let i=1; i<=pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      pages.push(content.items.map(item => item.str || '').join(' '));
+    }
+    return pages.join('\n\n');
+  }
+  if (name.endsWith('.docx')) {
+    await loadAdminExternalScript('https://unpkg.com/mammoth@1.9.0/mammoth.browser.min.js');
+    if (!globalThis.mammoth) throw new Error('DOCX parser could not be initialized.');
+    const result = await globalThis.mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+    return result.value || '';
+  }
+  if (name.endsWith('.doc')) throw new Error('Legacy .DOC files cannot be reliably extracted in the browser. Please convert it to DOCX or PDF first.');
+  throw new Error('Unsupported file type.');
+}
+
+async function loadAdminExternalScript(src) {
+  return new Promise((resolve, reject) => {
+    const existing = [...document.scripts].find(s => s.src === src);
+    if (existing) return resolve();
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Could not load document parser: ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+async function publishAdminNote(event) {
+  event.preventDefault();
+  const status = $('#admin-note-status');
+  const button = $('#admin-note-save');
+  const titleEl = $('#admin-note-title');
+  const subjectEl = $('#admin-note-subject');
+  const contentEl = $('#admin-note-content');
+  const fileEl = $('#admin-note-file');
+  const title = titleEl.value.trim();
+  const subject = subjectEl.value.trim() || 'General';
+  const file = fileEl.files?.[0];
+  let content = contentEl.value.trim();
+
+  if (!title && file) titleEl.value = file.name.replace(/\.[^/.]+$/, '');
+  const finalTitle = title || titleEl.value.trim();
+  if (!finalTitle) { status.textContent = 'Enter a note title or choose a file.'; status.className = 'notes-admin-status error'; return; }
+  if (file) {
+    try { content = (await loadNoteFileText(file)).trim(); }
+    catch (error) { status.textContent = error.message || String(error); status.className = 'notes-admin-status error'; return; }
+  }
+  if (!content) { status.textContent = 'Add a file or paste note content before publishing.'; status.className = 'notes-admin-status error'; return; }
+
+  button.disabled = true;
+  button.textContent = 'Publishing…';
+  status.textContent = 'Saving to the shared Notes Library…';
+  status.className = 'notes-admin-status';
+  try {
+    const { error } = await supabase.from('global_notes').insert({ title: finalTitle, subject, content, file_name: file?.name || null });
+    if (error) throw error;
+    status.textContent = '✓ Published. Students will see this note in Available Notes.';
+    status.className = 'notes-admin-status success';
+    titleEl.value = ''; subjectEl.value = 'General'; contentEl.value = ''; fileEl.value = '';
+    await loadAdminNotes();
+  } catch (error) {
+    status.textContent = `Could not publish note: ${error.message}`;
+    status.className = 'notes-admin-status error';
+  } finally {
+    button.disabled = false;
+    button.textContent = '＋ Publish Note';
+  }
+}
+
+async function deleteAdminNote(id) {
+  if (!confirm('Delete this shared note for all students?')) return;
+  const { error } = await supabase.from('global_notes').delete().eq('id', id);
+  if (error) return alert(`Note could not be deleted: ${error.message}`);
+  await loadAdminNotes();
+}
+
+function initAdminNotes() {
+  $('#admin-note-form')?.addEventListener('submit', publishAdminNote);
+  $('#admin-note-clear')?.addEventListener('click', () => {
+    $('#admin-note-title').value = '';
+    $('#admin-note-subject').value = 'General';
+    $('#admin-note-content').value = '';
+    $('#admin-note-file').value = '';
+    $('#admin-note-status').textContent = '';
+    $('#admin-note-status').className = 'notes-admin-status';
+  });
+  $('#admin-note-file')?.addEventListener('change', e => {
+    const file = e.target.files?.[0];
+    if (file && !$('#admin-note-title').value.trim()) $('#admin-note-title').value = file.name.replace(/\.[^/.]+$/, '');
+  });
+}
+
+function renderAdminModules(){renderAssignmentList();renderNotificationHistory();renderStreakRisk();$('#overview-assignment-count')&&($('#overview-assignment-count').textContent=state.assignments.length);$('#overview-notification-count')&&($('#overview-notification-count').textContent=state.notifications.length);$('#overview-risk-count')&&($('#overview-risk-count').textContent=state.atRisk.length);if(state.analytics)renderAdminAnalytics();}
 
 async function openUser(id){const user=state.users.find(u=>u.id===id);if(!user)return;state.selected=user;$('#drawer').classList.add('open');$('#overlay').classList.add('show');document.body.classList.add('locked');const name=getUserName(user);$('#detailName').textContent=name;$('#detailEmail').textContent=user.email||'—';$('#detailAvatar').textContent=user.avatar||'🕵️';$('#accountDetails').innerHTML=detailRows([['User ID',user.id],['Username',user.username||'—'],['Joined',fmt(user.created_at)],['Last sign-in',fmt(user.last_sign_in_at)],['Last profile update',fmt(user.updated_at)]]);$('#performanceDetails').innerHTML=detailRows([['XP / total_dxp',Number(user.total_dxp||0).toLocaleString('en-IN')],['Cases solved',`${Number(user.cases_solved||0)} / ${state.totalCases}`],['Current case',user.current_case_id||'—'],['Accuracy',`${Number(user.accuracy||0)}%`],['Streak',Number(user.streak||0)],['Rank',user.rank||'Rookie']]);$('#caseList').innerHTML='<div class="case-loading">Loading case history…</div>';const {data,error}=await supabase.rpc('admin_user_progress',{target_user_id:id});if(error){$('#caseList').innerHTML=`<div class="case-error">${esc(error.message)}</div>`;return;}const rows=Array.isArray(data)?data:[];$('#caseList').innerHTML=rows.length?rows.map(r=>`<div class="case-row"><div><span class="case-icon">${r.completed?'✓':'○'}</span><div><strong>${esc(r.case_id)}</strong><small>${r.completed?'Completed':'In progress'} · ${esc(fmt(r.completed_at||r.updated_at))}</small></div></div><b>+${Number(r.xp_earned||0)} XP</b></div>`).join(''):'<div class="empty small">No case progress recorded yet.</div>';}
 function detailRows(rows){return rows.map(([a,b])=>`<div class="detail-row"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join('')}

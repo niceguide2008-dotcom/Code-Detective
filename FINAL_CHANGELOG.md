@@ -42,3 +42,14 @@
 ## Android
 
 - Existing Capacitor Android project preserved for later APK/AAB release packaging.
+
+
+## Authentication + Separate Admin Dashboard
+
+- Added a dedicated, role-protected Admin Dashboard with hash-routed sections for Overview, Users, Question Bank, Units & Academic Content, Assignments, Analytics, and Settings.
+- Admin authorization now relies on the secure `public.is_admin()` Supabase RPC; the frontend no longer falls back to directly reading role rows for authorization.
+- Added secure server-side admin RPCs for user registry, user case history, and analytics.
+- Added Forgot Password request UI and a dedicated password-reset page using Supabase Auth.
+- Added Google OAuth sign-in using the existing Supabase Auth client, with profile creation/reuse and role-based post-login routing.
+- Google authentication never assigns administrator privileges.
+- Added `AUTH_ADMIN_SECURITY_UPGRADE.sql`; run it in Supabase after `FINAL_UPGRADE.sql`.
