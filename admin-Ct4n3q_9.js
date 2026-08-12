@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Detective | Authentication</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            font-family: Inter, Arial, sans-serif;
+            color: #eef6ff;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(0, 229, 255, .10), transparent 30%),
+                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, .12), transparent 30%),
+                #050b12;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 430px;
+            padding: 34px;
+            border: 1px solid rgba(0, 229, 255, .22);
+            border-radius: 22px;
+            background: rgba(10, 20, 32, .94);
+            box-shadow: 0 0 50px rgba(0, 229, 255, .08);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 34px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 27px;
+        }
+
+        .cyan {
+            color: #00e5ff;
+        }
+
+        .subtitle {
+            margin: 10px 0 28px;
+            text-align: center;
+            color: #8394a7;
+            line-height: 1.5;
+        }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 25px;
+            padding: 5px;
+            border-radius: 12px;
+            background: #07111c;
+        }
+
+        .tab {
+            border: 0;
+            border-radius: 9px;
+            padding: 11px;
+            cursor: pointer;
+            color: #8495a8;
+            background: transparent;
+            font-weight: 700;
+        }
+
+        .tab.active {
+            color: #001014;
+            background: #00e5ff;
+        }
+
+        .field {
+            margin-bottom: 17px;
+        }
+
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-input-wrapper input {
+            padding-right: 48px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 0;
+            background: transparent;
+            color: #8fa3b7;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .password-toggle:hover {
+            color: #00e5ff;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            color: #a9b8c7;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #24364a;
+            border-radius: 10px;
+            outline: none;
+            color: white;
+            background: #08131f;
+        }
+
+        input:focus {
+            border-color: #00e5ff;
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, .08);
+        }
+
+        #nameField {
+            display: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 5px;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #001014;
+            background: #00e5ff;
+            font-size: 15px;
+            font-weight: 900;
+        }
+
+        .submit-btn:disabled {
+            cursor: not-allowed;
+            opacity: .6;
+        }
+
+        #message {
+            display: none;
+            margin-top: 18px;
+            padding: 12px;
+            border-radius: 9px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        #message.error {
+            display: block;
+            color: #ff6b81;
+            border: 1px solid rgba(255, 71, 87, .25);
+            background: rgba(255, 71, 87, .08);
+        }
+
+        #message.success {
+            display: block;
+            color: #4dffc3;
+            border: 1px solid rgba(77, 255, 195, .25);
+            background: rgba(77, 255, 195, .08);
+        }
+
+        .footer {
+            margin-top: 25px;
+            text-align: center;
+            color: #53667a;
+            font-size: 12px;
+        }
+
+        /* Midnight Gold palette */
+        body {
+            color: #FFFFFF;
+            background: radial-gradient(circle at 20% 20%, rgba(245, 185, 66, .10), transparent 30%), radial-gradient(circle at 80% 80%, rgba(201, 146, 28, .10), transparent 30%), #0E1117;
+        }
+        .auth-card { border-color: #303B4D; background: rgba(27, 34, 48, .96); box-shadow: 0 0 50px rgba(245, 185, 66, .08); }
+        .cyan { color: #F5B942; }
+        .subtitle, .footer { color: #7B8798; }
+        .tabs { background: #1B2230; }
+        .tab { color: #B6BECF; }
+        .tab.active, .submit-btn { color: #0E1117; background: #F5B942; }
+        label { color: #B6BECF; }
+        input { color: #FFFFFF; border-color: #303B4D; background: #222B3A; }
+        input:focus { border-color: #F5B942; box-shadow: 0 0 0 3px rgba(245, 185, 66, .10); }
+        #message.error { color: #FF5D73; border-color: rgba(255,93,115,.25); background: rgba(255,93,115,.08); }
+        #message.success { color: #38D39F; border-color: rgba(56,211,159,.25); background: rgba(56,211,159,.08); }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+                padding: 18px 12px;
+            }
+
+            .auth-card {
+                margin: auto 0;
+                padding: 24px 18px;
+                border-radius: 16px;
+            }
+
+            .logo { font-size: 30px; }
+            h1 { font-size: 23px; }
+            .subtitle { margin-bottom: 20px; font-size: 14px; }
+            .tabs { margin-bottom: 20px; }
+            input, .submit-btn { min-height: 48px; font-size: 16px; }
+            .footer { font-size: 10px; line-height: 1.5; }
+        }
+
+        @media (max-height: 650px) {
+            body { align-items: flex-start; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="auth-card">
+
+    <div class="logo">🕵️‍♂️</div>
+
+    <h1>
+        Code<span class="cyan">Detective</span>
+    </h1>
+
+    <p class="subtitle">
+        Authenticate to enter Detective Headquarters.
+    </p>
+
+    <div class="tabs">
+        <button id="loginTab" class="tab active" type="button">LOGIN</button>
+        <button id="signupTab" class="tab" type="button">SIGN UP</button>
+    </div>
+
+    <form id="authForm">
+
+        <div class="field" id="nameField">
+            <label>DETECTIVE NAME</label>
+            <input
+                id="displayName"
+                type="text"
+                placeholder="Eddie"
+                autocomplete="name"
+            >
+        </div>
+
+        <div class="field">
+            <label>EMAIL</label>
+            <input
+                id="email"
+                type="email"
+                placeholder="detective@example.com"
+                autocomplete="email"
+                required
+            >
+        </div>
+
+        <div class="field">
+            <label>PASSWORD</label>
+            <div class="password-input-wrapper">
+                <input
+                    id="password"
+                    type="password"
+                    placeholder="Minimum 6 characters"
+                    autocomplete="current-password"
+                    minlength="6"
+                    required
+                >
+                <button
+                    id="passwordToggle"
+                    class="password-toggle"
+                    type="button"
+                    aria-label="Show password"
+                >👁</button>
+            </div>
+        </div>
+
+        <button id="submitBtn" class="submit-btn" type="submit">
+            ENTER HEADQUARTERS
+        </button>
+
+    </form>
+
+    <div id="message"></div>
+
+    <div class="footer">
+        SECURE DETECTIVE AUTHENTICATION • CODE DETECTIVE
+    </div>
+
+</div>
+
+<script type="module" src="/auth.js"></script>
+
+</body>
+</html>

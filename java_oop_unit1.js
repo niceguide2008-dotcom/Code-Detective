@@ -1,144 +1,8620 @@
-/* Object Oriented Programming Using Java — Unit I investigation pack.
-   Kept as data so the existing Code Detective engine can render it without a UI redesign. */
-(function () {
-  const cases = [
-    ['JOP-U1-01','The Blueprint Heist','Overview of Object Oriented Programming','Senior Investigator',250,'12 min','Object Hunter','A dispatch system lost the blueprint that connects evidence to the detectives who process it.','class Evidence { String label; }','Class and object roles were confused.','A class is a blueprint; an object is one usable instance.','new Evidence()'],
-    ['JOP-U1-02','The Paradigm Switch','Object Oriented Programming Paradigms','Senior Investigator',260,'13 min','Paradigm Pathfinder','A legacy records room mixes procedural instructions with object responsibilities, and cases are being filed by the wrong clerk.','class CaseFile { void file() { } }','Related state and behavior should travel together in an object.','OOP organizes programs around collaborating objects.','Move filing behavior into CaseFile'],
-    ['JOP-U1-03','The Four-Seal Breach','Features of OOP','Senior Investigator',275,'14 min','Encapsulation Guardian','A suspect altered protected evidence because every field in the archive was openly exposed.','class Vault { public String code; }','The vault exposes state that should be protected.','Encapsulation protects data behind controlled methods.','private String code;'],
-    ['JOP-U1-04','The Java Jurisdiction','Overview of Java','Senior Investigator',250,'12 min','Java Investigator','A cross-platform case file works at one station but an officer claims Java source runs directly on every machine.','public class Brief { public static void main(String[] args) {} }','Java source is compiled to bytecode, then the JVM executes it.','Java uses the JVM to support platform independence.','Compile with javac, run with java'],
-    ['JOP-U1-05','The Buzzword Alibi','Java Buzzwords','Senior Investigator',270,'13 min','Platform Tracker','A vendor promises “write once, run anywhere” but deleted the component that makes that promise credible.','// bytecode runs on a JVM','The JVM is the runtime bridge between bytecode and an operating system.','Java is portable, object-oriented, robust and secure.','Install a compatible JVM'],
-    ['JOP-U1-06','The Evidence Locker Types','Data Types, Variables and Arrays','Senior Investigator',300,'15 min','Type Forensic Analyst','The property desk stores a badge number in the wrong kind of container, corrupting an entire evidence list.','int[] badgeIds = new int[3];\nbadgeIds[3] = 404;','Arrays have fixed length and valid indexes start at zero.','Variables have a declared type; arrays store indexed values of one type.','badgeIds[2] = 404;'],
-    ['JOP-U1-07','The Operator Forgery','Operators','Senior Investigator',280,'14 min','Operator Examiner','A reward ledger reports the wrong total after a clerk used an operator that looked nearly identical to an assignment.','int points = 40;\npoints += 10 * 2;','Operator precedence evaluates multiplication before addition assignment.','Operators perform arithmetic, comparison, logical and assignment work.','// points is 60'],
-    ['JOP-U1-08','The Missing Exit Route','Control Statements','Senior Investigator',300,'15 min','Control Flow Detective','An alert loop never stops searching because its exit condition was placed outside the patrol route.','int i = 0;\nwhile (i < 3) { System.out.println(i); }','The loop variable never changes, so the condition never becomes false.','Control statements decide which code runs and how often.','i++;'],
-    ['JOP-U1-09','The Witness Profile','Classes and Objects','Master Detective',500,'18 min','Class Architect','A witness profile cannot remember its own name because field and object responsibilities were never established.','class Witness { String name; void introduce() { System.out.println(name); } }','An object stores state in fields and exposes behavior through methods.','Each object is an instance with its own state.','Witness w = new Witness(); w.name = "Mira";'],
-    ['JOP-U1-10','The Unnamed Arrival','Constructors','Senior Investigator',320,'16 min','Constructor Analyst','Every new detective arrives without an identity because the intake procedure was never invoked correctly.','class Detective { Detective(String name) { } }\nDetective d = new Detective();','A parameterized constructor must be called with matching arguments.','Constructors initialize objects when new creates them.','new Detective("Asha")'],
-    ['JOP-U1-11','The Silent Informant','Methods','Master Detective',500,'18 min','Method Investigator','An informant calculates a lead but never returns it to headquarters.','int scoreLead(int clues) { int score = clues * 10; }','A non-void method must return a value on every valid path.','Methods package a named task and may receive parameters or return values.','return score;'],
-    ['JOP-U1-12','The Restricted Archive','Access Specifiers','Senior Investigator',300,'15 min','Access Control Detective','A field officer tries to read a sealed archive field directly from outside its class.','class Archive { private String seal = "RED"; }\n// archive.seal','private members are available only inside their declaring class.','Access specifiers control visibility: private, default, protected and public.','public String getSeal() { return seal; }'],
-    ['JOP-U1-13','The Shared Ledger','Static Members','Chief Detective',800,'22 min','Static Specialist','The headquarters counter resets for every detective, hiding the real number of active investigations.','class CaseCounter { int openCases = 0; }','A value shared by every instance belongs to the class, not an individual object.','Static members belong to the class and can be used without an object.','static int openCases = 0;']
-  ];
-  const questionTypes = ['Multiple Choice','Fill in the Blank','Drag and Drop','Arrange the Steps','Identify the Error','Predict Output','Complete the Java Code','Match the Following'];
-  const icons = ['🔎','🧩','💾','🧠','⚖️','🧪'];
-  // Each core decision is deliberately built from plausible Java misconceptions.
-  // `at` is zero-based and is varied across all three investigation stages.
-  const challenges = {
-    'JOP-U1-01': {
-      suspect: { prompt: 'Which statement correctly identifies the missing blueprint relationship?', correct: '`Evidence` is a class; each `new Evidence()` expression produces a distinct object.', distractors: ['`Evidence` is an object because it contains a field.', '`String label` is the blueprint for every Evidence record.', 'A class and an object are interchangeable names in Java.'], at: 1 },
-      reason: { prompt: 'Why does that distinction matter when evidence must be kept separately?', correct: 'Objects carry independent runtime state while a class describes the common structure and behavior.', distractors: ['All fields in a class are automatically shared by every object.', 'Only static fields can be stored in an object.', 'The JVM copies a class definition whenever a field changes.'], at: 2 },
-      fix: { prompt: 'Which reconstruction gives two detectives two independent evidence records?', correct: 'Evidence first = new Evidence(); Evidence second = new Evidence();', distractors: ['class first = new Evidence(); class second = new Evidence();', 'Evidence first, second = Evidence;', 'new Evidence(first, second);'], at: 3 }
-    },
-    'JOP-U1-02': {
-      suspect: { prompt: 'Which design decision best repairs the mixed-up procedural record room?', correct: 'Give each `CaseFile` its own data and filing behavior, then let objects collaborate.', distractors: ['Place every case field in one global static array.', 'Use only free-standing methods because classes cannot contain behavior.', 'Create one `CaseFile` class but keep all case data in unrelated variables.'], at: 3 },
-      reason: { prompt: 'What OOP principle is being applied?', correct: 'Cohesion: state and the operations that use it are grouped in the same meaningful object.', distractors: ['Inheritance: every method must extend another method.', 'Compilation: methods become objects at runtime.', 'Overloading: fields are selected by parameter type.'], at: 1 },
-      fix: { prompt: 'Which code direction preserves responsibility inside the model?', correct: 'class CaseFile { String id; void file() { /* use this.id */ } }', distractors: ['static String id; static void fileAllCases() { }', 'void file(CaseFile c) { String id = ""; } // no CaseFile state', 'CaseFile = void file();'], at: 2 }
-    },
-    'JOP-U1-03': {
-      suspect: { prompt: 'Which exposure caused the vault breach?', correct: 'The sensitive `code` field is public, so any caller can overwrite it directly.', distractors: ['The field has no constructor parameter.', 'The class has too few methods.', 'A String field cannot be stored in a class.'], at: 2 },
-      reason: { prompt: 'Which OOP feature is violated by direct mutable access?', correct: 'Encapsulation, because the class cannot enforce validation before its internal state changes.', distractors: ['Polymorphism, because the field has one type.', 'Abstraction, because every class needs an interface.', 'Inheritance, because `Vault` has no parent class.'], at: 3 },
-      fix: { prompt: 'Which repair allows controlled access without exposing the vault code?', correct: 'private String code; public boolean matches(String attempt) { return code.equals(attempt); }', distractors: ['public String code; public void setCode(String c) { code = c; }', 'protected static String code;', 'String code; // default access is always private'], at: 1 }
-    },
-    'JOP-U1-04': {
-      suspect: { prompt: 'Which statement accurately describes Java execution across platforms?', correct: '`javac` compiles source to bytecode; a compatible JVM executes that bytecode on each platform.', distractors: ['A `.java` file is executed directly by the operating system.', 'Java recompiles itself every time a method is called.', 'The JDK is only a text editor and cannot compile code.'], at: 1 },
-      reason: { prompt: 'What makes the claim "write once, run anywhere" possible?', correct: 'The JVM provides a platform-specific runtime for a shared bytecode format.', distractors: ['Every Java program uses the same physical processor.', 'Source code contains no operating-system dependencies.', 'The `main` method converts Java into machine code.'], at: 0 },
-      fix: { prompt: 'Which command sequence is valid for `Brief.java`?', correct: 'javac Brief.java, then java Brief', distractors: ['java Brief.java, then javac Brief.class', 'jvm Brief.java, then run Brief.class', 'compile Brief, then main Brief.java'], at: 3 }
-    },
-    'JOP-U1-05': {
-      suspect: { prompt: 'Which component is missing when bytecode cannot run on a target machine?', correct: 'A compatible Java Virtual Machine (JVM).', distractors: ['A second copy of the `.java` source file.', 'A JavaScript runtime.', 'A different class name for each operating system.'], at: 3 },
-      reason: { prompt: 'Why is the JVM relevant to Java portability?', correct: 'It interprets or JIT-compiles the same bytecode for the host platform.', distractors: ['It removes all type checking from Java.', 'It changes every program into JavaScript.', 'It makes source files execute before compilation.'], at: 2 },
-      fix: { prompt: 'What is the most accurate deployment response?', correct: 'Provide a supported JRE/JVM for the target platform and distribute the compiled classes or JAR.', distractors: ['Convert each class to a separate operating-system-specific Java syntax.', 'Rename `main` for Linux and Windows.', 'Replace every object with a static variable.'], at: 0 }
-    },
-    'JOP-U1-06': {
-      suspect: { prompt: 'What is the precise failure in the recovered array evidence?', correct: '`badgeIds[3]` is outside an array of length 3; valid indexes are 0, 1 and 2.', distractors: ['An `int` array cannot hold 404.', 'Arrays must start at index 1.', 'The array length changes when a value is assigned.'], at: 2 },
-      reason: { prompt: 'Why is this a runtime problem rather than a type conversion issue?', correct: 'The expression uses an `int` index, but the index does not identify an existing array element.', distractors: ['Java requires array indexes to be `long`.', 'The declared array type becomes String after assignment.', 'The compiler treats all index values as valid.'], at: 1 },
-      fix: { prompt: 'Which repair stores the third badge correctly?', correct: 'badgeIds[2] = 404;', distractors: ['badgeIds[3] = 404; // Java expands the array', 'badgeIds.length = 4;', 'badgeIds[-1] = 404;'], at: 3 }
-    },
-    'JOP-U1-07': {
-      suspect: { prompt: 'What value is printed by `int points = 40; points += 10 * 2;`?', correct: '60, because `10 * 2` is evaluated before the `+=` assignment.', distractors: ['100, because `+=` runs before multiplication.', '50, because only the first operand is added.', '80, because `+=` doubles the existing value.'], at: 0 },
-      reason: { prompt: 'Which rule explains the ledger result?', correct: 'Multiplicative operators have higher precedence than additive and assignment operators.', distractors: ['Assignment always happens before arithmetic.', 'Java evaluates binary operators from right to left.', 'Compound assignment ignores the right-hand expression.'], at: 3 },
-      fix: { prompt: 'Which rewrite makes the intended precedence obvious without changing the result?', correct: 'points += (10 * 2);', distractors: ['points =+ 10 * 2;', 'points = points + 10 + 2;', 'points += 10; * 2;'], at: 2 }
-    },
-    'JOP-U1-08': {
-      suspect: { prompt: 'Why does the recovered `while` loop never finish?', correct: '`i` is tested but never updated inside the loop body, so `i < 3` remains true.', distractors: ['`while` loops may not contain `println`.', 'The comparison operator must be `=`.', 'The variable must be declared static.'], at: 1 },
-      reason: { prompt: 'Which control-flow condition must hold to terminate this loop?', correct: 'The loop body must eventually make the guard expression evaluate to false.', distractors: ['Every loop must use a `break` statement.', 'The guard must be true before each iteration.', 'Only `for` loops can update a counter.'], at: 2 },
-      fix: { prompt: 'Which minimal repair preserves the intended three patrol reports?', correct: 'while (i < 3) { System.out.println(i); i++; }', distractors: ['while (i <= 3) { System.out.println(i); }', 'while (i < 3) { i = 0; }', 'if (i < 3) { System.out.println(i); }'], at: 0 }
-    },
-    'JOP-U1-09': {
-      suspect: { prompt: 'What action creates a usable witness object with its own `name` field?', correct: 'Instantiate `Witness`, then assign the field on that instance before calling `introduce()`.', distractors: ['Call `Witness.introduce()` before any object exists.', 'Assign `name` directly to the class without an object.', 'Declare a second `Witness` class inside `main`.'], at: 3 },
-      reason: { prompt: 'Why can two witness objects remember different names?', correct: 'Each instance owns a separate copy of non-static instance fields.', distractors: ['A class duplicates its method source for every object.', 'Java converts instance fields to static values during construction.', 'Only String variables can differ between objects.'], at: 0 },
-      fix: { prompt: 'Which sequence is valid Java?', correct: 'Witness w = new Witness(); w.name = "Mira"; w.introduce();', distractors: ['Witness w; w.name = "Mira"; w.introduce();', 'Witness.name = "Mira"; Witness.introduce();', 'new Witness.name("Mira");'], at: 1 }
-    },
-    'JOP-U1-10': {
-      suspect: { prompt: 'Why does `new Detective()` fail for the recovered class?', correct: 'The class declares only `Detective(String)`, so no zero-argument constructor is available.', distractors: ['Constructor names may not match their class.', 'A constructor must return `void`.', 'String arguments cannot initialize objects.'], at: 2 },
-      reason: { prompt: 'What happens when a class declares any constructor?', correct: 'Java does not also generate the implicit no-argument constructor.', distractors: ['Java generates a no-argument constructor with empty Strings.', 'All constructors become static.', 'The JVM discards declared constructor parameters.'], at: 1 },
-      fix: { prompt: 'Which instantiation matches the available constructor exactly?', correct: 'Detective d = new Detective("Asha");', distractors: ['Detective d = new Detective;', 'Detective d = Detective("Asha");', 'Detective d = new Detective(42);'], at: 3 }
-    },
-    'JOP-U1-11': {
-      suspect: { prompt: 'What compiler obligation is unmet by `int scoreLead(int clues) { int score = clues * 10; }`?', correct: 'The method promises an `int` result but reaches its end without returning one.', distractors: ['A local variable may not use multiplication.', 'Methods returning int cannot accept int parameters.', 'The method must be named `main`.'], at: 1 },
-      reason: { prompt: 'Why is printing `score` not an equivalent repair?', correct: 'Printing has a side effect but does not provide an `int` value to the caller.', distractors: ['`println` returns the last printed value.', 'Java automatically returns local variables after printing.', 'A void method can be assigned to an int variable.'], at: 3 },
-      fix: { prompt: 'Which line correctly completes the method?', correct: 'return score;', distractors: ['print score;', 'return void;', 'break score;'], at: 0 }
-    },
-    'JOP-U1-12': {
-      suspect: { prompt: 'Why is `archive.seal` inaccessible from another class?', correct: '`seal` is private, so only members of `Archive` may access it directly.', distractors: ['The field is a String instead of an int.', 'Objects cannot have fields outside constructors.', 'A private class cannot create objects.'], at: 0 },
-      reason: { prompt: 'Which access-control purpose is served here?', correct: 'The class can expose a controlled operation without allowing callers to mutate or inspect its representation freely.', distractors: ['private makes a member available to all subclasses everywhere.', 'public removes the need for methods.', 'default access is visible to every Java program.'], at: 2 },
-      fix: { prompt: 'Which method safely exposes the sealed value for reading?', correct: 'public String getSeal() { return seal; }', distractors: ['private String getSeal() { return archive.seal; }', 'public static String seal;', 'String getSeal(Archive archive) { return archive; }'], at: 1 }
-    },
-    'JOP-U1-13': {
-      suspect: { prompt: 'Why does an instance `openCases` field fail as a headquarters-wide counter?', correct: 'Every `new CaseCounter()` receives a separate instance field, so the count is not shared.', distractors: ['int fields cannot store counters.', 'Only constructors can change an int field.', 'A class may contain at most one object.'], at: 3 },
-      reason: { prompt: 'What does `static` change about a member?', correct: 'It belongs to the class itself and is shared by all instances of that class.', distractors: ['It becomes immutable after the first assignment.', 'It belongs only to the most recently created object.', 'It can be accessed only inside a constructor.'], at: 1 },
-      fix: { prompt: 'Which declaration creates one shared counter?', correct: 'static int openCases = 0;', distractors: ['final int openCases = 0;', 'public int openCases = new int();', 'CaseCounter.openCases() = 0;'], at: 2 }
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Detective: Find the Java Criminal</title>
+  <meta name="description"
+    content="A gamified Java debugging app where you solve programming crimes. Level up your debugging skills through immersive detective cases." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE0IiBmaWxsPSIjMGIxMTE4Ii8+CjxjaXJjbGUgY3g9IjI4IiBjeT0iMjgiIHI9IjE1IiBmaWxsPSJub25lIiBzdHJva2U9IiNGNUI5NDIiIHN0cm9rZS13aWR0aD0iNiIvPgo8cGF0aCBkPSJNMzkgMzkgTDUzIDUzIiBzdHJva2U9IiNGNUI5NDIiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxjaXJjbGUgY3g9IjI4IiBjeT0iMjgiIHI9IjciIGZpbGw9IiMxMjM0NGEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMyIgZmlsbD0iIzQzZDlmZiIvPgo8cGF0aCBkPSJNMTcgMTQgUTI4IDYgMzkgMTQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzQzZDlmZiIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+" />
+  <link rel="shortcut icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE0IiBmaWxsPSIjMGIxMTE4Ii8+CjxjaXJjbGUgY3g9IjI4IiBjeT0iMjgiIHI9IjE1IiBmaWxsPSJub25lIiBzdHJva2U9IiNGNUI5NDIiIHN0cm9rZS13aWR0aD0iNiIvPgo8cGF0aCBkPSJNMzkgMzkgTDUzIDUzIiBzdHJva2U9IiNGNUI5NDIiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxjaXJjbGUgY3g9IjI4IiBjeT0iMjgiIHI9IjciIGZpbGw9IiMxMjM0NGEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMyIgZmlsbD0iIzQzZDlmZiIvPgo8cGF0aCBkPSJNMTcgMTQgUTI4IDYgMzkgMTQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzQzZDlmZiIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+" />
+  <meta name="application-name" content="Code Detective" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+    <link rel="manifest" href="/assets/manifest-CMNsDWOY.json">
+<meta name="theme-color" content="#F5B942">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Code Detective">
+
+  <style>
+    /* =============================================
+       DESIGN TOKENS & ROOT VARIABLES
+    ============================================= */
+    :root {
+      --cyan: #F5B942;
+      --cyan-dim: #C9921C;
+      --cyan-glow: rgba(245, 185, 66, 0.15);
+      --amber: #FFD166;
+      --amber-dim: #C9921C;
+      --amber-glow: rgba(255, 209, 102, 0.15);
+      --crimson: #FF5D73;
+      --crimson-dim: #C9475B;
+      --crimson-glow: rgba(255, 93, 115, 0.15);
+      --green: #38D39F;
+      --green-glow: rgba(56, 211, 159, 0.15);
+      --purple: #4FA9FF;
+      --purple-glow: rgba(79, 169, 255, 0.15);
+      --accent: #16A34A;
+      --accent-soft: rgba(22, 163, 74, 0.12);
+
+      --bg-primary: #0E1117;
+      --bg-secondary: #1B2230;
+      --bg-tertiary: #222B3A;
+      --bg-card: #1B2230;
+      --bg-card-hover: #222B3A;
+      --bg-terminal: #0E1117;
+      --border: #303B4D;
+      --border-active: rgba(245, 185, 66, 0.45);
+      --surface-subtle: rgba(255, 255, 255, 0.04);
+      --surface-strong: rgba(255, 255, 255, 0.08);
+      --surface-contrast: rgba(255, 255, 255, 0.02);
+      --nav-bg: rgba(7, 11, 17, 0.9);
+      --hero-bg: linear-gradient(135deg, rgba(22, 34, 56, 0.95), rgba(9, 18, 34, 0.95));
+      --shadow-soft: 0 16px 42px rgba(0, 0, 0, 0.23);
+
+      --text-primary: #FFFFFF;
+      --text-secondary: #B6BECF;
+      --text-muted: #7B8798;
+      --text-code: #FFFFFF;
+
+      --font-ui: 'Inter', sans-serif;
+      --font-code: 'Fira Code', 'JetBrains Mono', monospace;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+
+      --shadow-cyan: 0 0 20px rgba(245, 185, 66, 0.2);
+      --shadow-amber: 0 0 20px rgba(255, 209, 102, 0.2);
+      --shadow-crimson: 0 0 20px rgba(255, 93, 115, 0.2);
+      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
+    body[data-theme="light"] {
+      --bg-primary: #f5f7fb;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #eef2f7;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f3f6fb;
+      --bg-terminal: #f8fafc;
+      --border: #d9e2ee;
+      --border-active: rgba(22, 163, 74, 0.35);
+      --surface-subtle: rgba(15, 23, 42, 0.04);
+      --surface-strong: rgba(15, 23, 42, 0.06);
+      --surface-contrast: rgba(255, 255, 255, 0.85);
+      --nav-bg: rgba(255, 255, 255, 0.9);
+      --hero-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 245, 250, 0.96));
+      --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.10);
+      --accent: #16A34A;
+      --accent-soft: rgba(22, 163, 74, 0.14);
+      --text-primary: #142033;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --text-code: #0f172a;
+      --shadow-card: 0 18px 38px rgba(15, 23, 42, 0.1);
+    }
+
+    body[data-theme="dark"] {
+      --bg-primary: #06070b;
+      --bg-secondary: #121727;
+      --bg-tertiary: #182132;
+      --bg-card: #121727;
+      --bg-card-hover: #1a2234;
+      --bg-terminal: #0a0e15;
+      --border: #243244;
+      --border-active: rgba(245, 185, 66, 0.45);
+      --surface-subtle: rgba(255, 255, 255, 0.04);
+      --surface-strong: rgba(255, 255, 255, 0.08);
+      --surface-contrast: rgba(255, 255, 255, 0.02);
+      --nav-bg: rgba(7, 11, 17, 0.9);
+      --hero-bg: linear-gradient(135deg, rgba(22, 34, 56, 0.95), rgba(9, 18, 34, 0.95));
+      --shadow-soft: 0 16px 42px rgba(0, 0, 0, 0.23);
+      --accent: #16A34A;
+      --accent-soft: rgba(22, 163, 74, 0.12);
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --text-code: #f8fafc;
+      --shadow-card: 0 18px 38px rgba(0, 0, 0, 0.24);
+    }
+
+    body {
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
+    /* =============================================
+       RESET & BASE
+    ============================================= */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 243, 255, 0.01) 2px,
+          rgba(0, 243, 255, 0.01) 4px);
+      pointer-events: none;
+      z-index: 9999;
+      animation: scanlines 8s linear infinite;
+    }
+
+    @keyframes scanlines {
+      0% {
+        background-position: 0 0;
+      }
+
+      100% {
+        background-position: 0 100px;
+      }
+    }
+
+    /* Background noise texture */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0.4;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--cyan-dim);
+      border-radius: 3px;
+    }
+
+    /* =============================================
+       KEYFRAME ANIMATIONS
+    ============================================= */
+    @keyframes glitch {
+
+      0%,
+      100% {
+        transform: translate(0);
+      }
+
+      20% {
+        transform: translate(-2px, 2px);
+      }
+
+      40% {
+        transform: translate(2px, -2px);
+      }
+
+      60% {
+        transform: translate(-2px, -2px);
+      }
+
+      80% {
+        transform: translate(2px, 2px);
+      }
+    }
+
+    @keyframes pulse-cyan {
+
+      0%,
+      100% {
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+      }
+
+      50% {
+        box-shadow: 0 0 30px rgba(0, 243, 255, 0.6);
+      }
+    }
+
+    @keyframes pulse-crimson {
+
+      0%,
+      100% {
+        box-shadow: 0 0 10px rgba(255, 46, 99, 0.3);
+      }
+
+      50% {
+        box-shadow: 0 0 30px rgba(255, 46, 99, 0.6);
+      }
+    }
+
+    @keyframes fade-in-up {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slide-in-right {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    @keyframes spin-slow {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes blink {
+
+      0%,
+      50% {
+        opacity: 1;
+      }
+
+      51%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes xp-fill {
+      from {
+        width: 0%;
+      }
+
+      to {
+        width: var(--target-width);
+      }
+    }
+
+    @keyframes counter-up {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes celebrate {
+      0% {
+        transform: scale(0) rotate(-10deg);
+        opacity: 0;
+      }
+
+      60% {
+        transform: scale(1.1) rotate(3deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+
+    @keyframes particle-burst {
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-6px);
+      }
+
+      75% {
+        transform: translateX(6px);
+      }
+    }
+
+    @keyframes typewriter {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: 100%;
+      }
+    }
+
+    @keyframes neon-flicker {
+
+      0%,
+      19%,
+      21%,
+      23%,
+      25%,
+      54%,
+      56%,
+      100% {
+        opacity: 1;
+      }
+
+      20%,
+      24%,
+      55% {
+        opacity: 0.7;
+      }
+    }
+
+    /* =============================================
+       NAVIGATION
+    ============================================= */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 64px;
+      background: rgba(13, 17, 23, 0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: 0.4;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      animation: pulse-cyan 3s infinite;
+    }
+
+    .nav-logo-text {
+      font-family: var(--font-code);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .nav-logo-text span {
+      color: var(--cyan);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+    }
+
+    .nav-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .nav-tab:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-tab.active {
+      background: linear-gradient(135deg, rgba(0, 243, 255, 0.15), rgba(0, 243, 255, 0.05));
+      color: var(--cyan);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+    }
+
+    .nav-tab-icon {
+      font-size: 15px;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-xp-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--amber-glow);
+      border: 1px solid rgba(255, 183, 0, 0.25);
+      border-radius: var(--radius-md);
+      font-family: var(--font-code);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--amber);
+    }
+
+    .nav-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--crimson), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      border: 2px solid rgba(255, 46, 99, 0.3);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .nav-avatar:hover {
+      border-color: var(--crimson);
+      box-shadow: var(--shadow-crimson);
+    }
+
+    .nav-bell {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .nav-bell:hover {
+      border-color: rgba(0, 243, 255, 0.24);
+      background: rgba(0, 243, 255, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .nav-bell-badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: var(--crimson);
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--bg-app);
+      opacity: 0.9;
+    }
+
+    .nav-bell-badge.active {
+      animation: pulse-cyan 1.2s ease-in-out infinite;
+    }
+
+    /* Profile Dropdown */
+    .profile-dropdown {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      width: 240px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+
+    .profile-dropdown.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+
+    .dropdown-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .dropdown-email {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .dropdown-item {
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition);
+    }
+
+    .dropdown-item:hover {
+      background: var(--surface-subtle);
+      color: var(--text-primary);
+    }
+
+    .dropdown-item.dropdown-parent {
+      justify-content: space-between;
+    }
+
+    .dropdown-chevron {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .dropdown-item.dropdown-parent.active .dropdown-chevron {
+      transform: rotate(180deg);
+      color: var(--accent);
+    }
+
+    .theme-submenu {
+      display: none;
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface-subtle);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      gap: 8px;
+    }
+
+    .theme-submenu.active {
+      display: grid;
+    }
+
+    .theme-option {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      text-align: left;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .theme-option:hover {
+      background: var(--surface-strong);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+
+    .theme-option.active {
+      background: var(--accent-soft);
+      color: var(--text-primary);
+      border-color: rgba(22, 163, 74, 0.25);
+    }
+
+    .theme-option-icon {
+      font-size: 14px;
+      width: 18px;
+      text-align: center;
+    }
+
+    .theme-option-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .theme-option-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .theme-option-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .theme-option-check {
+      color: var(--accent);
+      font-weight: 800;
+      margin-left: auto;
+    }
+
+    /* Donut Charts */
+    .donut-charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      grid-column: 1 / -1;
+      margin-bottom: 10px;
+    }
+
+    .donut-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      transition: var(--transition);
+    }
+
+    .donut-card:hover {
+      border-color: rgba(0, 243, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .donut-svg-wrap {
+      position: relative;
+      width: 140px;
+      height: 140px;
+    }
+
+    .donut-svg-wrap svg {
+      width: 140px;
+      height: 140px;
+      transform: rotate(-90deg);
+    }
+
+    .donut-svg-wrap circle {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+    }
+
+    .donut-track {
+      stroke: rgba(255, 255, 255, 0.06);
+    }
+
+    .donut-fill {
+      transition: stroke-dashoffset 1s ease;
+    }
+
+    .donut-center-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .donut-pct {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .donut-pct-unit {
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0.7;
+    }
+
+    .donut-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .donut-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .donut-card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* =============================================
+       LAYOUT
+    ============================================= */
+    .app-container {
+      margin-top: 64px;
+      min-height: calc(100vh - 64px);
+    }
+
+    .screen {
+      display: none;
+      animation: fade-in-up 0.4s ease forwards;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* =============================================
+       SHARED COMPONENTS
+    ============================================= */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .section-label-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(0, 243, 255, 0.3), transparent);
+    }
+
+    .section-label-text {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .badge-cyan {
+      background: var(--cyan-glow);
+      color: var(--cyan);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+    }
+
+    .badge-amber {
+      background: var(--amber-glow);
+      color: var(--amber);
+      border: 1px solid rgba(255, 183, 0, 0.2);
+    }
+
+    .badge-crimson {
+      background: var(--crimson-glow);
+      color: var(--crimson);
+      border: 1px solid rgba(255, 46, 99, 0.2);
+    }
+
+    .badge-green {
+      background: var(--green-glow);
+      color: var(--green);
+      border: 1px solid rgba(0, 255, 136, 0.2);
+    }
+
+    .badge-purple {
+      background: var(--purple-glow);
+      color: var(--purple);
+      border: 1px solid rgba(155, 93, 229, 0.2);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      border: none;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0);
+      transition: background 0.2s;
+    }
+
+    .btn:hover::after {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--cyan), #0088ff);
+      color: #0d1117;
+      font-weight: 700;
+      box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--crimson), #cc0044);
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 0 20px rgba(255, 46, 99, 0.3);
+    }
+
+    .btn-danger:hover {
+      box-shadow: 0 0 30px rgba(255, 46, 99, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .btn-amber {
+      background: linear-gradient(135deg, var(--amber), #ff8c00);
+      color: #0d1117;
+      font-weight: 700;
+      box-shadow: 0 0 20px rgba(255, 183, 0, 0.3);
+    }
+
+    .btn-amber:hover {
+      box-shadow: 0 0 30px rgba(255, 183, 0, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: var(--transition);
+      box-shadow: var(--shadow-card);
+    }
+
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .card-glow-cyan:hover {
+      border-color: rgba(0, 243, 255, 0.25);
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.08);
+    }
+
+    /* Progress Bar */
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: -2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+    }
+
+    .progress-fill-amber {
+      background: linear-gradient(90deg, var(--amber), var(--crimson));
+    }
+
+    .progress-fill-amber::after {
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--amber);
+    }
+
+    /* =============================================
+       SCREEN 1: DASHBOARD
+    ============================================= */
+    .dashboard-shell {
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero-panel {
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid rgba(0, 243, 255, 0.16);
+      background: linear-gradient(135deg, rgba(22, 34, 56, 0.95), rgba(9, 18, 34, 0.95));
+      padding: 28px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .hero-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(0, 243, 255, 0.2), transparent 32%);
+      pointer-events: none;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(0, 243, 255, 0.12);
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .hero-title {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin: 0 0 10px;
+      color: var(--text-primary);
+    }
+
+    .hero-subtitle {
+      color: var(--text-secondary);
+      max-width: 660px;
+      line-height: 1.65;
+      margin: 0 0 16px;
+    }
+
+    .hero-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .hero-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hero-panel-side {
+      position: relative;
+      z-index: 1;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-panel-side h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      color: var(--text-primary);
+    }
+
+    .hero-panel-side p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+      width:100%;
+      margin: 24px 0;
+      box-sizing: border-box;
+    }
+
+   .stat-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  padding: 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  /* Restore the card container */
+  border: 1px solid var(--border);
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(17, 27, 48, 0.82),
+      rgba(10, 17, 31, 0.72)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 10px 28px rgba(0, 0, 0, 0.12);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+
+  border-color: rgba(0, 243, 255, 0.25);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 14px 32px rgba(0, 0, 0, 0.18),
+    0 0 18px rgba(0, 243, 255, 0.04);
+}
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(0, 243, 255, 0.24);
+    }
+
+    @media (max-width: 1100px) {
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    }
+    @media (max-width: 620px) {
+      .stats-grid { grid-template-columns: 1fr; gap: 14px; }
+      .stat-card { padding: 16px; }
+    }
+
+    .stat-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      font-size: 18px;
+      background: rgba(0, 243, 255, 0.12);
+      color: var(--cyan);
+      flex-shrink: 0;
+    }
+
+    .stat-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .stat-trend {
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .learning-hub-shell {
+      display: grid;
+      gap: 20px;
+      padding: 24px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+    }
+
+    .panel-card {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.035);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .panel-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .panel-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .panel-card-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .panel-card-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      background: rgba(0, 243, 255, 0.1);
+      color: var(--cyan);
+      border: 1px solid rgba(0, 243, 255, 0.16);
+    }
+
+    .profile-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+    }
+
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(0, 243, 255, 0.14), transparent 35%);
+      pointer-events: none;
+    }
+
+    .profile-card-top {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .profile-avatar-wrapper {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      flex-shrink: 0;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      background: linear-gradient(135deg, rgba(0, 243, 255, 0.18), rgba(90, 94, 255, 0.24));
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .profile-avatar-ring {
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: var(--cyan);
+      border-right-color: var(--purple);
+      animation: spin-slow 7s linear infinite;
+    }
+
+    .profile-rank-badge {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      background: linear-gradient(135deg, var(--amber), var(--crimson));
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .profile-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .profile-rank-title {
+      font-size: 12px;
+      color: var(--cyan);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .profile-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .profile-meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+    }
+
+    .profile-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .profile-stat-inline {
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .profile-stat-inline .value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .profile-stat-inline .label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .profile-detail-list {
+      display: grid;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .profile-detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .profile-detail-item strong {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .insight-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+      display: grid;
+      gap: 14px;
+    }
+
+    .insight-highlight {
+      border-radius: 18px;
+      border: 1px solid rgba(0, 243, 255, 0.16);
+      background: linear-gradient(135deg, rgba(0, 243, 255, 0.12), rgba(24, 38, 58, 0.82));
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .insight-highlight h3 {
+      margin: 0;
+      font-size: 18px;
+      color: var(--text-primary);
+    }
+
+    .insight-highlight p {
+      margin: 0;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .insight-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .insight-meta-pill {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 110px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .insight-meta-pill strong {
+      color: var(--text-primary);
+      font-size: 13px;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .action-button {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      border-radius: 13px;
+      padding: 10px 8px;
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .action-button:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0, 243, 255, 0.2);
+      color: var(--text-primary);
+    }
+
+    .assignment-widget-list,
+    .timeline-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .assignment-widget-item,
+    .timeline-item {
+      display: grid;
+      gap: 6px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .assignment-widget-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 10px;
+    }
+
+    .assignment-widget-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .assignment-widget-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .assignment-widget-priority {
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      white-space: nowrap;
+    }
+
+    .assignment-widget-priority.high {
+      background: rgba(255, 46, 99, 0.12);
+      color: var(--crimson);
+    }
+
+    .assignment-widget-priority.medium {
+      background: rgba(245, 185, 66, 0.14);
+      color: var(--amber);
+    }
+
+    .assignment-widget-priority.low {
+      background: rgba(0, 243, 255, 0.12);
+      color: var(--cyan);
+    }
+
+    .assignment-widget-progress {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+
+    .assignment-widget-progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+    }
+
+    .achievement-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .achievement-badge {
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .achievement-badge:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0, 243, 255, 0.2);
+    }
+
+    .achievement-badge .icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      font-size: 18px;
+      background: rgba(0, 243, 255, 0.1);
+    }
+
+    .achievement-badge .text {
+      display: grid;
+      gap: 2px;
+    }
+
+    .achievement-badge .text strong {
+      color: var(--text-primary);
+      font-size: 13px;
+    }
+
+    .achievement-badge .text span {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    .analytics-shell {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .analytics-progress-ring {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--cyan) 0 72%, rgba(255,255,255,0.06) 72% 100%);
+      color: var(--text-primary);
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0 auto;
+    }
+
+    .analytics-bars {
+      display: grid;
+      gap: 10px;
+    }
+
+    .analytics-bar-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .analytics-bar-row .label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .analytics-bar-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+
+    .analytics-bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      transition: width 0.8s ease;
+    }
+
+    .timeline-item {
+      grid-template-columns: auto 1fr;
+      align-items: start;
+    }
+
+    .timeline-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 6px;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.24);
+      flex-shrink: 0;
+    }
+
+    .timeline-content strong {
+      display: block;
+      color: var(--text-primary);
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+
+    .timeline-content span {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .subject-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .subject-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      cursor: pointer;
+    }
+
+    .subject-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(0, 243, 255, 0.24);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .subject-card.active {
+      border-color: rgba(0, 243, 255, 0.24);
+      box-shadow: inset 0 0 0 1px rgba(0, 243, 255, 0.16);
+    }
+
+    .subject-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .subject-card-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.06);
+      font-size: 18px;
+    }
+
+    .subject-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .subject-card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .subject-progress-ring {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .subject-progress-bar {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+      margin: 8px 0 10px;
+    }
+
+    .subject-progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      transition: width 0.8s ease;
+    }
+
+    .subject-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .assignment-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255,255,255,0.03);
+      display: grid;
+      gap: 10px;
+    }
+
+    .assignment-card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .assignment-status {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      white-space: nowrap;
+    }
+
+    .assignment-status.submitted {
+      background: rgba(0, 255, 136, 0.12);
+      color: var(--green);
+    }
+
+    .assignment-status.pending {
+      background: rgba(0, 243, 255, 0.12);
+      color: var(--cyan);
+    }
+
+    .assignment-status.overdue {
+      background: rgba(255, 46, 99, 0.12);
+      color: var(--crimson);
+    }
+
+    .assignment-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .assignment-actions button {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 999px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .activity-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .activity-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .activity-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 6px;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.35);
+      flex-shrink: 0;
+    }
+
+    /* =========================
+   NOTIFICATION CENTER
+   ========================= */
+
+.notification-panel {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: min(430px, calc(100vw - 24px));
+  max-width: 430px;
+  max-height: min(72vh, 680px);
+  padding: 14px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  overflow: hidden;
+
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(13, 21, 39, 0.99),
+      rgba(8, 15, 29, 0.99)
+    );
+
+  border: 1px solid rgba(0, 243, 255, 0.14);
+
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 0 30px rgba(0, 243, 255, 0.06);
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.98);
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
+
+  z-index: 1100;
+}
+
+.notification-panel.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.notification-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.notification-panel-header h3 {
+  color: var(--text-primary);
+  font-size: 16px !important;
+  font-weight: 800;
+}
+
+.notification-panel-header small {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.notification-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.notification-search {
+  width: 100%;
+  box-sizing: border-box;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+
+  padding: 10px 13px;
+  font-size: 12px;
+
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.notification-search:focus {
+  border-color: rgba(0, 243, 255, 0.35);
+  background: rgba(0, 243, 255, 0.05);
+}
+
+.notification-chip {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+
+  border-radius: 999px;
+  padding: 6px 10px;
+
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.notification-chip:hover {
+  border-color: rgba(0, 243, 255, 0.25);
+  color: var(--cyan);
+}
+
+.notification-chip.active {
+  background: rgba(0, 243, 255, 0.13);
+  color: var(--cyan);
+  border-color: rgba(0, 243, 255, 0.28);
+}
+
+/* Scrollable notification list */
+.notification-list {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  padding-right: 3px;
+}
+
+.notification-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 243, 255, 0.2);
+  border-radius: 999px;
+}
+
+/* Notification card */
+.notification-item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+
+  padding: 12px;
+
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.notification-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 243, 255, 0.2);
+  background: rgba(0, 243, 255, 0.055);
+}
+
+.notification-item.unread {
+  border-color: rgba(0, 243, 255, 0.25);
+  background: rgba(0, 243, 255, 0.08);
+}
+
+.notification-item-icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+  background: rgba(0, 243, 255, 0.08);
+
+  font-size: 17px;
+}
+
+.notification-item-content {
+  min-width: 0;
+}
+
+.notification-item-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-primary);
+
+  margin-bottom: 4px;
+}
+
+.notification-unread-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 243, 255, 0.7);
+}
+
+.notification-type-badge {
+  display: inline-flex;
+  align-items: center;
+
+  margin-bottom: 5px;
+  padding: 3px 7px;
+
+  border-radius: 999px;
+
+  background: rgba(0, 243, 255, 0.08);
+  color: var(--cyan);
+
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.notification-item-message {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+
+  margin-bottom: 7px;
+}
+
+.notification-item-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.notification-item-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+
+  margin-top: 8px;
+}
+
+.notification-open-btn {
+  border: 1px solid rgba(0, 243, 255, 0.18);
+  background: rgba(0, 243, 255, 0.06);
+
+  color: var(--cyan);
+
+  border-radius: 8px;
+  padding: 6px 9px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.notification-read-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+
+  color: var(--text-secondary);
+
+  border-radius: 8px;
+  padding: 6px 9px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.notification-empty {
+  text-align: center;
+  padding: 30px 16px;
+
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* =========================================
+   NOTIFICATION DETAIL MODAL
+   ========================================= */
+
+.notification-detail-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+
+  width: 100vw;
+  height: 100vh;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+
+  z-index: 99999;
+}
+
+.notification-detail-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.notification-detail-modal {
+  position: relative;
+
+  width: min(680px, 100%);
+  max-width: 680px;
+
+  max-height: calc(100vh - 48px);
+
+  margin: auto;
+
+  display: flex;
+  flex-direction: column;
+
+  box-sizing: border-box;
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(13, 21, 39, 0.99),
+      rgba(8, 15, 29, 0.99)
+    );
+
+  border: 1px solid rgba(0, 243, 255, 0.18);
+
+  box-shadow:
+    0 30px 100px rgba(0, 0, 0, 0.65),
+    0 0 50px rgba(0, 243, 255, 0.08);
+
+  overflow: hidden;
+
+  transform: translateY(0);
+}
+
+.notification-detail-header {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  padding: 20px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.notification-detail-heading {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 13px;
+
+  min-width: 0;
+}
+
+.notification-detail-icon {
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: rgba(0, 243, 255, 0.09);
+  border: 1px solid rgba(0, 243, 255, 0.12);
+
+  font-size: 20px;
+}
+
+.notification-detail-type {
+  margin-bottom: 5px;
+
+  color: var(--cyan);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.notification-detail-title {
+  margin: 0;
+
+  color: var(--text-primary);
+
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 850;
+
+  overflow-wrap: anywhere;
+}
+
+.notification-detail-close {
+  width: 36px;
+  height: 36px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--border);
+
+  background: rgba(255, 255, 255, 0.04);
+
+  color: var(--text-secondary);
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font-size: 20px;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.notification-detail-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+
+  color: var(--text-primary);
+
+  border-color: rgba(0, 243, 255, 0.25);
+}
+
+.notification-detail-body {
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+}
+
+.notification-detail-message {
+  color: var(--text-secondary);
+
+  font-size: 13px;
+  line-height: 1.8;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.notification-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-top: 20px;
+  padding-top: 16px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.notification-detail-meta-item {
+  padding: 6px 9px;
+
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  color: var(--text-muted);
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   MOBILE MODAL
+   ========================================= */
+
+@media (max-width: 640px) {
+
+  .notification-detail-overlay {
+    padding: 12px;
+
+    align-items: center;
+  }
+
+  .notification-detail-modal {
+    width: 100%;
+
+    max-width: none;
+
+    max-height: calc(100vh - 24px);
+
+    border-radius: 18px;
+  }
+
+  .notification-detail-header {
+    padding: 16px;
+  }
+
+  .notification-detail-body {
+    padding: 16px;
+  }
+
+  .notification-detail-title {
+    font-size: 17px;
+  }
+
+  .notification-detail-message {
+    font-size: 12px;
+    line-height: 1.7;
+  }
+}
+    /* Player Profile Card */
+    .profile-card {
+      grid-row: 1;
+      grid-column: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 243, 255, 0.04), transparent 60%);
+      pointer-events: none;
+    }
+
+    .profile-avatar-wrapper {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a2a4a, #2a1a4a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      border: 3px solid transparent;
+      background-clip: padding-box;
+      position: relative;
+    }
+
+    .profile-avatar-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: conic-gradient(var(--cyan), var(--purple), var(--crimson), var(--cyan));
+      z-index: -1;
+      animation: spin-slow 6s linear infinite;
+    }
+
+    .profile-rank-badge {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      background: linear-gradient(135deg, var(--amber), var(--crimson));
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      border: 2px solid var(--bg-card);
+    }
+
+    .profile-name {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+
+    .profile-rank-title {
+      font-size: 12px;
+      color: var(--cyan);
+      font-family: var(--font-code);
+      font-weight: 500;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .profile-rank-title::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan);
+      animation: blink 1.5s infinite;
+    }
+
+    .profile-stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .profile-stat {
+      text-align: center;
+      padding: 12px 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+    }
+
+    .profile-stat-value {
+      font-family: var(--font-code);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .profile-stat-value.cyan {
+      color: var(--cyan);
+    }
+
+    .profile-stat-value.amber {
+      color: var(--amber);
+    }
+
+    .profile-stat-value.crimson {
+      color: var(--crimson);
+    }
+
+    .profile-stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .profile-xp-section {
+      margin-top: 4px;
+    }
+
+    .profile-xp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .profile-xp-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .profile-xp-value {
+      font-family: var(--font-code);
+      font-size: 12px;
+      color: var(--cyan);
+    }
+
+    /* Active Investigation Banner */
+    .investigation-banner {
+      grid-column: 2;
+      grid-row: 1;
+      background: linear-gradient(135deg, #0f1e36, #0d2040);
+      border: 1px solid rgba(0, 243, 255, 0.15);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      animation: pulse-cyan 4s infinite;
+    }
+
+    .investigation-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    }
+
+    .investigation-banner::after {
+      content: '🔍';
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 80px;
+      opacity: 0.07;
+    }
+
+    .investigation-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--crimson-glow);
+      border: 1px solid rgba(255, 46, 99, 0.3);
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--crimson);
+      margin-bottom: 12px;
+    }
+
+    .investigation-tag::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--crimson);
+      animation: blink 1s infinite;
+    }
+
+    .investigation-title {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .investigation-subtitle {
+      font-family: var(--font-code);
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .investigation-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    /* Department Progress Matrix */
+    .topics-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .topic-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topic-card:hover {
+      border-color: rgba(0, 243, 255, 0.2);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .topic-card.locked {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .topic-card.locked:hover {
+      transform: none;
+    }
+
+    .topic-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--topic-color, var(--cyan));
+      opacity: 0.6;
+    }
+
+    .topic-icon {
+      font-size: 26px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .topic-name {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+
+    .topic-mastery {
+      font-family: var(--font-code);
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .topic-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .topic-lock-icon {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 16px;
+      opacity: 0.4;
+    }
+
+    /* =============================================
+       SCREEN 2: CRIME SCENE
+    ============================================= */
+    .crime-scene-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+    }
+
+    /* Case Header */
+    .case-header {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      grid-column: 1 / -1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .case-header::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, var(--crimson), var(--purple));
+    }
+
+    .case-id {
+      font-family: var(--font-code);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    .case-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .case-nav-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Terminal */
+    .terminal-container {
+      background: var(--bg-terminal);
+      border: 1px solid rgba(0, 243, 255, 0.12);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid rgba(0, 243, 255, 0.08);
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 7px;
+    }
+
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-red {
+      background: #ff5f57;
+    }
+
+    .dot-yellow {
+      background: #ffbd2e;
+    }
+
+    .dot-green {
+      background: #28ca41;
+    }
+
+    .terminal-title {
+      font-family: var(--font-code);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .terminal-badge {
+      font-family: var(--font-code);
+      font-size: 10px;
+      color: var(--crimson);
+      background: var(--crimson-glow);
+      border: 1px solid rgba(255, 46, 99, 0.2);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .terminal-body {
+      padding: 20px;
+      overflow-x: auto;
+    }
+
+    .code-block {
+      font-family: var(--font-code);
+      font-size: 14px;
+      line-height: 1.8;
+      counter-reset: line;
+    }
+
+    .code-line {
+      display: flex;
+      align-items: flex-start;
+      min-height: 26px;
+      position: relative;
+    }
+
+    .code-line:hover {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+    }
+
+    .line-number {
+      min-width: 40px;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding-right: 16px;
+      text-align: right;
+      user-select: none;
+      padding-top: 2px;
+    }
+
+    .line-content {
+      color: var(--text-code);
+      flex: 1;
+    }
+
+    .line-content .keyword {
+      color: #ff79c6;
+    }
+
+    .line-content .type {
+      color: #8be9fd;
+    }
+
+    .line-content .number {
+      color: #bd93f9;
+    }
+
+    .line-content .string {
+      color: #f1fa8c;
+    }
+
+    .line-content .comment {
+      color: #6272a4;
+      font-style: italic;
+    }
+
+    .line-content .method {
+      color: #50fa7b;
+    }
+
+    .line-content .operator {
+      color: var(--amber);
+    }
+
+    .line-content .variable {
+      color: var(--text-code);
+    }
+
+    .line-content .class-name {
+      color: #ffb86c;
+    }
+
+    .code-line.bug-line {
+      background: rgba(255, 46, 99, 0.08);
+    }
+
+    .code-line.bug-line .line-number {
+      color: var(--crimson);
+    }
+
+    .code-line.bug-line::before {
+      content: '⚠';
+      position: absolute;
+      right: 8px;
+      top: 2px;
+      font-size: 12px;
+      color: var(--crimson);
+      animation: blink 1.5s infinite;
+    }
+
+    /* Evidence Locker */
+    .evidence-locker {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .evidence-header {
+      padding: 14px 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .evidence-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--amber);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .evidence-body {
+      padding: 16px;
+    }
+
+    .clue-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .clue-item:hover {
+      border-color: rgba(255, 183, 0, 0.2);
+      background: rgba(255, 183, 0, 0.03);
+    }
+
+    .clue-item.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .clue-item.locked:hover {
+      border-color: var(--border);
+      background: transparent;
+    }
+
+    .clue-item.revealed {
+      border-color: rgba(255, 183, 0, 0.2);
+      background: rgba(255, 183, 0, 0.04);
+    }
+
+    .clue-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .clue-icon-unlocked {
+      background: rgba(255, 183, 0, 0.12);
+    }
+
+    .clue-icon-locked {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .clue-content {
+      flex: 1;
+    }
+
+    .clue-num {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .clue-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .clue-reveal-hint {
+      font-size: 11px;
+      color: var(--amber);
+      margin-top: 4px;
+      opacity: 0.7;
+    }
+
+    /* Suspect Lineup */
+    .suspects-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .suspect-card {
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+
+    .suspect-card:hover {
+      border-color: rgba(0, 243, 255, 0.3);
+      background: var(--cyan-glow);
+    }
+
+    .suspect-card.selected {
+      border-color: var(--cyan);
+      background: var(--cyan-glow);
+      box-shadow: var(--shadow-cyan);
+    }
+
+    .suspect-card.correct {
+      border-color: var(--green);
+      background: var(--green-glow);
+      animation: pulse-cyan 0.5s ease;
+    }
+
+    .suspect-card.wrong {
+      border-color: var(--crimson);
+      background: var(--crimson-glow);
+      animation: shake 0.3s ease;
+    }
+
+    .suspect-name {
+      font-family: var(--font-code);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 6px;
+    }
+
+    .suspect-icon {
+      font-size: 24px;
+    }
+
+    /* Root Cause */
+    .root-cause-section {
+      margin-bottom: 20px;
+    }
+
+    .reason-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .reason-option {
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .reason-option:hover {
+      border-color: rgba(0, 243, 255, 0.2);
+      color: var(--text-primary);
+    }
+
+    .reason-option.selected {
+      border-color: var(--cyan);
+      background: var(--cyan-glow);
+      color: var(--text-primary);
+    }
+
+    .reason-option.correct {
+      border-color: var(--green);
+      background: var(--green-glow);
+      color: var(--green);
+    }
+
+    .reason-option.wrong {
+      border-color: var(--crimson);
+      background: var(--crimson-glow);
+      color: var(--crimson);
+    }
+
+    .reason-radio {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    .reason-option.selected .reason-radio {
+      border-color: var(--cyan);
+      background: var(--cyan);
+    }
+
+    .reason-option.correct .reason-radio {
+      border-color: var(--green);
+      background: var(--green);
+    }
+
+    .reason-option.wrong .reason-radio {
+      border-color: var(--crimson);
+      background: var(--crimson);
+    }
+
+    /* Code Fix Section */
+    .code-fix-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .fix-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px;
+    }
+
+    .fix-option {
+      padding: 10px 16px;
+      background: var(--bg-terminal);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: var(--font-code);
+      font-size: 13px;
+      color: var(--text-secondary);
+      position: relative;
+    }
+
+    .fix-option:hover {
+      border-color: rgba(0, 243, 255, 0.2);
+      color: var(--text-primary);
+    }
+
+    .fix-option.selected {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .fix-option.correct {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(0, 255, 136, 0.05);
+    }
+
+    .fix-option.wrong {
+      border-color: var(--crimson);
+      color: var(--crimson);
+    }
+
+    .fix-prefix {
+      color: var(--text-muted);
+      margin-right: 6px;
+    }
+
+    /* Right sidebar - evidence panel */
+    .crime-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step-indicator {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+    }
+
+    .step-item.active {
+      background: rgba(0, 243, 255, 0.06);
+    }
+
+    .step-item.done {
+      background: rgba(0, 255, 136, 0.04);
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    .step-item.active .step-num {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: var(--cyan-glow);
+    }
+
+    .step-item.done .step-num {
+      border-color: var(--green);
+      color: var(--green);
+      background: var(--green-glow);
+    }
+
+    .step-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .step-item.active .step-label {
+      color: var(--text-primary);
+    }
+
+    .step-item.done .step-label {
+      color: var(--green);
+    }
+
+    /* Submit button */
+    .submit-section {
+      padding: 0 0 20px 0;
+    }
+
+    /* =============================================
+       SCREEN 3: CRIMINAL DATABASE
+    ============================================= */
+    .criminals-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .criminal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .criminal-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-card);
+    }
+
+    .criminal-card-top {
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .criminal-card-top::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--criminal-gradient, linear-gradient(135deg, rgba(255, 46, 99, 0.08), transparent));
+    }
+
+    .criminal-mugshot {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+    }
+
+    .criminal-alias {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .criminal-class {
+      font-family: var(--font-code);
+      font-size: 12px;
+      color: var(--crimson);
+      margin-bottom: 12px;
+    }
+
+    .criminal-solved {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .criminal-solved-count {
+      font-family: var(--font-code);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--amber);
+    }
+
+    .criminal-card-bottom {
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+    }
+
+    .criminal-attack-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .criminal-code-snippet {
+      font-family: var(--font-code);
+      font-size: 12px;
+      padding: 10px 12px;
+      background: var(--bg-terminal);
+      border-radius: var(--radius-sm);
+      color: var(--crimson);
+      border: 1px solid rgba(255, 46, 99, 0.1);
+      margin-bottom: 12px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .criminal-root-cause {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .unit-section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 40px 0 20px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cases-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .case-library-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .case-library-card:hover {
+      border-color: var(--cyan);
+      box-shadow: var(--shadow-cyan);
+      transform: translateY(-2px);
+    }
+
+    .case-library-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .case-library-id {
+      font-family: var(--font-code);
+      font-size: 11px;
+      color: var(--cyan);
+      background: rgba(0, 243, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .case-library-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* =============================================
+       SCREEN 4: MASTERY BOARD
+    ============================================= */
+    .mastery-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 20px;
+    }
+
+    .mastery-topics {
+      grid-column: 1;
+    }
+
+    .mastery-sidebar {
+      grid-column: 2;
+    }
+
+    .mastery-topic-row {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 12px;
+      transition: var(--transition);
+    }
+
+    .mastery-topic-row:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateX(4px);
+    }
+
+    .mastery-row-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .mastery-topic-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mastery-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .mastery-name {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .mastery-cases {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .mastery-percentage {
+      font-family: var(--font-code);
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .mastery-stats-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .mastery-stat {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .mastery-stat span {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* Overall stat cards */
+    .overall-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .overall-stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .overall-stat-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .overall-stat-value {
+      font-family: var(--font-code);
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .overall-stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* =============================================
+       CASE CLOSED MODAL
+    ============================================= */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .case-closed-modal {
+      background: var(--bg-card);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      border-radius: var(--radius-xl);
+      padding: 48px;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: celebrate 0.6s ease forwards;
+      box-shadow: 0 0 60px rgba(0, 243, 255, 0.15);
+    }
+
+    .case-closed-modal::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--crimson), var(--cyan), var(--purple));
+    }
+
+    .modal-badge-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      margin: 0 auto 24px;
+      box-shadow: 0 0 40px rgba(0, 243, 255, 0.3);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .modal-title {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .modal-subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    .modal-xp-award {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 28px;
+      background: linear-gradient(135deg, rgba(255, 183, 0, 0.15), rgba(255, 183, 0, 0.05));
+      border: 1px solid rgba(255, 183, 0, 0.3);
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+    }
+
+    .modal-xp-icon {
+      font-size: 28px;
+    }
+
+    .modal-xp-text {
+      text-align: left;
+    }
+
+    .modal-xp-value {
+      font-family: var(--font-code);
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--amber);
+      line-height: 1;
+    }
+
+    .modal-xp-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .modal-stats-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 32px;
+      justify-content: center;
+    }
+
+    .modal-stat {
+      text-align: center;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+    }
+
+    .modal-stat-val {
+      font-family: var(--font-code);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-stat-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 3px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    /* Particles */
+    .particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: particle-burst 1s ease forwards;
+    }
+
+    /* =============================================
+       TOAST NOTIFICATION
+    ============================================= */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      z-index: 9990;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+      font-size: 13px;
+      animation: slide-in-right 0.3s ease forwards;
+      min-width: 260px;
+    }
+
+    .toast-success {
+      border-color: rgba(0, 255, 136, 0.3);
+    }
+
+    .toast-error {
+      border-color: rgba(255, 46, 99, 0.3);
+    }
+
+    .toast-info {
+      border-color: rgba(0, 243, 255, 0.3);
+    }
+
+    .toast-icon {
+      font-size: 18px;
+    }
+
+    /* =============================================
+       NEON TEXT EFFECTS
+    ============================================= */
+    .text-cyan {
+      color: var(--cyan);
+    }
+
+    .text-amber {
+      color: var(--amber);
+    }
+
+    .text-crimson {
+      color: var(--crimson);
+    }
+
+    .text-green {
+      color: var(--green);
+    }
+
+    .text-purple {
+      color: var(--purple);
+    }
+
+    .text-muted {
+      color: var(--text-muted);
+    }
+
+    .text-secondary {
+      color: var(--text-secondary);
+    }
+
+    .glow-cyan {
+      text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+    }
+
+    .glow-amber {
+      text-shadow: 0 0 20px rgba(255, 183, 0, 0.5);
+    }
+
+    .glow-crimson {
+      text-shadow: 0 0 20px rgba(255, 46, 99, 0.5);
+    }
+
+    .neon-title {
+      font-size: 36px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1px;
+    }
+/* =============================================
+       RESPONSIVE — TABLET (≤900px)
+    ============================================= */
+    @media (max-width: 900px) {
+      /* Nav */
+      .nav {
+        padding: 0 16px;
+      }
+      .nav-tabs .nav-tab-label {
+        display: none;
+      }
+      .nav-tab {
+        padding: 8px 12px;
+      }
+      .nav-xp-badge {
+        display: none;
+      }
+
+      /* Container */
+      .container {
+        padding: 24px 16px;
+      }
+
+      /* Dashboard */
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      .investigation-banner {
+        grid-column: 1;
+        grid-row: 2;
+      }
+      .topics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .donut-charts-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* Crime Scene */
+      .crime-scene-layout {
+        grid-template-columns: 1fr;
+      }
+      .crime-sidebar {
+        display: none;
+      }
+      .case-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .suspects-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* Criminal DB */
+      .criminals-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .cases-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* Mastery */
+      .mastery-layout {
+        grid-template-columns: 1fr;
+      }
+      .mastery-sidebar {
+        display: none;
+      }
+
+      /* Neon title */
+      .neon-title {
+        font-size: 28px;
+      }
+
+      /* Modal */
+      .case-closed-modal {
+        padding: 32px 24px;
+      }
+    }
+
+    /* =============================================
+       RESPONSIVE — MOBILE (≤480px)
+    ============================================= */
+    @media (max-width: 480px) {
+      /* Nav — compact single row */
+      .nav {
+        padding: 0 12px;
+        height: 56px;
+      }
+      .nav-logo-text {
+        display: none;
+      }
+      .nav-tabs {
+        gap: 2px;
+        padding: 3px;
+      }
+      .nav-tab {
+        padding: 6px 10px;
+        gap: 0;
+      }
+      .nav-tab-icon {
+        font-size: 16px;
+      }
+      .nav-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+
+      /* App offset for smaller nav */
+      .app-container {
+        margin-top: 56px;
+        min-height: calc(100vh - 56px);
+      }
+
+      /* Container */
+      .container {
+        padding: 16px 12px;
+      }
+
+      /* Dashboard header */
+      #screen-dashboard .container > div:first-child {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      /* Profile Card */
+      .profile-card {
+        padding: 20px 16px;
+      }
+      .profile-stats-row {
+        gap: 8px;
+      }
+      .profile-stat-value {
+        font-size: 18px;
+      }
+
+      /* Investigation banner */
+      .investigation-banner {
+        padding: 20px 16px;
+      }
+      .investigation-title {
+        font-size: 20px;
+      }
+      .investigation-banner::after {
+        font-size: 50px;
+        opacity: 0.05;
+      }
+
+      /* Topics */
+      .topics-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      /* Donut charts */
+      .donut-charts-row {
+        grid-template-columns: 1fr;
+      }
+      .donut-svg-wrap,
+      .donut-svg-wrap svg {
+        width: 120px;
+        height: 120px;
+      }
+
+      /* Crime Scene */
+      .case-header {
+        padding: 16px;
+      }
+      .case-title {
+        font-size: 16px;
+      }
+      .case-nav-buttons .btn {
+        padding: 8px 14px;
+        font-size: 12px;
+      }
+      .terminal-body {
+        padding: 14px 12px;
+        overflow-x: auto;
+      }
+      .code-block {
+        font-size: 12px;
+      }
+      .suspects-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .suspect-card {
+        padding: 10px 8px;
+      }
+
+      /* Criminal DB */
+      .criminals-grid {
+        grid-template-columns: 1fr;
+      }
+      .cases-grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* Mastery */
+      .mastery-topic-row {
+        padding: 16px;
+      }
+      .mastery-row-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .mastery-percentage {
+        font-size: 20px;
+      }
+      .overall-stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* Modal */
+      .case-closed-modal {
+        padding: 24px 16px;
+        border-radius: var(--radius-lg);
+      }
+      .modal-title {
+        font-size: 24px;
+      }
+      .modal-badge-circle {
+        width: 76px;
+        height: 76px;
+        font-size: 36px;
+      }
+      .modal-stats-row {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .modal-buttons {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .modal-buttons .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      /* Toast */
+      .toast-container {
+        right: 12px;
+        left: 12px;
+      }
+      .toast {
+        min-width: unset;
+        width: 100%;
+      }
+
+      /* Neon title */
+      .neon-title {
+        font-size: 22px;
+      }
+
+      /* Buttons - full width on mobile where used inside stacked layouts */
+      .investigation-banner .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      /* Section label spacing */
+      .section-label {
+        margin-bottom: 14px;
+      }
+
+      /* Profile dropdown */
+      .profile-dropdown {
+        right: 0;
+        width: 240px;
+      }
+
+      /* Unit section title */
+      .unit-section-title {
+        font-size: 16px;
+        margin: 28px 0 14px;
+      }
+    }
+    /* Midnight Gold palette overrides for legacy hard-coded accents. */
+    body::before { background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(245,185,66,.01) 2px, rgba(245,185,66,.01) 4px); }
+    .nav-tab.active { background: linear-gradient(135deg, rgba(245,185,66,.15), rgba(245,185,66,.05)); border-color: rgba(245,185,66,.28); }
+    .nav-xp-badge, .profile-avatar-ring { border-color: rgba(245,185,66,.28); }
+    .nav-xp-badge:hover, .profile-avatar:hover { box-shadow: 0 0 20px rgba(245,185,66,.2); }
+    .badge-cyan { border-color: rgba(245,185,66,.25); }
+    .badge-amber { border-color: rgba(255,209,102,.25); }
+    .badge-crimson { border-color: rgba(255,93,115,.25); }
+    .badge-green { border-color: rgba(56,211,159,.25); }
+</style>
+  <script type="module" crossorigin src="/assets/home-Dz8P3S1H.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/supabase-C0Bv1Tz9.js">
+  <link rel="modulepreload" crossorigin href="/assets/ai-client-CDGyBfud.js">
+</head>
+
+<body>
+
+  <!-- =============================================
+     NAVIGATION
+============================================= -->
+  <nav class="nav" id="main-nav">
+<div class="nav-tabs" id="nav-tabs">
+      <button class="nav-tab active" data-screen="dashboard" id="tab-dashboard">
+        <span class="nav-tab-icon">🏢</span>
+        <span class="nav-tab-label">HQ</span>
+      </button>
+      <button class="nav-tab" data-screen="crime-scene" id="tab-crime-scene">
+        <span class="nav-tab-icon">🔬</span>
+        <span class="nav-tab-label">Crime Scene</span>
+      </button>
+      <button class="nav-tab" data-screen="criminal-db" id="tab-criminal-db">
+        <span class="nav-tab-icon">👤</span>
+        <span class="nav-tab-label">Cases & Rogues</span>
+      </button>
+      <button class="nav-tab" data-screen="mastery" id="tab-mastery">
+        <span class="nav-tab-icon">📊</span>
+        <span class="nav-tab-label">Mastery Board</span>
+      </button>
+      <button class="nav-tab" data-screen="notes" id="tab-notes">
+        <span class="nav-tab-icon">📚</span>
+        <span class="nav-tab-label">Notes</span>
+      </button>
+</div>
+
+    <div class="nav-right" style="position: relative;">
+<button class="nav-bell" id="nav-bell-btn" type="button" title="Notifications">
+        🔔
+        <span class="nav-bell-badge" id="nav-bell-badge">0</span>
+      </button>
+      <div class="notification-panel" id="notification-panel"></div>
+     
+      <div class="nav-xp-badge" id="nav-xp-btn">
+        <span>⚡</span>
+        <span id="nav-xp"></span>
+      </div>
+      <div class="nav-avatar" id="nav-avatar-btn" title="Profile"></div>
+
+      <!-- Profile Dropdown -->
+      <div class="profile-dropdown" id="profile-dropdown">
+        <div class="dropdown-header">
+          <div class="dropdown-name" id="dropdown-name"></div>
+          <div class="dropdown-email" id="dropdown-email"></div>
+        </div>
+        <div class="dropdown-item">
+          <span style="color:var(--cyan)">🏅</span> Rank: <span id="dropdown-rank"></span>
+        </div>
+
+        <div class="dropdown-item" id="edit-username-option" style="color:var(--cyan); margin-top:8px; cursor:pointer;">
+          <span>✏️</span> Edit Username
+        </div>
+        <div class="dropdown-item dropdown-parent" id="appearance-option" style="margin-top:8px;">
+          <span><span>🎨</span> <span id="theme-menu-label">Appearance</span></span>
+          <span class="dropdown-chevron">▾</span>
+        </div>
+        <div class="theme-submenu active" id="theme-submenu">
+          <button class="theme-option" type="button" data-theme="system">
+            <span class="theme-option-icon">🌐</span>
+            <span class="theme-option-copy">
+              <span class="theme-option-title">System Default</span>
+              <span class="theme-option-subtitle">Follow your device</span>
+            </span>
+            <span class="theme-option-check">✓</span>
+          </button>
+          <button class="theme-option" type="button" data-theme="light">
+            <span class="theme-option-icon">☀</span>
+            <span class="theme-option-copy">
+              <span class="theme-option-title">Light Mode</span>
+              <span class="theme-option-subtitle">Bright, refined workspace</span>
+            </span>
+            <span class="theme-option-check">✓</span>
+          </button>
+          <button class="theme-option" type="button" data-theme="dark">
+            <span class="theme-option-icon">🌙</span>
+            <span class="theme-option-copy">
+              <span class="theme-option-title">Dark Mode</span>
+              <span class="theme-option-subtitle">Classic immersive noir</span>
+            </span>
+            <span class="theme-option-check">✓</span>
+          </button>
+        </div>
+        <div class="dropdown-item" id="signin-option" style="color:var(--amber); margin-top:8px; cursor:pointer;">
+          <span>🔑</span> Sign In
+        </div>
+        <div class="dropdown-item" id="logout-option" style="color:var(--crimson); margin-top:8px; cursor:pointer;">
+          <span>🚪</span> Secure Logout
+        </div>
+      </div>
+    </div>
+  </nav>
+   <!-- Notification Detail Modal -->
+<div
+  class="notification-detail-overlay"
+  id="notification-detail-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="notification-detail-title"
+>
+  <div class="notification-detail-modal">
+
+    <div class="notification-detail-header">
+
+      <div class="notification-detail-heading">
+
+        <div
+          class="notification-detail-icon"
+          id="notification-detail-icon"
+        >
+          🔔
+        </div>
+
+        <div>
+          <div
+            class="notification-detail-type"
+            id="notification-detail-type"
+          >
+            Notification
+          </div>
+
+          <h2
+            class="notification-detail-title"
+            id="notification-detail-title"
+          >
+            Notification
+          </h2>
+        </div>
+
+      </div>
+
+      <button
+        type="button"
+        class="notification-detail-close"
+        onclick="closeNotificationDetails()"
+        aria-label="Close notification"
+      >
+        ×
+      </button>
+
+    </div>
+
+    <div class="notification-detail-body">
+
+      <div
+        class="notification-detail-message"
+        id="notification-detail-message"
+      ></div>
+
+      <div
+        class="notification-detail-meta"
+        id="notification-detail-meta"
+      ></div>
+
+    </div>
+
+  </div>
+</div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Modal Overlay -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="case-closed-modal" id="case-closed-modal">
+      <div class="modal-badge-circle" id="modal-badge">🎉</div>
+      <div class="modal-title">CASE CLOSED!</div>
+      <div class="modal-subtitle" id="modal-subtitle">Outstanding detective work. The criminal has been caught.</div>
+      <div class="modal-xp-award">
+        <div class="modal-xp-icon">⚡</div>
+        <div class="modal-xp-text">
+          <div class="modal-xp-value" id="modal-xp-value">+250 DXP</div>
+          <div class="modal-xp-label">Detective XP Earned</div>
+        </div>
+      </div>
+      <div class="modal-stats-row">
+        <div class="modal-stat">
+          <div class="modal-stat-val" id="modal-total-xp">1,500</div>
+          <div class="modal-stat-lbl">Total DXP</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-val" id="modal-cases-solved">4</div>
+          <div class="modal-stat-lbl">Cases Solved</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-val" id="modal-streak">3🔥</div>
+          <div class="modal-stat-lbl">Streak</div>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-ghost" onclick="closeModal()">← Back to HQ</button>
+        <button class="btn btn-primary" id="next-case-btn" onclick="nextCase()">Next Case →</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- =============================================
+     APP CONTAINER
+============================================= -->
+  <div class="app-container">
+
+    <!-- =============================================
+       SCREEN 1: DASHBOARD
+  ============================================= -->
+    <section class="screen active" id="screen-dashboard">
+      <div class="container">
+        <!-- Section header -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 28px;">
+          <div>
+            <div
+              style="font-size:12px; color:var(--cyan); font-family:var(--font-code); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px;">
+              Detective Headquarters</div>
+            <h1 style="font-size:28px; font-weight:900; letter-spacing:-0.5px;" id="dashboard-title-heading">Welcome</h1>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <div class="badge badge-crimson">🔥 <span id="dash-streak">Loading…</span></div>
+            <div class="badge badge-amber">📅 Active</div>
+          </div>
+        </div>
+
+        <div class="dashboard-shell">
+          <div class="hero-panel">
+            <div class="hero-copy">
+              <div class="hero-eyebrow">🕵️ Detective headquarters</div>
+              <h2 class="hero-title" id="hero-title">Welcome</h2>
+              <p class="hero-subtitle" id="hero-summary">Your next case is waiting. Continue your mission and keep the streak alive.</p>
+              <div class="hero-metrics">
+                <div class="hero-chip">🔥 <span id="hero-streak">Loading…</span></div>
+                <div class="hero-chip">⚡ <span id="hero-level">Loading…</span></div>
+                <div class="hero-chip">🎯 <span id="hero-goal">Loading…</span></div>
+              </div>
+            </div>
+            <div class="hero-panel-side">
+              <h3 id="hero-mission">Loading…</h3>
+              <p id="hero-mission-text">Loading your next mission…</p>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">📈</div>
+              <div class="stat-content">
+                <div class="stat-label">Overall progress</div>
+                <div class="stat-value" id="stat-overall-progress">Loading…</div>
+                <div class="stat-trend" id="stat-overall-trend">Loading…</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⚡</div>
+              <div class="stat-content">
+                <div class="stat-label">XP earned</div>
+                <div class="stat-value" id="stat-xp-value">Loading…</div>
+                <div class="stat-trend" id="stat-xp-trend">Loading…</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🧩</div>
+              <div class="stat-content">
+                <div class="stat-label">Cases solved</div>
+                <div class="stat-value" id="stat-cases-value">Loading…</div>
+                <div class="stat-trend" id="stat-cases-trend">Loading…</div>
+              </div>
+            </div>
+            
+          </div>
+
+          <div class="learning-hub-shell" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;">
+              <div>
+                <div style="font-size:12px; color:var(--cyan); font-family:var(--font-code); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px;">Multi-subject learning hub</div>
+                <h2 style="font-size:22px; font-weight:800; margin:0;">Choose your focus and keep your momentum</h2>
+              </div>
+              <div class="badge badge-green">🌟 Smart study path</div>
+            </div>
+            <div class="hub-stats-grid">
+              <div class="hub-stat-card">
+                <div class="hub-stat-label">Total Subjects</div>
+                <div class="hub-stat-value" id="hub-total-subjects">0</div>
+              </div>
+              <div class="hub-stat-card">
+                <div class="hub-stat-label">Overall Progress</div>
+                <div class="hub-stat-value" id="hub-overall-progress">0%</div>
+              </div>
+              <div class="hub-stat-card">
+                <div class="hub-stat-label">Daily Streak</div>
+                <div class="hub-stat-value" id="hub-daily-streak">0</div>
+              </div>
+              <div class="hub-stat-card">
+                <div class="hub-stat-label">XP Earned</div>
+                <div class="hub-stat-value" id="hub-total-xp">0</div>
+              </div>
+            </div>
+            <div class="subject-grid" id="subject-grid"></div>
+            <div class="subject-detail-card" id="subject-detail-card"></div>
+            <div class="panel-card" style="margin-top:4px;">
+              <div class="panel-card-header">
+                <div>
+                  <div class="panel-card-title">Assignments & reminders</div>
+                  <div class="panel-card-subtitle">Stay ahead of your next submission and keep your streak intact.</div>
+                </div>
+              </div>
+              <div class="assignment-list" id="assignments-list"></div>
+            </div>
+            <div class="panel-card" style="margin-top:4px;">
+              <div class="panel-card-header">
+                <div>
+                  <div class="panel-card-title">Recent activity</div>
+                  <div class="panel-card-subtitle">A quick view of your latest progress and momentum.</div>
+                </div>
+              </div>
+              <div class="activity-list" id="activity-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="profile-card">
+            <div class="profile-card-top">
+              <div class="profile-avatar-wrapper">
+                <div class="profile-avatar" id="profile-avatar">🕵️</div>
+                <div class="profile-avatar-ring"></div>
+                <div class="profile-rank-badge">⭐</div>
+              </div>
+              <div>
+                <div class="profile-name" id="profile-name">Loading…</div>
+                <div class="profile-rank-title" id="profile-rank">Loading…</div>
+                <div class="profile-meta-row">
+                  <div class="profile-meta-pill">🏫 <span id="profile-college">Loading…</span></div>
+                  <div class="profile-meta-pill">🧠 <span id="profile-department">Loading…</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="profile-stats-grid">
+              <div class="profile-stat-inline">
+                <div class="value" id="stat-cases">Loading…</div>
+                <div class="label">Cases</div>
+              </div>
+              <div class="profile-stat-inline">
+                <div class="value" id="stat-streak">Loading…</div>
+                <div class="label">Streak</div>
+              </div>
+              <div class="profile-stat-inline">
+                <div class="value" id="stat-accuracy">Loading…</div>
+                <div class="label">Accuracy</div>
+              </div>
+            </div>
+            <div class="profile-detail-list">
+              <div class="profile-detail-item"><span>🎯 Level</span><strong id="profile-level">Loading…</strong></div>
+              <div class="profile-detail-item"><span>⚡ XP</span><strong id="profile-xp-total">Loading…</strong></div>
+              <div class="profile-detail-item"><span>📅 Joined</span><strong id="profile-join">Loading…</strong></div>
+              <div class="profile-detail-item"><span>🧭 Role</span><strong id="profile-role">Loading…</strong></div>
+            </div>
+            <div class="profile-xp-section" style="margin-top:16px;">
+              <div class="profile-xp-header">
+                <span class="profile-xp-label">DXP Progress</span>
+                <span class="profile-xp-value" id="xp-display">Loading…</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="xp-bar" style="width: 0%;"></div>
+              </div>
+              <div style="text-align:right; margin-top:6px; font-size:11px; color:var(--text-muted);">
+                <span id="xp-to-next">0 DXP to <strong style="color:var(--amber)" id="next-rank-label">Detective</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="insight-card">
+            <div class="panel-card-header" style="margin-bottom:0;">
+              <div>
+                <div class="panel-card-title">Continue learning</div>
+                <div class="panel-card-subtitle">Resume your most valuable next step.</div>
+              </div>
+              <div class="panel-card-pill">⚡ Focus</div>
+            </div>
+            <div class="insight-highlight">
+              <div style="font-size:11px; color:var(--cyan); text-transform:uppercase; letter-spacing:0.16em; font-weight:700;">Current subject</div>
+              <h3 id="continue-subject">Loading…</h3>
+              <p id="continue-lesson">Loading…</p>
+              <div class="insight-meta-row">
+                <div class="insight-meta-pill"><span>Remaining</span><strong id="continue-remaining">Loading…</strong></div>
+                <div class="insight-meta-pill"><span>Est. time</span><strong id="continue-time">Loading…</strong></div>
+                <div class="insight-meta-pill"><span>Reward</span><strong id="continue-xp">Loading…</strong></div>
+              </div>
+              <button class="btn btn-primary" type="button" onclick="goToCrimeScene()" style="justify-content:center; width:fit-content;">Resume mission</button>
+            </div>
+            <div class="quick-actions" id="quick-actions-list"></div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div>
+                <div class="panel-card-title">Upcoming assignments</div>
+                <div class="panel-card-subtitle">Stay ahead of the next deadline.</div>
+              </div>
+              <div class="panel-card-pill">📝 Due soon</div>
+            </div>
+            <div class="assignment-widget-list" id="assignment-widget-list"></div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div>
+                <div class="panel-card-title">Achievements</div>
+                <div class="panel-card-subtitle">Your earned milestones and momentum.</div>
+              </div>
+            </div>
+            <div class="achievement-grid" id="achievement-grid"></div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div>
+                <div class="panel-card-title">Performance analytics</div>
+                <div class="panel-card-subtitle">A quick pulse on your weekly learning rhythm.</div>
+              </div>
+            </div>
+            <div class="analytics-shell">
+              <div class="analytics-progress-ring" id="analytics-progress-ring">Loading…</div>
+              <div class="analytics-bars" id="analytics-bars"></div>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div>
+                <div class="panel-card-title">Recent activity</div>
+                <div class="panel-card-subtitle">Your latest wins and updates.</div>
+              </div>
+            </div>
+            <div class="timeline-list" id="activity-timeline-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+       SCREEN 2: CRIME SCENE
+  ============================================= -->
+    <section class="screen" id="screen-notes">
+  <div class="container">
+    <div style="margin-bottom:18px;">
+      <div class="section-kicker">STUDY HEADQUARTERS</div>
+      <h1 style="font-size:28px;font-weight:900;letter-spacing:-.5px;">Notes & AI Tutor</h1>
+      <p style="color:var(--text-muted);">Keep your notes in your account and ask an AI tutor to teach directly from them.</p>
+    </div>
+    <div class="notes-workspace">
+      <section class="notes-panel notes-selector-card">
+        <div class="notes-selector-heading">
+          <div>
+            <div class="notes-eyebrow">STUDY MATERIAL</div>
+            <h2>Available Notes</h2>
+          </div>
+          <span class="notes-selector-icon" aria-hidden="true">⌄</span>
+        </div>
+        <div class="notes-select-wrap">
+          <label class="notes-select-label" for="notes-select">Choose a note</label>
+          <select id="notes-select" class="notes-select" aria-label="Available Notes">
+            <option value="">Loading notes…</option>
+          </select>
+        </div>
+        <div class="selected-note-preview" id="selected-note-preview">
+          <div class="selected-note-toolbar">
+            <div class="selected-note-meta">
+              <div class="selected-note-icon" aria-hidden="true">▤</div>
+              <div>
+                <div class="panel-card-title" id="selected-note-title">Select a note</div>
+                <div id="selected-note-subject" class="selected-note-subject"></div>
+              </div>
+            </div>
+            <button id="download-note-btn" class="notes-btn notes-download-btn" type="button" title="Download the selected note" disabled>↓ Download Note</button>
+          </div>
+          <div id="selected-note-content" class="selected-note">Choose a note to preview its content and start tutoring.</div>
+        </div>
+      </section>
+
+      <section class="notes-panel tutor-panel">
+        <div class="tutor-header">
+          <div class="tutor-title-wrap">
+            <div class="tutor-avatar" aria-hidden="true">✦</div>
+            <div>
+              <div class="notes-eyebrow">INTELLIGENT STUDY ASSISTANT</div>
+              <div class="tutor-title">AI Tutor</div>
+              <div class="tutor-subtitle">Learn from the note you selected — not from a generic answer.</div>
+            </div>
+          </div>
+          <div class="tutor-status" id="tutor-status"><span></span> Ready</div>
+        </div>
+
+        <div class="tutor-note-context" id="tutor-note-context">
+          <span>NOTE</span>
+          <strong>Select a note above to begin</strong>
+        </div>
+
+        <div class="tutor-chat" id="tutor-chat"></div>
+
+        <div class="tutor-suggestions" aria-label="Tutor suggestions">
+          <button type="button" class="tutor-chip" data-tutor-prompt="Explain this note in simple terms.">Explain simply</button>
+          <button type="button" class="tutor-chip" data-tutor-prompt="Give me a practical example based on this note.">Give an example</button>
+          <button type="button" class="tutor-chip" data-tutor-prompt="Quiz me on this note with 5 questions.">Quiz me</button>
+        </div>
+
+        <div class="tutor-compose">
+          <div class="tutor-input-wrap">
+            <textarea id="tutor-question" class="tutor-input" rows="2" placeholder="Ask your tutor anything about the selected note…" aria-label="Ask AI Tutor"></textarea>
+            <span class="tutor-hint">Enter to send · Shift + Enter for a new line</span>
+          </div>
+          <button id="tutor-send" class="notes-btn tutor-send" type="button">
+            <span>Ask Tutor</span>
+            <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="screen-crime-scene">
+      <div class="container">
+
+        <!-- Case Navigation -->
+        <div class="case-header">
+          <div>
+            <div class="case-id" id="crime-case-id">CASE #007 — OPERATORS DIVISION</div>
+            <div class="case-title" id="crime-case-title">The Calculator Murder</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div id="crime-case-tags" style="display:flex; gap:8px;"></div>
+            <div class="case-nav-buttons">
+              <button class="btn btn-ghost" id="prev-case-btn" onclick="prevCase()"
+                style="padding:8px 14px; font-size:12px;">← Prev</button>
+              <button class="btn btn-ghost" id="next-case-nav-btn" onclick="nextCase()"
+                style="padding:8px 14px; font-size:12px;">Next →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="crime-scene-layout">
+          <!-- Left Column: Main Content -->
+          <div>
+
+            <!-- CODE TERMINAL -->
+            <div class="terminal-container">
+              <div class="terminal-header">
+                <div class="terminal-dots">
+                  <div class="terminal-dot dot-red"></div>
+                  <div class="terminal-dot dot-yellow"></div>
+                  <div class="terminal-dot dot-green"></div>
+                </div>
+                <div class="terminal-title" id="terminal-filename">Calculator.java</div>
+                <div class="terminal-badge">⚠ BUG DETECTED</div>
+              </div>
+              <div class="terminal-body">
+                <div class="code-block" id="code-block">
+                  <div class="code-line"><span class="line-number">1</span><span class="line-content"><span class="type">int</span> a = <span class="number">100</span>;</span></div>
+                  <div class="code-line"><span class="line-number">2</span><span class="line-content"><span class="type">int</span> b = <span class="number">0</span>;</span></div>
+                  <div class="code-line"><span class="line-number">3</span><span class="line-content">&nbsp;</span></div>
+                  <div class="code-line bug-line"><span class="line-number">4</span><span class="line-content"><span class="class-name">System</span>.<span class="variable">out</span>.<span class="method">println</span>(a / b);</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pack-specific briefing; hidden for legacy cases. -->
+            <div id="investigation-briefing" class="card" style="display:none; margin:0 0 20px; border-color:rgba(0,243,255,.22);"></div>
+
+            <!-- EVIDENCE LOCKER -->
+            <div style="margin-bottom:8px;">
+              <div class="section-label">
+                <span class="section-label-text">🔐 Evidence Locker</span>
+                <div class="section-label-line"></div>
+                <span style="font-size:11px; color:var(--text-muted);" id="clues-unlocked">0/3 Clues Revealed</span>
+              </div>
+            </div>
+            <div class="evidence-locker" style="margin-bottom:20px;">
+              <div class="evidence-header">
+                <span style="font-size:16px;">🔬</span>
+                <span class="evidence-title">Forensic Evidence</span>
+                <span style="margin-left:auto; font-size:11px; color:var(--text-muted);">Click clues to reveal</span>
+              </div>
+              <div class="evidence-body" id="evidence-body"></div>
+            </div>
+
+            <!-- SUSPECT LINEUP -->
+            <div style="margin-bottom:8px;">
+              <div class="section-label">
+                <span class="section-label-text">🚨 Suspect Lineup</span>
+                <div class="section-label-line"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Identify the Java Criminal</span>
+              </div>
+            </div>
+            <div class="suspects-grid" id="suspects-grid"></div>
+
+            <!-- ROOT CAUSE -->
+            <div id="root-cause-section" style="display:none;">
+              <div style="margin-bottom:8px;">
+                <div class="section-label">
+                  <span class="section-label-text">🔎 Root Cause Analysis</span>
+                  <div class="section-label-line"></div>
+                </div>
+              </div>
+              <div class="root-cause-section">
+                <div
+                  style="font-size:13px; color:var(--text-secondary); margin-bottom:12px; padding:12px 16px; background:var(--bg-card); border-radius:var(--radius-md); border:1px solid var(--border);">
+                  <span class="text-amber">⚠</span> Why did this bug occur?
+                </div>
+                <div class="reason-options" id="reason-options"></div>
+              </div>
+            </div>
+
+            <!-- CODE FIX -->
+            <div id="code-fix-section" style="display:none;">
+              <div style="margin-bottom:8px; margin-top:20px;">
+                <div class="section-label">
+                  <span class="section-label-text">🔧 Code Repair Station</span>
+                  <div class="section-label-line"></div>
+                </div>
+              </div>
+              <div class="code-fix-section">
+                <div style="padding:14px 20px; border-bottom:1px solid var(--border);">
+                  <div style="font-size:13px; font-weight:600; color:var(--amber);">Select the correct fix to close the
+                    case:</div>
+                </div>
+                <div class="fix-options" id="fix-options"></div>
+              </div>
+            </div>
+
+            <!-- SUBMIT -->
+            <div class="submit-section" id="submit-section" style="display:none; margin-top:20px;">
+              <button class="btn btn-primary" onclick="submitCase()"
+                style="width:100%; justify-content:center; padding:16px;">
+                🔒 Submit & Close Case
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Sidebar -->
+          <div class="crime-sidebar">
+            <!-- Steps -->
+            <div class="step-indicator">
+              <div
+                style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); margin-bottom:14px;">
+                Investigation Steps</div>
+              <div class="step-list">
+                <div class="step-item active" id="step-1">
+                  <div class="step-num">1</div>
+                  <div>
+                    <div class="step-label">Identify the Criminal</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Select the exception type</div>
+                  </div>
+                </div>
+                <div class="step-item" id="step-2">
+                  <div class="step-num">2</div>
+                  <div>
+                    <div class="step-label">Find Root Cause</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Why did it go wrong?</div>
+                  </div>
+                </div>
+                <div class="step-item" id="step-3">
+                  <div class="step-num">3</div>
+                  <div>
+                    <div class="step-label">Apply the Fix</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Repair the broken code</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Case File -->
+            <div class="card">
+              <div
+                style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); margin-bottom:14px;">
+                📋 Case File</div>
+              <div style="display:flex; flex-direction:column; gap:10px; font-size:13px;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-muted">Case ID</span>
+                  <span class="text-cyan" id="case-file-id" style="font-family:var(--font-code);">#007</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-muted">Difficulty</span>
+                  <span id="case-file-diff"></span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-muted">Department</span>
+                  <span id="case-file-topic" style="color:var(--amber);">Operators</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-muted">Reward</span>
+                  <span style="color:var(--amber); font-family:var(--font-code);" id="case-file-reward">+250 DXP</span>
+                </div>
+                <div id="case-file-pack-meta" style="display:none; gap:10px; flex-direction:column; padding-top:8px; border-top:1px solid var(--border);">
+                  <div style="display:flex; justify-content:space-between;"><span class="text-muted">Rank</span><span id="case-file-rank" class="text-cyan"></span></div>
+                  <div style="display:flex; justify-content:space-between;"><span class="text-muted">Est. time</span><span id="case-file-time"></span></div>
+                  <div style="display:flex; justify-content:space-between;"><span class="text-muted">Completion</span><span id="case-file-progress"></span></div>
+                  <div style="display:flex; justify-content:space-between;"><span class="text-muted">Hints / Score</span><span id="case-file-score"></span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hints used -->
+            <div class="card">
+              <div
+                style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); margin-bottom:12px;">
+                🔎 Detective Notes</div>
+              <div id="detective-notes" style="font-size:12px; color:var(--text-muted); line-height:1.6;">
+                Start by examining the code carefully. Look for suspicious operations or method calls that could cause
+                runtime errors.
+              </div>
+            </div>
+
+            <!-- XP Display -->
+            <div class="card"
+              style="background: linear-gradient(135deg, rgba(255,183,0,0.08), rgba(255,183,0,0.02)); border-color: rgba(255,183,0,0.15);">
+              <div style="text-align:center;">
+                <div
+                  style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">
+                  Current DXP</div>
+                <div style="font-family:var(--font-code); font-size:28px; font-weight:800; color:var(--amber);"
+                  id="sidebar-xp">0</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Detective XP Points</div>
+                <div class="progress-track" style="margin-top:12px;">
+                  <div class="progress-fill progress-fill-amber" id="sidebar-xp-bar" style="width:0%;"></div>
+                </div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:6px;" id="sidebar-rank">Detective</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+       SCREEN 3: CRIMINAL DATABASE
+  ============================================= -->
+    <section class="screen" id="screen-criminal-db">
+      <div class="container">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
+          <div>
+            <div
+              style="font-size:12px; color:var(--crimson); font-family:var(--font-code); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px;">
+              Classified Files</div>
+            <h1 style="font-size:28px; font-weight:900; letter-spacing:-0.5px;">Case Library & Rogues Gallery</h1>
+            <div style="font-size:14px; color:var(--text-muted); margin-top:4px;">Java Criminals you've encountered and
+              the cases to catch them</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <div class="badge badge-cyan">📂 <span id="case-catalog-total">50</span> Cases</div>
+            <div class="badge badge-green">✓ <span id="unlocked-count">3 Unlocked</span></div>
+          </div>
+        </div>
+
+        <div id="cases-unit-container"></div>
+
+        <div class="unit-section-title" style="margin-top: 60px; display:none;">
+          <span style="font-size:24px;">🚨</span>
+          Criminal Database
+        </div>
+        <div class="criminals-grid" id="criminals-grid" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- =============================================
+       SCREEN 4: MASTERY BOARD
+  ============================================= -->
+    <section class="screen" id="screen-mastery">
+      <div class="container">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
+          <div>
+            <div
+              style="font-size:12px; color:var(--purple); font-family:var(--font-code); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px;">
+              Performance Analytics</div>
+            <h1 style="font-size:28px; font-weight:900; letter-spacing:-0.5px;">Mastery Board</h1>
+          </div>
+          <div class="badge badge-purple">📊 All 8 Departments</div>
+        </div>
+
+        <div class="mastery-layout">
+          <div class="mastery-topics">
+            <div class="section-label">
+              <span class="section-label-text">Department Breakdown</span>
+              <div class="section-label-line"></div>
+            </div>
+            <div id="mastery-topics-list"></div>
+          </div>
+
+          <div class="mastery-sidebar">
+            <div class="overall-stats-grid">
+              <div class="overall-stat-card">
+                <div class="overall-stat-icon">⚡</div>
+                <div class="overall-stat-value text-amber" id="mastery-total-xp">0</div>
+                <div class="overall-stat-label">Total DXP</div>
+              </div>
+              <div class="overall-stat-card">
+                <div class="overall-stat-icon">🔍</div>
+                <div class="overall-stat-value text-cyan" id="mastery-cases-solved">0</div>
+                <div class="overall-stat-label">Cases Solved</div>
+              </div>
+              <div class="overall-stat-card">
+                <div class="overall-stat-icon">🎯</div>
+                <div class="overall-stat-value text-green" id="mastery-accuracy">0%</div>
+                <div class="overall-stat-label">Accuracy</div>
+              </div>
+              <div class="overall-stat-card">
+                <div class="overall-stat-icon">🔥</div>
+                <div class="overall-stat-value text-crimson" id="mastery-streak">0</div>
+                <div class="overall-stat-label">Day Streak</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div
+                style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px;">
+                📈 Recommended</div>
+              <div style="display:flex; flex-direction:column; gap:10px;" id="recommendations"></div>
+            </div>
+
+            <div class="card" style="margin-top:14px;">
+              <div
+                style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px;">
+                🏆 Rank Progression</div>
+              <div id="rank-progression" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- =============================================
+     APPLICATION JAVASCRIPT
+============================================= -->
+
+  <script src="./java_oop_unit1.js"></script>
+  <script>
+  /* Complete offline data reconstructed from the supplied SQL seed. */
+  const CASES = [{"id": "U1-01", "unitId": "UNIT_1", "caseNumber": "Case 1", "title": "The Overflowing Evidence", "description": "Java data types and integer overflow.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Investigation.java", "bannerSnippet": "<span class=\"text-crimson\">evidence++</span>;", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "Java data types and integer overflow.", "criminal": "Numeric overflow", "code": [{"text": "<span class=\"type\">byte</span> evidence = <span class=\"number\">127</span>;", "bug": false}, {"text": "evidence++;", "bug": true}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(evidence);", "bug": false}], "clues": [{"text": "The variable 'evidence' is declared as a byte.", "icon": "🔍"}, {"text": "A byte in Java is an 8-bit signed integer.", "icon": "💾"}, {"text": "The maximum value for a byte is 127. Incrementing past it causes an overflow to its minimum value (-128).", "icon": "🌊"}], "suspects": [{"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Numeric overflow", "icon": "🌊", "correct": true}, {"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "Syntax Error", "icon": "🚫", "correct": false}], "reasons": [{"text": "The maximum value for a byte is 127. Incrementing past it causes an overflow to its minimum value (-128).", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "int evidence = 127;", "correct": true}, {"text": "byte evidence = 128;", "correct": false}, {"text": "short evidence = 32000;", "correct": false}, {"text": "char evidence = 127;", "correct": false}], "orderIndex": 0}, {"id": "U1-02", "unitId": "UNIT_1", "caseNumber": "Case 2", "title": "The Array Boundary Breach", "description": "Accessing an array out of its bounds.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Records.java", "bannerSnippet": "System.out.println(<span class=\"text-crimson\">marks[3]</span>);", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "Accessing an array out of its bounds.", "criminal": "ArrayIndexOutOfBoundsException", "code": [{"text": "<span class=\"type\">int</span>[] marks = {<span class=\"number\">80</span>, <span class=\"number\">90</span>, <span class=\"number\">70</span>};", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(marks[<span class=\"number\">3</span>]);", "bug": true}], "clues": [{"text": "The array 'marks' has exactly 3 elements.", "icon": "🔍"}, {"text": "Java arrays are zero-indexed, meaning the first element is at index 0.", "icon": "0️⃣"}, {"text": "The valid indices for this array are 0, 1, and 2. Index 3 does not exist.", "icon": "🚫"}], "suspects": [{"name": "ArrayIndexOutOfBoundsException", "icon": "📊", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "TypeMismatch", "icon": "🎭", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}], "reasons": [{"text": "The valid indices for this array are 0, 1, and 2. Index 3 does not exist.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "System.out.println(marks[2]);", "correct": true}, {"text": "System.out.println(marks[4]);", "correct": false}, {"text": "System.out.println(marks);", "correct": false}, {"text": "System.out.println(marks.get(3));", "correct": false}], "orderIndex": 1}, {"id": "U1-03", "unitId": "UNIT_1", "caseNumber": "Case 3", "title": "The Assignment Impostor", "description": "Operator precedence and compound assignment.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "total_dxp.java", "bannerSnippet": "total_dxp <span class=\"text-crimson\">+=</span> 10 * 2;", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "Operator precedence and compound assignment.", "criminal": "70", "code": [{"text": "<span class=\"type\">int</span> total_dxp = <span class=\"number\">50</span>;", "bug": false}, {"text": "total_dxp += <span class=\"number\">10</span> * <span class=\"number\">2</span>;", "bug": true}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(total_dxp);", "bug": false}], "clues": [{"text": "The total_dxp starts at 50.", "icon": "🔍"}, {"text": "Multiplication (*) has a higher precedence than compound assignment (+=).", "icon": "⚖️"}, {"text": "First, 10 * 2 is evaluated (20). Then, 20 is added to 50.", "icon": "🧮"}], "suspects": [{"name": "70", "icon": "🎯", "correct": true}, {"name": "120", "icon": "❌", "correct": false}, {"name": "100", "icon": "❌", "correct": false}, {"name": "60", "icon": "❌", "correct": false}], "reasons": [{"text": "First, 10 * 2 is evaluated (20). Then, 20 is added to 50.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "The correct output is 70", "correct": true}, {"text": "The correct output is 120", "correct": false}, {"text": "The correct output is 100", "correct": false}, {"text": "The correct output is 60", "correct": false}], "orderIndex": 2}, {"id": "U1-04", "unitId": "UNIT_1", "caseNumber": "Case 4", "title": "The Unreachable Branch", "description": "Incorrect condition ordering in an if-else chain.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Grader.java", "bannerSnippet": "<span class=\"text-crimson\">if (marks >= 40)</span>", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "Incorrect condition ordering in an if-else chain.", "criminal": "Incorrect condition ordering", "code": [{"text": "<span class=\"type\">int</span> marks = <span class=\"number\">85</span>;", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"keyword\">if</span> (marks >= <span class=\"number\">40</span>)", "bug": true}, {"text": "    <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Pass\"</span>);", "bug": false}, {"text": "<span class=\"keyword\">else if</span> (marks >= <span class=\"number\">75</span>)", "bug": true}, {"text": "    <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Distinction\"</span>);", "bug": false}], "clues": [{"text": "The 'marks' variable is 85, which means they should get a Distinction.", "icon": "🔍"}, {"text": "An if-else chain evaluates from top to bottom and stops at the FIRST true condition.", "icon": "⚖️"}, {"text": "Because 85 >= 40 is true, the first block executes and the rest are ignored.", "icon": "⚠️"}], "suspects": [{"name": "Variable shadowing", "icon": "👥", "correct": false}, {"name": "Incorrect condition ordering", "icon": "🔀", "correct": true}, {"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}], "reasons": [{"text": "Because 85 >= 40 is true, the first block executes and the rest are ignored.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "if (marks >= 75) { ... } else if (marks >= 40) { ... }", "correct": true}, {"text": "if (marks >= 40 && marks >= 75)", "correct": false}, {"text": "if (marks == 75)", "correct": false}, {"text": "else if (marks >= 85)", "correct": false}], "orderIndex": 3}, {"id": "U1-05", "unitId": "UNIT_1", "caseNumber": "Case 5", "title": "The Missing Blueprint", "description": "Code Reconstruction of Classes and Objects.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Main.java", "bannerSnippet": "<span class=\"text-crimson\">Student s = new Student();</span>", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "Code Reconstruction of Classes and Objects.", "criminal": "Missing Blueprint (Class structure error)", "code": [{"text": "<span class=\"comment\">// Fragmented Code:</span>", "bug": false}, {"text": "Student s = new Student();", "bug": true}, {"text": "class Student {", "bug": true}, {"text": "s.display();", "bug": true}, {"text": "void display() { }", "bug": true}, {"text": "}", "bug": true}], "clues": [{"text": "The code is scrambled. A class must encapsulate its methods.", "icon": "🧩"}, {"text": "The object creation and method call must happen inside a method like 'main', not inside another class structure at the top level.", "icon": "🏗️"}, {"text": "The method display() belongs inside the Student class.", "icon": "📦"}], "suspects": [{"name": "Syntax Error", "icon": "🚫", "correct": false}, {"name": "Missing Blueprint (Class structure error)", "icon": "🏗️", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Private method access", "icon": "🔒", "correct": false}], "reasons": [{"text": "The method display() belongs inside the Student class.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "class Student { void display(){} } // and in main: Student s = new Student(); s.display();", "correct": true}, {"text": "class Student s = new Student();", "correct": false}, {"text": "Student s = class Student { void display(){} };", "correct": false}, {"text": "void display() { Student s = new Student(); } class Student {}", "correct": false}], "orderIndex": 4}, {"id": "U1-06", "unitId": "UNIT_1", "caseNumber": "Case 6", "title": "The Constructor Without Identity", "description": "Constructor argument mismatch.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Student.java", "bannerSnippet": "Student s = <span class=\"text-crimson\">new Student()</span>;", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "Constructor argument mismatch.", "criminal": "Constructor mismatch", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Student</span> {", "bug": false}, {"text": "    <span class=\"class-name\">Student</span>(<span class=\"type\">String</span> name) {", "bug": false}, {"text": "        <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(name);", "bug": false}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Student</span> s = <span class=\"keyword\">new</span> <span class=\"class-name\">Student</span>();", "bug": true}], "clues": [{"text": "The Student class defines a constructor that expects a String.", "icon": "🔍"}, {"text": "When you write a custom constructor, Java removes the hidden default empty constructor.", "icon": "🗑️"}, {"text": "The instantiation calls new Student(), passing NO arguments.", "icon": "⚠️"}], "suspects": [{"name": "Constructor mismatch", "icon": "🏗️", "correct": true}, {"name": "Variable shadowing", "icon": "👥", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Runtime Polymorphism", "icon": "🎭", "correct": false}], "reasons": [{"text": "The instantiation calls new Student(), passing NO arguments.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Student s = new Student(\"Arun\");", "correct": true}, {"text": "Student s = new Student(123);", "correct": false}, {"text": "Student s = new Student;", "correct": false}, {"text": "Student s = null;", "correct": false}], "orderIndex": 5}, {"id": "U1-07", "unitId": "UNIT_1", "caseNumber": "Case 7", "title": "The Missing Return", "description": "A method promises a return value but fails to deliver.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "MathCalc.java", "bannerSnippet": "static <span class=\"text-crimson\">int</span> add(int a, int b)", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "A method promises a return value but fails to deliver.", "criminal": "Missing return statement", "code": [{"text": "<span class=\"keyword\">static int</span> <span class=\"method\">add</span>(<span class=\"type\">int</span> a, <span class=\"type\">int</span> b) {", "bug": false}, {"text": "    <span class=\"type\">int</span> result = a + b;", "bug": true}, {"text": "}", "bug": true}], "clues": [{"text": "The method signature declares 'int' as the return type.", "icon": "🔍"}, {"text": "The method calculates the sum and stores it in 'result'.", "icon": "🧮"}, {"text": "The method ends without sending anything back to the caller.", "icon": "🚫"}], "suspects": [{"name": "Missing inheritance", "icon": "🧬", "correct": false}, {"name": "Missing return statement", "icon": "📤", "correct": true}, {"name": "TypeMismatch", "icon": "🎭", "correct": false}, {"name": "Syntax Error", "icon": "❌", "correct": false}], "reasons": [{"text": "The method ends without sending anything back to the caller.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "return result;", "correct": true}, {"text": "return void;", "correct": false}, {"text": "System.out.println(result);", "correct": false}, {"text": "break result;", "correct": false}], "orderIndex": 6}, {"id": "U1-08", "unitId": "UNIT_1", "caseNumber": "Case 8", "title": "The Private Vault", "description": "Illegal private-member access.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Account.java", "bannerSnippet": "System.out.println(<span class=\"text-crimson\">account.balance</span>);", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "Illegal private-member access.", "criminal": "Encapsulation Violation", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Account</span> {", "bug": false}, {"text": "    <span class=\"keyword\">private</span> <span class=\"type\">double</span> balance = <span class=\"number\">5000</span>;", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Account</span> account = <span class=\"keyword\">new</span> <span class=\"class-name\">Account</span>();", "bug": false}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(account.balance);", "bug": true}], "clues": [{"text": "The balance field belongs to Account.", "icon": "🔍"}, {"text": "The balance field is marked as private.", "icon": "🔒"}, {"text": "The main method is trying to access balance directly from outside the class.", "icon": "⚠️"}], "suspects": [{"name": "Variable shadowing", "icon": "👥", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Encapsulation Violation", "icon": "🔒", "correct": true}, {"name": "Constructor Mismatch", "icon": "🏗️", "correct": false}], "reasons": [{"text": "The main method is trying to access balance directly from outside the class.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "// Inside Account: public double getBalance() { return balance; } // Usage: account.getBalance()", "correct": true}, {"text": "System.out.println(account->balance);", "correct": false}, {"text": "System.out.println(Account.balance);", "correct": false}, {"text": "System.out.println(balance);", "correct": false}], "orderIndex": 7}, {"id": "U1-09", "unitId": "UNIT_1", "caseNumber": "Case 9", "title": "The Shared Counter Mystery", "description": "Determine the output of a shared static counter.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Student.java", "bannerSnippet": "<span class=\"text-crimson\">static int count = 0;</span>", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "Determine the output of a shared static counter.", "criminal": "3", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Student</span> {", "bug": false}, {"text": "    <span class=\"keyword\">static int</span> count = <span class=\"number\">0</span>;", "bug": false}, {"text": "    <span class=\"class-name\">Student</span>() {", "bug": false}, {"text": "        count++;", "bug": false}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}, {"text": "<span class=\"class-name\">Student</span> s1 = <span class=\"keyword\">new</span> <span class=\"class-name\">Student</span>();", "bug": false}, {"text": "<span class=\"class-name\">Student</span> s2 = <span class=\"keyword\">new</span> <span class=\"class-name\">Student</span>();", "bug": false}, {"text": "<span class=\"class-name\">Student</span> s3 = <span class=\"keyword\">new</span> <span class=\"class-name\">Student</span>();", "bug": false}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"class-name\">Student</span>.count);", "bug": true}], "clues": [{"text": "The count variable is declared as 'static'.", "icon": "🌟"}, {"text": "There are three objects created: s1, s2, and s3.", "icon": "👤"}, {"text": "Static variables are shared among all instances of the class.", "icon": "📈"}], "suspects": [{"name": "3", "icon": "🎯", "correct": true}, {"name": "1", "icon": "❌", "correct": false}, {"name": "0", "icon": "❌", "correct": false}, {"name": "Compilation Error", "icon": "🚫", "correct": false}], "reasons": [{"text": "Static variables are shared among all instances of the class.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "The output is 3.", "correct": true}, {"text": "The output is 1.", "correct": false}, {"text": "The output is 0.", "correct": false}, {"text": "Throws exception.", "correct": false}], "orderIndex": 8}, {"id": "U1-10", "unitId": "UNIT_1", "caseNumber": "Case 10", "title": "The Undocumented Evidence", "description": "Identify the correct JavaDoc format.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Utils.java", "bannerSnippet": "<span class=\"text-crimson\">// Calculates the total</span>", "topic": "Data Types & Operators", "division": "Unit I - Basics", "detectorNote": "Identify the correct JavaDoc format.", "criminal": "Incorrect Comment Format", "code": [{"text": "<span class=\"comment\">// Calculates the total</span>", "bug": true}, {"text": "<span class=\"keyword\">int</span> <span class=\"method\">calculateTotal</span>(<span class=\"type\">int</span> a, <span class=\"type\">int</span> b) {", "bug": false}, {"text": "    <span class=\"keyword\">return</span> a + b;", "bug": false}, {"text": "}", "bug": false}], "clues": [{"text": "The current comment uses a double slash // which is a single-line comment.", "icon": "📝"}, {"text": "JavaDoc comments must start with /** and end with */.", "icon": "📜"}, {"text": "JavaDoc uses tags like @param and @return to generate API documentation.", "icon": "🏷️"}], "suspects": [{"name": "Incorrect Comment Format", "icon": "❌", "correct": true}, {"name": "Missing Blueprint", "icon": "🏗️", "correct": false}, {"name": "Syntax Error", "icon": "🚫", "correct": false}, {"name": "TypeMismatch", "icon": "🎭", "correct": false}], "reasons": [{"text": "JavaDoc uses tags like @param and @return to generate API documentation.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "/**\n * Calculates the total.\n * @param a first value\n * @param b second value\n * @return calculated total\n */", "correct": true}, {"text": "/* Calculates the total @param a @param b */", "correct": false}, {"text": "/// Calculates the total\n/// @param a\n/// @param b", "correct": false}, {"text": "<!-- Calculates the total -->", "correct": false}], "orderIndex": 9}, {"id": "U2-01", "unitId": "UNIT_2", "caseNumber": "Case 1", "title": "The Overload Impostor", "description": "Invalid method overloading by only changing the return type.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Investigation.java", "bannerSnippet": "<span class=\"text-crimson\">int</span> investigate(int evidence)", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "Invalid method overloading by only changing the return type.", "criminal": "Compilation Error (Duplicate Method)", "code": [{"text": "<span class=\"keyword\">void</span> <span class=\"method\">investigate</span>(<span class=\"type\">int</span> evidence) {", "bug": false}, {"text": "    <span class=\"comment\">// Analyze evidence</span>", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"type\">int</span> <span class=\"method\">investigate</span>(<span class=\"type\">int</span> evidence) {", "bug": true}, {"text": "    <span class=\"keyword\">return</span> evidence;", "bug": true}, {"text": "}", "bug": true}], "clues": [{"text": "Both methods share the same name 'investigate'.", "icon": "🔍"}, {"text": "Both methods have the exact same parameter list: (int evidence).", "icon": "⚖️"}, {"text": "The return types are different, but Java method signatures only care about the name and parameter list.", "icon": "📝"}], "suspects": [{"name": "Variable shadowing", "icon": "👥", "correct": false}, {"name": "Compilation Error (Duplicate Method)", "icon": "❌", "correct": true}, {"name": "Missing inheritance", "icon": "🧬", "correct": false}, {"name": "Runtime Polymorphism", "icon": "🎭", "correct": false}], "reasons": [{"text": "The return types are different, but Java method signatures only care about the name and parameter list.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "int investigate(int evidence, boolean detailed) { return evidence; }", "correct": true}, {"text": "int Investigate(int evidence) { return evidence; }", "correct": false}, {"text": "void investigate(int evidence) { return evidence; }", "correct": false}, {"text": "double investigate(int evidence) { return evidence; }", "correct": false}], "orderIndex": 0}, {"id": "U2-02", "unitId": "UNIT_2", "caseNumber": "Case 2", "title": "The Altered Evidence", "description": "Understanding object references as method parameters.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Lab.java", "bannerSnippet": "tamperEvidence(<span class=\"text-cyan\">suspect</span>);", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "Understanding object references as method parameters.", "criminal": "\"Guilty\"", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Student</span> { <span class=\"type\">String</span> name = <span class=\"string\">\"Innocent\"</span>; }", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"keyword\">static void</span> <span class=\"method\">tamperEvidence</span>(<span class=\"class-name\">Student</span> s) {", "bug": false}, {"text": "    s.name = <span class=\"string\">\"Guilty\"</span>;", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Student</span> suspect = <span class=\"keyword\">new</span> <span class=\"class-name\">Student</span>();", "bug": false}, {"text": "<span class=\"method\">tamperEvidence</span>(suspect);", "bug": false}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(suspect.name);", "bug": true}], "clues": [{"text": "The object 'suspect' is created with the name 'Innocent'.", "icon": "🔍"}, {"text": "It is passed into the 'tamperEvidence' method.", "icon": "🧪"}, {"text": "Java passes object references by value. The method gets a copy of the reference pointing to the SAME object in memory.", "icon": "🔗"}], "suspects": [{"name": "\"Innocent\"", "icon": "😇", "correct": false}, {"name": "\"Guilty\"", "icon": "😈", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}], "reasons": [{"text": "Java passes object references by value. The method gets a copy of the reference pointing to the SAME object in memory.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "The output is: Guilty", "correct": true}, {"text": "The output is: Innocent", "correct": false}, {"text": "Throws exception.", "correct": false}, {"text": "Compile error.", "correct": false}], "orderIndex": 1}, {"id": "U2-03", "unitId": "UNIT_2", "caseNumber": "Case 3", "title": "The Returning Witness", "description": "Returning objects from a method.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Station.java", "bannerSnippet": "<span class=\"text-crimson\">________;</span>", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "Returning objects from a method.", "criminal": "Missing Return", "code": [{"text": "<span class=\"class-name\">Student</span> <span class=\"method\">createStudent</span>() {", "bug": false}, {"text": "    <span class=\"class-name\">Student</span> s = <span class=\"keyword\">new</span> <span class=\"class-name\">Student</span>();", "bug": false}, {"text": "    <span class=\"keyword\">________</span>;", "bug": true}, {"text": "}", "bug": false}], "clues": [{"text": "The method signature specifies the return type is 'Student'.", "icon": "🔍"}, {"text": "A new 'Student' object is instantiated and assigned to 's'.", "icon": "👤"}, {"text": "The method ends abruptly. It must return the created object to satisfy the contract.", "icon": "📤"}], "suspects": [{"name": "Missing Return", "icon": "📤", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Abstract Instantiation", "icon": "👻", "correct": false}, {"name": "Encapsulation Violation", "icon": "🔒", "correct": false}], "reasons": [{"text": "The method ends abruptly. It must return the created object to satisfy the contract.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "return s;", "correct": true}, {"text": "return new Object();", "correct": false}, {"text": "System.out.println(s);", "correct": false}, {"text": "break;", "correct": false}], "orderIndex": 2}, {"id": "U2-04", "unitId": "UNIT_2", "caseNumber": "Case 4", "title": "The Hidden Room", "description": "Constructing an inner class object.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 250, "filename": "Building.java", "bannerSnippet": "Outer.Inner inner = <span class=\"text-crimson\">new Inner()</span>;", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "Constructing an inner class object.", "criminal": "Invalid inner class instantiation", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Outer</span> {", "bug": false}, {"text": "    <span class=\"keyword\">class</span> <span class=\"class-name\">Inner</span> {", "bug": false}, {"text": "        <span class=\"keyword\">void</span> <span class=\"method\">hide</span>() { }", "bug": false}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Outer</span> outer = <span class=\"keyword\">new</span> <span class=\"class-name\">Outer</span>();", "bug": false}, {"text": "<span class=\"class-name\">Outer</span>.<span class=\"class-name\">Inner</span> inner = <span class=\"keyword\">new</span> <span class=\"class-name\">Inner</span>();", "bug": true}], "clues": [{"text": "The Inner class is NOT marked static. It is a non-static nested class.", "icon": "🔍"}, {"text": "A non-static inner class belongs to an INSTANCE of the outer class.", "icon": "🏠"}, {"text": "You cannot instantiate Inner directly without going through an Outer object.", "icon": "🚫"}], "suspects": [{"name": "Invalid inner class instantiation", "icon": "❌", "correct": true}, {"name": "Abstract Instantiation", "icon": "👻", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Variable shadowing", "icon": "👥", "correct": false}], "reasons": [{"text": "You cannot instantiate Inner directly without going through an Outer object.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Outer.Inner inner = outer.new Inner();", "correct": true}, {"text": "Outer.Inner inner = Outer.new Inner();", "correct": false}, {"text": "Outer.Inner inner = new outer.Inner();", "correct": false}, {"text": "Outer.Inner inner = new Outer.Inner();", "correct": false}], "orderIndex": 3}, {"id": "U2-05", "unitId": "UNIT_2", "caseNumber": "Case 5", "title": "The Inheritance Impostor", "description": "Missing inheritance relationship.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Dog.java", "bannerSnippet": "Dog d = new Dog(); <span class=\"text-crimson\">d.eat();</span>", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "Missing inheritance relationship.", "criminal": "Missing inheritance relationship", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Animal</span> {", "bug": false}, {"text": "    <span class=\"keyword\">void</span> <span class=\"method\">eat</span>() { }", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Dog</span> {", "bug": true}, {"text": "    <span class=\"keyword\">void</span> <span class=\"method\">bark</span>() { }", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Dog</span> d = <span class=\"keyword\">new</span> <span class=\"class-name\">Dog</span>();", "bug": false}, {"text": "d.<span class=\"method\">eat</span>();", "bug": true}], "clues": [{"text": "The `eat()` method is defined inside the Animal class.", "icon": "🦴"}, {"text": "The `Dog` class is completely separate from `Animal`.", "icon": "🚫"}, {"text": "A class must use `extends` to inherit methods from another class.", "icon": "🧬"}], "suspects": [{"name": "Variable shadowing", "icon": "👥", "correct": false}, {"name": "Missing inheritance relationship", "icon": "🧬", "correct": true}, {"name": "Incorrect method override", "icon": "🔀", "correct": false}, {"name": "Abstract class instantiation", "icon": "👻", "correct": false}], "reasons": [{"text": "A class must use `extends` to inherit methods from another class.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "class Dog extends Animal {", "correct": true}, {"text": "class Dog implements Animal {", "correct": false}, {"text": "class Dog uses Animal {", "correct": false}, {"text": "class Dog inherits Animal {", "correct": false}], "orderIndex": 4}, {"id": "U2-06", "unitId": "UNIT_2", "caseNumber": "Case 6", "title": "The Parent Constructor Mystery", "description": "Subclass fails to invoke the parent constructor properly.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Student.java", "bannerSnippet": "Student() { <span class=\"text-crimson\">// empty</span> }", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "Subclass fails to invoke the parent constructor properly.", "criminal": "Parent constructor mismatch", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Person</span> {", "bug": false}, {"text": "    <span class=\"class-name\">Person</span>(<span class=\"type\">String</span> name) {}", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Student</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Person</span> {", "bug": false}, {"text": "    <span class=\"class-name\">Student</span>() {}", "bug": true}, {"text": "}", "bug": false}], "clues": [{"text": "Person has no default constructor, only a parameterized one.", "icon": "👤"}, {"text": "Java automatically inserts a call to super() (default parent constructor) in the child constructor.", "icon": "🏗️"}, {"text": "The default parent constructor does not exist, causing an error.", "icon": "❌"}], "suspects": [{"name": "Constructor mismatch", "icon": "🏗️", "correct": false}, {"name": "Parent constructor mismatch", "icon": "🧬", "correct": true}, {"name": "Variable shadowing", "icon": "👥", "correct": false}, {"name": "Incorrect method override", "icon": "🔀", "correct": false}], "reasons": [{"text": "The default parent constructor does not exist, causing an error.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Student() { super(\"Unknown\"); }", "correct": true}, {"text": "Student() { super(); }", "correct": false}, {"text": "Student() { Person.name = \"Unknown\"; }", "correct": false}, {"text": "Student() { this.name = \"Unknown\"; }", "correct": false}], "orderIndex": 5}, {"id": "U2-07", "unitId": "UNIT_2", "caseNumber": "Case 7", "title": "The Silent Override", "description": "A method override fails silently due to a typo in the method signature.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Animal.java", "bannerSnippet": "void <span class=\"text-crimson\">Sound()</span> { }", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "A method override fails silently due to a typo in the method signature.", "criminal": "Incorrect method override", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Animal</span> {", "bug": false}, {"text": "    <span class=\"keyword\">void</span> <span class=\"method\">sound</span>() { }", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Dog</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Animal</span> {", "bug": false}, {"text": "    <span class=\"keyword\">void</span> <span class=\"method\">Sound</span>() { }", "bug": true}, {"text": "}", "bug": false}], "clues": [{"text": "The parent method is `sound()`.", "icon": "🔊"}, {"text": "The child method is `Sound()`.", "icon": "🔠"}, {"text": "Java is case-sensitive, so these are treated as completely different methods.", "icon": "⚖️"}], "suspects": [{"name": "Missing inheritance relationship", "icon": "🧬", "correct": false}, {"name": "Incorrect method override", "icon": "🔀", "correct": true}, {"name": "Variable shadowing", "icon": "👥", "correct": false}, {"name": "Runtime polymorphism error", "icon": "🎭", "correct": false}], "reasons": [{"text": "Java is case-sensitive, so these are treated as completely different methods.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "@Override void sound() { }", "correct": true}, {"text": "void override sound() { }", "correct": false}, {"text": "void sound(String s) { }", "correct": false}, {"text": "public void Sound() { }", "correct": false}], "orderIndex": 6}, {"id": "U2-08", "unitId": "UNIT_2", "caseNumber": "Case 8", "title": "The Identity Switch", "description": "Understanding runtime polymorphism and method dispatch.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 250, "filename": "Polymorphism.java", "bannerSnippet": "Animal suspect = <span class=\"text-cyan\">new Dog()</span>; suspect.sound();", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "Understanding runtime polymorphism and method dispatch.", "criminal": "\"Dog\"", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Animal</span> { <span class=\"keyword\">void</span> <span class=\"method\">sound</span>() { <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Animal\"</span>); } }", "bug": false}, {"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Dog</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Animal</span> { <span class=\"keyword\">@Override</span> <span class=\"keyword\">void</span> <span class=\"method\">sound</span>() { <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Dog\"</span>); } }", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Animal</span> suspect = <span class=\"keyword\">new</span> <span class=\"class-name\">Dog</span>();", "bug": true}, {"text": "suspect.<span class=\"method\">sound</span>();", "bug": true}], "clues": [{"text": "The reference type is Animal, but the actual object type in memory is Dog.", "icon": "🏷️"}, {"text": "Java uses dynamic method dispatch for overridden instance methods.", "icon": "⚡"}, {"text": "The method execution is determined by the actual object type at runtime.", "icon": "🏃"}], "suspects": [{"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "\"Animal\"", "icon": "🐾", "correct": false}, {"name": "\"Dog\"", "icon": "🐕", "correct": true}, {"name": "Nothing", "icon": "🕳️", "correct": false}], "reasons": [{"text": "The method execution is determined by the actual object type at runtime.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Output is: \"Dog\" (Runtime Polymorphism)", "correct": true}, {"text": "Output is: \"Animal\"", "correct": false}, {"text": "Throws ClassCastException", "correct": false}, {"text": "Compile time error", "correct": false}], "orderIndex": 7}, {"id": "U2-09", "unitId": "UNIT_2", "caseNumber": "Case 9", "title": "The Abstract Fugitive", "description": "An attempt to instantiate an abstract class.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 250, "filename": "Shape.java", "bannerSnippet": "Shape s = <span class=\"text-crimson\">new Shape()</span>;", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "An attempt to instantiate an abstract class.", "criminal": "Abstract Instantiation", "code": [{"text": "<span class=\"keyword\">abstract class</span> <span class=\"class-name\">Shape</span> {", "bug": false}, {"text": "    <span class=\"keyword\">abstract void</span> <span class=\"method\">draw</span>();", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Shape</span> s = <span class=\"keyword\">new</span> <span class=\"class-name\">Shape</span>();", "bug": true}], "clues": [{"text": "The Shape class is marked with the abstract keyword.", "icon": "👻"}, {"text": "Abstract classes are incomplete templates.", "icon": "📝"}, {"text": "You cannot instantiate an abstract class directly.", "icon": "🚫"}], "suspects": [{"name": "Abstract Instantiation", "icon": "👻", "correct": true}, {"name": "Missing interface method", "icon": "📄", "correct": false}, {"name": "Constructor mismatch", "icon": "🏗️", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}], "reasons": [{"text": "You cannot instantiate an abstract class directly.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Shape s = new Circle(); // Assuming Circle extends Shape", "correct": true}, {"text": "Shape s = new abstract Shape();", "correct": false}, {"text": "abstract Shape s = new Shape();", "correct": false}, {"text": "Shape s = null;", "correct": false}], "orderIndex": 8}, {"id": "U2-10", "unitId": "UNIT_2", "caseNumber": "Case 10", "title": "The Package Contract", "description": "Mini-Boss: Interfaces and Implementations.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 300, "filename": "Card.java", "bannerSnippet": "class Card <span class=\"text-crimson\">implements Payment</span>", "topic": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "detectorNote": "Mini-Boss: Interfaces and Implementations.", "criminal": "Unimplemented Interface", "code": [{"text": "<span class=\"keyword\">interface</span> <span class=\"class-name\">Payment</span> {", "bug": false}, {"text": "    <span class=\"keyword\">void</span> <span class=\"method\">pay</span>();", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Card</span> <span class=\"keyword\">implements</span> <span class=\"class-name\">Payment</span> {", "bug": true}, {"text": "    <span class=\"comment\">// I will implement later...</span>", "bug": true}, {"text": "}", "bug": true}], "clues": [{"text": "Payment is an interface that specifies a pay() method.", "icon": "📜"}, {"text": "Card implements Payment but does not provide a body for pay().", "icon": "❌"}, {"text": "Implementing an interface is a strict contract to provide all its methods.", "icon": "🤝"}], "suspects": [{"name": "Unimplemented Interface", "icon": "🤝", "correct": true}, {"name": "Abstract Instantiation", "icon": "👻", "correct": false}, {"name": "Missing inheritance", "icon": "🧬", "correct": false}, {"name": "Variable shadowing", "icon": "👥", "correct": false}], "reasons": [{"text": "Implementing an interface is a strict contract to provide all its methods.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "@Override public void pay() { System.out.println(\"Payment made\"); }", "correct": true}, {"text": "void pay() {}", "correct": false}, {"text": "abstract class Card implements Payment", "correct": false}, {"text": "public void display(Payment p) {}", "correct": false}], "orderIndex": 9}, {"id": "U3-01", "unitId": "UNIT_3", "caseNumber": "Case 1", "title": "The Division Murder", "description": "Exception Basics: Division by zero.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Calculator.java", "bannerSnippet": "System.out.println(<span class=\"text-crimson\">a / b</span>);", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "Exception Basics: Division by zero.", "criminal": "ArithmeticException", "code": [{"text": "<span class=\"type\">int</span> a = <span class=\"number\">100</span>;", "bug": false}, {"text": "<span class=\"type\">int</span> b = <span class=\"number\">0</span>;", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(a / b);", "bug": true}], "clues": [{"text": "The variable 'a' is 100.", "icon": "🔍"}, {"text": "The variable 'b' is 0.", "icon": "0️⃣"}, {"text": "The math operation is division (/).", "icon": "➗"}], "suspects": [{"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "ArithmeticException", "icon": "➗", "correct": true}, {"name": "ClassCastException", "icon": "🎭", "correct": false}, {"name": "Syntax Error", "icon": "❌", "correct": false}], "reasons": [{"text": "The math operation is division (/).", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "if (b != 0) System.out.println(a / b); else System.out.println(\"Cannot divide by 0\");", "correct": true}, {"text": "System.out.println(a % b);", "correct": false}, {"text": "System.out.println(b / a);", "correct": false}, {"text": "System.out.println(a * b);", "correct": false}], "orderIndex": 0}, {"id": "U3-02", "unitId": "UNIT_3", "caseNumber": "Case 2", "title": "The Wrong Catch", "description": "Catch block ordering error.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Investigation.java", "bannerSnippet": "} <span class=\"text-crimson\">catch (Exception e)</span> {", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "Catch block ordering error.", "criminal": "Catch Ordering", "code": [{"text": "<span class=\"keyword\">try</span> {", "bug": false}, {"text": "    <span class=\"comment\">// suspicious operation</span>", "bug": false}, {"text": "}", "bug": false}, {"text": "<span class=\"keyword\">catch</span> (<span class=\"class-name\">Exception</span> e) {", "bug": true}, {"text": "}", "bug": true}, {"text": "<span class=\"keyword\">catch</span> (<span class=\"class-name\">ArithmeticException</span> e) {", "bug": true}, {"text": "}", "bug": true}], "clues": [{"text": "There are multiple catch blocks for a single try block.", "icon": "🔍"}, {"text": "Exception is the parent class of all exceptions, including ArithmeticException.", "icon": "🧬"}, {"text": "Java catches exceptions from top to bottom.", "icon": "⬇️"}], "suspects": [{"name": "Catch Ordering", "icon": "🔀", "correct": true}, {"name": "ArithmeticException", "icon": "➗", "correct": false}, {"name": "Missing Return", "icon": "📤", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}], "reasons": [{"text": "Java catches exceptions from top to bottom.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "catch(ArithmeticException e){} catch(Exception e){}", "correct": true}, {"text": "catch(Exception e, ArithmeticException a){}", "correct": false}, {"text": "try{} catch(Exception e){} try{} catch(ArithmeticException e){}", "correct": false}, {"text": "catch(ArithmeticException e | Exception a){}", "correct": false}], "orderIndex": 1}, {"id": "U3-03", "unitId": "UNIT_3", "caseNumber": "Case 3", "title": "The Nested Trap", "description": "Determine which catch block handles a nested exception.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Lab.java", "bannerSnippet": "int[] a = {1}; <span class=\"text-crimson\">a[5] = 10;</span>", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "Determine which catch block handles a nested exception.", "criminal": "Outer Catch", "code": [{"text": "<span class=\"keyword\">try</span> {", "bug": false}, {"text": "    <span class=\"keyword\">try</span> {", "bug": false}, {"text": "        <span class=\"type\">int</span>[] a = {<span class=\"number\">1</span>};", "bug": false}, {"text": "        a[<span class=\"number\">5</span>] = <span class=\"number\">10</span>;", "bug": true}, {"text": "    } <span class=\"keyword\">catch</span> (<span class=\"class-name\">ArithmeticException</span> e) {", "bug": false}, {"text": "        <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Inner\"</span>);", "bug": false}, {"text": "    }", "bug": false}, {"text": "} <span class=\"keyword\">catch</span> (<span class=\"class-name\">ArrayIndexOutOfBoundsException</span> e) {", "bug": false}, {"text": "    <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Outer\"</span>);", "bug": false}, {"text": "}", "bug": false}], "clues": [{"text": "The error occurs at a[5] = 10.", "icon": "🔍"}, {"text": "The array only has one element (index 0). Accessing index 5 throws ArrayIndexOutOfBoundsException.", "icon": "📊"}, {"text": "The inner catch block only looks for ArithmeticException.", "icon": "➗"}], "suspects": [{"name": "Inner Catch", "icon": "📥", "correct": false}, {"name": "Outer Catch", "icon": "📤", "correct": true}, {"name": "Uncaught Exception", "icon": "❌", "correct": false}, {"name": "Compilation Error", "icon": "🚫", "correct": false}], "reasons": [{"text": "The inner catch block only looks for ArithmeticException.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Output is: Outer", "correct": true}, {"text": "Output is: Inner", "correct": false}, {"text": "Program crashes", "correct": false}, {"text": "Compile Error", "correct": false}], "orderIndex": 2}, {"id": "U3-04", "unitId": "UNIT_3", "caseNumber": "Case 4", "title": "The Null Assassin", "description": "Built-in Exceptions: Using a null reference.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Witness.java", "bannerSnippet": "<span class=\"text-crimson\">witness.length()</span>;", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "Built-in Exceptions: Using a null reference.", "criminal": "NullPointerException", "code": [{"text": "<span class=\"type\">String</span> witness = <span class=\"keyword\">null</span>;", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(witness.<span class=\"method\">length</span>());", "bug": true}], "clues": [{"text": "The 'witness' string is explicitly set to null.", "icon": "🔍"}, {"text": "Null means 'no object exists'.", "icon": "🕳️"}, {"text": "The code tries to call the length() method on an object that doesn't exist.", "icon": "💀"}], "suspects": [{"name": "StringIndexOutOfBoundsException", "icon": "📊", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": true}, {"name": "ArithmeticException", "icon": "➗", "correct": false}, {"name": "TypeMismatch", "icon": "🎭", "correct": false}], "reasons": [{"text": "The code tries to call the length() method on an object that doesn't exist.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "if (witness != null) { System.out.println(witness.length()); }", "correct": true}, {"text": "System.out.println(witness);", "correct": false}, {"text": "System.out.println(witness[0]);", "correct": false}, {"text": "System.out.println(null);", "correct": false}], "orderIndex": 3}, {"id": "U3-05", "unitId": "UNIT_3", "caseNumber": "Case 5", "title": "The Unauthorized Age", "description": "User-Defined Exception.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 200, "filename": "Auth.java", "bannerSnippet": "<span class=\"text-crimson\">throw new InvalidAgeException(\"Too young\");</span>", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "User-Defined Exception.", "criminal": "Missing 'throws' declaration", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">InvalidAgeException</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Exception</span> {", "bug": false}, {"text": "    <span class=\"keyword\">public</span> <span class=\"class-name\">InvalidAgeException</span>(<span class=\"type\">String</span> msg) { <span class=\"keyword\">super</span>(msg); }", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"keyword\">void</span> <span class=\"method\">checkAge</span>(<span class=\"type\">int</span> age) {", "bug": true}, {"text": "    <span class=\"keyword\">if</span> (age < <span class=\"number\">18</span>) {", "bug": false}, {"text": "        <span class=\"keyword\">throw new</span> <span class=\"class-name\">InvalidAgeException</span>(<span class=\"string\">\"Too young\"</span>);", "bug": true}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}], "clues": [{"text": "InvalidAgeException extends Exception, meaning it is a Checked Exception.", "icon": "🔍"}, {"text": "The method checkAge throws this checked exception.", "icon": "📤"}, {"text": "Methods that throw checked exceptions must declare them in their signature using 'throws'.", "icon": "📜"}], "suspects": [{"name": "Missing 'throws' declaration", "icon": "📜", "correct": true}, {"name": "Invalid throw syntax", "icon": "❌", "correct": false}, {"name": "Missing inheritance", "icon": "🧬", "correct": false}, {"name": "Exception subclassing error", "icon": "🚫", "correct": false}], "reasons": [{"text": "Methods that throw checked exceptions must declare them in their signature using 'throws'.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "void checkAge(int age) throws InvalidAgeException { ... }", "correct": true}, {"text": "void checkAge(int age) catch InvalidAgeException { ... }", "correct": false}, {"text": "void checkAge(int age) throw Exception { ... }", "correct": false}, {"text": "void checkAge(int age) { ... }", "correct": false}], "orderIndex": 4}, {"id": "U3-06", "unitId": "UNIT_3", "caseNumber": "Case 6", "title": "The Missing Thread", "description": "Thread creation and start.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Investigation.java", "bannerSnippet": "Investigation i = new Investigation(); <span class=\"text-crimson\">i.run();</span>", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "Thread creation and start.", "criminal": "Thread not started correctly", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Investigation</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Thread</span> {", "bug": false}, {"text": "    <span class=\"keyword\">public void</span> <span class=\"method\">run</span>() {", "bug": false}, {"text": "        <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Investigating\"</span>);", "bug": false}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Investigation</span> i = <span class=\"keyword\">new</span> <span class=\"class-name\">Investigation</span>();", "bug": false}, {"text": "i.<span class=\"method\">run</span>();", "bug": true}], "clues": [{"text": "The class extends Thread, which is correct for creating a thread.", "icon": "🔍"}, {"text": "Calling run() directly just executes the method in the CURRENT thread like a normal method call.", "icon": "📞"}, {"text": "To actually spawn a NEW thread, a different method must be called.", "icon": "🌟"}], "suspects": [{"name": "Thread not started correctly", "icon": "🌟", "correct": true}, {"name": "Missing inheritance", "icon": "🧬", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}], "reasons": [{"text": "To actually spawn a NEW thread, a different method must be called.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "i.start();", "correct": true}, {"text": "i.execute();", "correct": false}, {"text": "i.begin();", "correct": false}, {"text": "i.spawn();", "correct": false}], "orderIndex": 5}, {"id": "U3-07", "unitId": "UNIT_3", "caseNumber": "Case 7", "title": "The Race Condition Heist", "description": "Multiple threads modifying shared state.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 250, "filename": "Bank.java", "bannerSnippet": "<span class=\"text-crimson\">balance++;</span> // Accessed by 10 threads", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "Multiple threads modifying shared state.", "criminal": "Race Condition", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Bank</span> {", "bug": false}, {"text": "    <span class=\"keyword\">int</span> balance = <span class=\"number\">0</span>;", "bug": false}, {"text": "", "bug": false}, {"text": "    <span class=\"keyword\">void</span> <span class=\"method\">deposit</span>() {", "bug": false}, {"text": "        balance++;", "bug": true}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}, {"text": "<span class=\"comment\">// Assume 10 threads call deposit() 100 times each simultaneously.</span>", "bug": false}, {"text": "<span class=\"comment\">// Expected total: 1000. Actual total: 942.</span>", "bug": true}], "clues": [{"text": "The expected total is 1000, but the actual total is unpredictable (like 942).", "icon": "🔍"}, {"text": "balance++ is not a single atomic operation; it is a read, increment, and write.", "icon": "⏱️"}, {"text": "Multiple threads are reading the same old balance simultaneously and writing back identical incremented values.", "icon": "👥"}], "suspects": [{"name": "Race Condition", "icon": "🏃", "correct": true}, {"name": "ArithmeticException", "icon": "➗", "correct": false}, {"name": "Variable shadowing", "icon": "👥", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}], "reasons": [{"text": "Multiple threads are reading the same old balance simultaneously and writing back identical incremented values.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "The criminal is a Race Condition. Synchronization is needed.", "correct": true}, {"text": "The criminal is a syntax error.", "correct": false}, {"text": "The criminal is a math error.", "correct": false}, {"text": "The criminal is a loop error.", "correct": false}], "orderIndex": 6}, {"id": "U3-08", "unitId": "UNIT_3", "caseNumber": "Case 8", "title": "The Locked Evidence Room", "description": "Synchronization solution to a race condition.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 250, "filename": "Bank.java", "bannerSnippet": "<span class=\"text-crimson\">void deposit()</span> { balance++; }", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "Synchronization solution to a race condition.", "criminal": "Missing Synchronization", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Bank</span> {", "bug": false}, {"text": "    <span class=\"keyword\">int</span> balance = <span class=\"number\">0</span>;", "bug": false}, {"text": "", "bug": false}, {"text": "    <span class=\"keyword\">void</span> <span class=\"method\">deposit</span>() {", "bug": true}, {"text": "        balance++;", "bug": false}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}], "clues": [{"text": "This is the same crime scene from The Race Condition Heist.", "icon": "🔍"}, {"text": "We need to ensure only ONE thread can execute the deposit() method at a time.", "icon": "🔒"}, {"text": "Java provides a specific keyword to lock a method to a single thread.", "icon": "🔑"}], "suspects": [{"name": "Missing Synchronization", "icon": "🔒", "correct": true}, {"name": "Missing Volatile", "icon": "⚡", "correct": false}, {"name": "TypeMismatch", "icon": "🎭", "correct": false}, {"name": "Missing Thread.sleep()", "icon": "💤", "correct": false}], "reasons": [{"text": "Java provides a specific keyword to lock a method to a single thread.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "synchronized void deposit() { balance++; }", "correct": true}, {"text": "void deposit(synchronized) { balance++; }", "correct": false}, {"text": "volatile void deposit() { balance++; }", "correct": false}, {"text": "static void deposit() { balance++; }", "correct": false}], "orderIndex": 7}, {"id": "U3-09", "unitId": "UNIT_3", "caseNumber": "Case 9", "title": "The Waiting Witness", "description": "Inter-thread communication using wait() and notify().", "difficulty": "Master Detective", "difficultyColor": "crimson", "xpReward": 300, "filename": "Interrogation.java", "bannerSnippet": "Thread 1: <span class=\"text-cyan\">wait();</span> Thread 2: <span class=\"text-crimson\">_______;</span>", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "Inter-thread communication using wait() and notify().", "criminal": "Missing notify()", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">Room</span> {", "bug": false}, {"text": "    <span class=\"keyword\">synchronized void</span> <span class=\"method\">waitForAnswer</span>() <span class=\"keyword\">throws</span> <span class=\"class-name\">InterruptedException</span> {", "bug": false}, {"text": "        <span class=\"method\">wait</span>();", "bug": false}, {"text": "    }", "bug": false}, {"text": "", "bug": false}, {"text": "    <span class=\"keyword\">synchronized void</span> <span class=\"method\">provideAnswer</span>() {", "bug": false}, {"text": "        <span class=\"keyword\">________</span>;", "bug": true}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}], "clues": [{"text": "Thread 1 enters waitForAnswer() and calls wait(). It goes to sleep.", "icon": "💤"}, {"text": "Thread 2 enters provideAnswer() when it has the information.", "icon": "📝"}, {"text": "Thread 2 needs a way to wake up Thread 1.", "icon": "🔔"}], "suspects": [{"name": "Missing notify()", "icon": "🔔", "correct": true}, {"name": "Missing start()", "icon": "🌟", "correct": false}, {"name": "Missing wake()", "icon": "⏰", "correct": false}, {"name": "Missing resume()", "icon": "▶️", "correct": false}], "reasons": [{"text": "Thread 2 needs a way to wake up Thread 1.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "notify();", "correct": true}, {"text": "wake();", "correct": false}, {"text": "start();", "correct": false}, {"text": "resume();", "correct": false}], "orderIndex": 8}, {"id": "U3-10", "unitId": "UNIT_3", "caseNumber": "Case 10", "title": "The Boxed Identity", "description": "Wrappers and Autoboxing.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Evidence.java", "bannerSnippet": "<span class=\"text-cyan\">Integer evidence = 100;</span>", "topic": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "detectorNote": "Wrappers and Autoboxing.", "criminal": "Autoboxing and Unboxing", "code": [{"text": "<span class=\"class-name\">Integer</span> evidence = <span class=\"number\">100</span>;", "bug": false}, {"text": "<span class=\"type\">int</span> result = evidence;", "bug": false}], "clues": [{"text": "'Integer' is an object wrapper class. 'int' is a primitive type.", "icon": "🔍"}, {"text": "We are assigning a primitive (100) directly to an Object (evidence).", "icon": "📦"}, {"text": "We are assigning an Object (evidence) directly to a primitive (result).", "icon": "📤"}], "suspects": [{"name": "Autoboxing and Unboxing", "icon": "📦", "correct": true}, {"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "ClassCastException", "icon": "🎭", "correct": false}, {"name": "TypeMismatch", "icon": "🚫", "correct": false}], "reasons": [{"text": "We are assigning an Object (evidence) directly to a primitive (result).", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "The code is correct. It uses Autoboxing and Unboxing.", "correct": true}, {"text": "Integer evidence = new Integer(100);", "correct": false}, {"text": "int result = (int) evidence;", "correct": false}, {"text": "Compile Error.", "correct": false}], "orderIndex": 9}, {"id": "U4-01", "unitId": "UNIT_4", "caseNumber": "Case 1", "title": "The Silent Console", "description": "Console I/O and Type Mismatch.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Investigation.java", "bannerSnippet": "Scanner sc = new Scanner(System.in); <span class=\"text-crimson\">int age = sc.nextLine();</span>", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "Console I/O and Type Mismatch.", "criminal": "TypeMismatch", "code": [{"text": "<span class=\"keyword\">import</span> java.util.Scanner;", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Scanner</span> sc = <span class=\"keyword\">new</span> <span class=\"class-name\">Scanner</span>(<span class=\"class-name\">System</span>.<span class=\"variable\">in</span>);", "bug": false}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">print</span>(<span class=\"string\">\"Enter your age: \"</span>);", "bug": false}, {"text": "<span class=\"type\">int</span> age = sc.<span class=\"method\">nextLine</span>();", "bug": true}], "clues": [{"text": "The program asks the user for their age, expecting a number.", "icon": "🔍"}, {"text": "The variable 'age' is declared as an 'int'.", "icon": "🔢"}, {"text": "The Scanner's 'nextLine()' method returns a String, not an int.", "icon": "🔤"}], "suspects": [{"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "TypeMismatch", "icon": "🎭", "correct": true}, {"name": "InputMismatchException", "icon": "❌", "correct": false}, {"name": "Missing Scanner", "icon": "📠", "correct": false}], "reasons": [{"text": "The Scanner's 'nextLine()' method returns a String, not an int.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "int age = sc.nextInt();", "correct": true}, {"text": "int age = (int) sc.nextLine();", "correct": false}, {"text": "int age = sc.next();", "correct": false}, {"text": "String age = sc.nextInt();", "correct": false}], "orderIndex": 0}, {"id": "U4-02", "unitId": "UNIT_4", "caseNumber": "Case 2", "title": "The Missing File", "description": "File I/O and Checked Exceptions.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "FileHandler.java", "bannerSnippet": "FileReader reader = <span class=\"text-crimson\">new FileReader(\"evidence.txt\")</span>;", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "File I/O and Checked Exceptions.", "criminal": "FileNotFoundException", "code": [{"text": "<span class=\"keyword\">import</span> java.io.FileReader;", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"keyword\">void</span> <span class=\"method\">readEvidence</span>() {", "bug": false}, {"text": "    <span class=\"class-name\">FileReader</span> reader = <span class=\"keyword\">new</span> <span class=\"class-name\">FileReader</span>(<span class=\"string\">\"evidence.txt\"</span>);", "bug": true}, {"text": "}", "bug": false}], "clues": [{"text": "The program tries to open a file named 'evidence.txt'.", "icon": "🔍"}, {"text": "Opening a file might fail if the file doesn't exist on the hard drive.", "icon": "📂"}, {"text": "Java forces you to handle this possibility with a checked exception.", "icon": "⚠️"}], "suspects": [{"name": "FileNotFoundException", "icon": "📄", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Variable shadowing", "icon": "👥", "correct": false}, {"name": "ClassCastException", "icon": "🎭", "correct": false}], "reasons": [{"text": "Java forces you to handle this possibility with a checked exception.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "try { FileReader reader = new FileReader(\"evidence.txt\"); } catch (FileNotFoundException e) {}", "correct": true}, {"text": "FileReader reader = new FileReader();", "correct": false}, {"text": "File f = new FileReader(\"evidence.txt\");", "correct": false}, {"text": "FileReader reader = \"evidence.txt\";", "correct": false}], "orderIndex": 1}, {"id": "U4-03", "unitId": "UNIT_4", "caseNumber": "Case 3", "title": "The Vanishing Evidence", "description": "Resource Handling and Memory Leaks.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "FileHandler.java", "bannerSnippet": "reader.read(); <span class=\"text-crimson\">// Done reading</span>", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "Resource Handling and Memory Leaks.", "criminal": "Resource Leak", "code": [{"text": "<span class=\"keyword\">try</span> {", "bug": false}, {"text": "    <span class=\"class-name\">FileReader</span> reader = <span class=\"keyword\">new</span> <span class=\"class-name\">FileReader</span>(<span class=\"string\">\"evidence.txt\"</span>);", "bug": false}, {"text": "    <span class=\"type\">int</span> data = reader.<span class=\"method\">read</span>();", "bug": false}, {"text": "} <span class=\"keyword\">catch</span> (<span class=\"class-name\">Exception</span> e) {", "bug": false}, {"text": "    e.<span class=\"method\">printStackTrace</span>();", "bug": false}, {"text": "}", "bug": true}], "clues": [{"text": "The code opens a file and reads data from it.", "icon": "🔍"}, {"text": "Files are operating system resources.", "icon": "💾"}, {"text": "The code finishes without closing the resource, which can cause memory leaks or file locks.", "icon": "🔓"}], "suspects": [{"name": "Resource Leak", "icon": "🔓", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "FileNotFoundException", "icon": "📄", "correct": false}, {"name": "Syntax Error", "icon": "❌", "correct": false}], "reasons": [{"text": "The code finishes without closing the resource, which can cause memory leaks or file locks.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Use a finally block with reader.close(), or use Try-With-Resources: try (FileReader r = new FileReader(\"evidence.txt\")) { ... }", "correct": true}, {"text": "reader.delete();", "correct": false}, {"text": "reader = null;", "correct": false}, {"text": "catch (ResourceLeak e)", "correct": false}], "orderIndex": 2}, {"id": "U4-04", "unitId": "UNIT_4", "caseNumber": "Case 4", "title": "The Unsafe Container", "description": "The need for Generics for type safety.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Lab.java", "bannerSnippet": "evidence.add(\"Fingerprint\"); <span class=\"text-crimson\">evidence.add(100);</span>", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "The need for Generics for type safety.", "criminal": "Raw Type Vulnerability", "code": [{"text": "<span class=\"class-name\">ArrayList</span> evidence = <span class=\"keyword\">new</span> <span class=\"class-name\">ArrayList</span>();", "bug": true}, {"text": "", "bug": false}, {"text": "evidence.<span class=\"method\">add</span>(<span class=\"string\">\"Fingerprint\"</span>);", "bug": false}, {"text": "evidence.<span class=\"method\">add</span>(<span class=\"number\">100</span>);", "bug": false}], "clues": [{"text": "The ArrayList is created without specifying a type (it is a Raw Type).", "icon": "🔍"}, {"text": "Raw types allow you to mix Strings, Integers, and any other object together.", "icon": "📦"}, {"text": "This usually leads to ClassCastExceptions later when you retrieve the data.", "icon": "⚠️"}], "suspects": [{"name": "Raw Type Vulnerability", "icon": "📦", "correct": true}, {"name": "TypeMismatch", "icon": "🎭", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "IndexOutOfBounds", "icon": "📊", "correct": false}], "reasons": [{"text": "This usually leads to ClassCastExceptions later when you retrieve the data.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "ArrayList<String> evidence = new ArrayList<>();", "correct": true}, {"text": "ArrayList(String) evidence = new ArrayList();", "correct": false}, {"text": "String[] evidence = new ArrayList();", "correct": false}, {"text": "ArrayList evidence = new ArrayList(String);", "correct": false}], "orderIndex": 3}, {"id": "U4-05", "unitId": "UNIT_4", "caseNumber": "Case 5", "title": "The Universal Evidence Box", "description": "Constructing Generic Classes.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "EvidenceBox.java", "bannerSnippet": "class EvidenceBox<span class=\"text-crimson\">&lt;____&gt;</span> {", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "Constructing Generic Classes.", "criminal": "Generic Type Parameter", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"keyword\">____</span>&gt; {", "bug": true}, {"text": "", "bug": false}, {"text": "    <span class=\"keyword\">private</span> <span class=\"keyword\">____</span> evidence;", "bug": true}, {"text": "", "bug": false}, {"text": "    <span class=\"keyword\">void</span> <span class=\"method\">store</span>(<span class=\"keyword\">____</span> evidence) {", "bug": true}, {"text": "        <span class=\"keyword\">this</span>.evidence = evidence;", "bug": false}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}], "clues": [{"text": "This class is meant to hold ANY type of evidence.", "icon": "🔍"}, {"text": "Java allows you to use Type Parameters (usually a single uppercase letter).", "icon": "🔠"}, {"text": "The letter acts as a placeholder for the actual type that will be used later.", "icon": "📦"}], "suspects": [{"name": "Generic Type Parameter", "icon": "🔠", "correct": true}, {"name": "Raw Type", "icon": "📦", "correct": false}, {"name": "Missing Return", "icon": "📤", "correct": false}, {"name": "Missing inheritance", "icon": "🧬", "correct": false}], "reasons": [{"text": "The letter acts as a placeholder for the actual type that will be used later.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "class EvidenceBox<T> { private T evidence; void store(T evidence) { ... } }", "correct": true}, {"text": "class EvidenceBox<Object> { private Object evidence; }", "correct": false}, {"text": "class EvidenceBox<String> { private String evidence; }", "correct": false}, {"text": "class EvidenceBox<Generic> { private Generic evidence; }", "correct": false}], "orderIndex": 4}, {"id": "U4-06", "unitId": "UNIT_4", "caseNumber": "Case 6", "title": "The Generic Investigator", "description": "Generic Methods.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 250, "filename": "Lab.java", "bannerSnippet": "static <span class=\"text-crimson\">&lt;T&gt;</span> void inspect(T evidence)", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "Generic Methods.", "criminal": "Valid Generic Execution", "code": [{"text": "<span class=\"keyword\">static</span> &lt;<span class=\"class-name\">T</span>&gt; <span class=\"keyword\">void</span> <span class=\"method\">inspect</span>(<span class=\"class-name\">T</span> evidence) {", "bug": false}, {"text": "    <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(evidence);", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"comment\">// Will this code compile?</span>", "bug": false}, {"text": "<span class=\"method\">inspect</span>(<span class=\"string\">\"Blood\"</span>);", "bug": false}, {"text": "<span class=\"method\">inspect</span>(<span class=\"number\">145</span>);", "bug": false}, {"text": "<span class=\"method\">inspect</span>(<span class=\"number\">99.9</span>);", "bug": false}], "clues": [{"text": "The method is a Generic Method, denoted by the <T> before the return type.", "icon": "🔍"}, {"text": "It accepts a parameter of type T.", "icon": "📥"}, {"text": "We are passing a String, an Integer, and a Double to the same method.", "icon": "🎭"}], "suspects": [{"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "TypeMismatch", "icon": "🚫", "correct": false}, {"name": "Valid Generic Execution", "icon": "✅", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}], "reasons": [{"text": "We are passing a String, an Integer, and a Double to the same method.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "The code is completely valid and compiles.", "correct": true}, {"text": "Change T to Object", "correct": false}, {"text": "Create three overloaded inspect() methods", "correct": false}, {"text": "Compile Error.", "correct": false}], "orderIndex": 5}, {"id": "U4-07", "unitId": "UNIT_4", "caseNumber": "Case 7", "title": "The Restricted Type", "description": "Bounded Type Parameters.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 250, "filename": "Vault.java", "bannerSnippet": "class EvidenceBox<span class=\"text-crimson\">&lt;T extends Number&gt;</span>", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "Bounded Type Parameters.", "criminal": "Compilation Error", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">T</span> <span class=\"keyword\">extends</span> <span class=\"class-name\">Number</span>&gt; {", "bug": false}, {"text": "    <span class=\"class-name\">T</span> value;", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">Integer</span>&gt; box1 = <span class=\"keyword\">new</span> <span class=\"class-name\">EvidenceBox</span>&lt;&gt;();", "bug": false}, {"text": "<span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">Double</span>&gt; box2 = <span class=\"keyword\">new</span> <span class=\"class-name\">EvidenceBox</span>&lt;&gt;();", "bug": false}, {"text": "<span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">String</span>&gt; box3 = <span class=\"keyword\">new</span> <span class=\"class-name\">EvidenceBox</span>&lt;&gt;();", "bug": true}], "clues": [{"text": "The class EvidenceBox uses a Bounded Type Parameter (<T extends Number>).", "icon": "🔍"}, {"text": "This means T can only be Number or a subclass of Number.", "icon": "🔢"}, {"text": "Integer and Double are subclasses of Number. String is not.", "icon": "🚫"}], "suspects": [{"name": "Compilation Error", "icon": "❌", "correct": true}, {"name": "TypeMismatch", "icon": "🎭", "correct": false}, {"name": "Valid Generic Execution", "icon": "✅", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}], "reasons": [{"text": "Integer and Double are subclasses of Number. String is not.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "String cannot be used. Remove box3, or change the bound.", "correct": true}, {"text": "EvidenceBox<String extends Number> box3;", "correct": false}, {"text": "EvidenceBox<Number> box3 = new EvidenceBox<String>();", "correct": false}, {"text": "Cast String to Number", "correct": false}], "orderIndex": 6}, {"id": "U4-08", "unitId": "UNIT_4", "caseNumber": "Case 8", "title": "The Forbidden Generic", "description": "Generic instantiation restrictions (Type Erasure).", "difficulty": "Master Detective", "difficultyColor": "crimson", "xpReward": 350, "filename": "Lab.java", "bannerSnippet": "T evidence = <span class=\"text-crimson\">new T()</span>;", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "Generic instantiation restrictions (Type Erasure).", "criminal": "Forbidden Generic Instantiation", "code": [{"text": "<span class=\"keyword\">class</span> <span class=\"class-name\">EvidenceBox</span>&lt;<span class=\"class-name\">T</span>&gt; {", "bug": false}, {"text": "    <span class=\"class-name\">T</span> evidence;", "bug": false}, {"text": "", "bug": false}, {"text": "    <span class=\"keyword\">void</span> <span class=\"method\">createEvidence</span>() {", "bug": false}, {"text": "        evidence = <span class=\"keyword\">new</span> <span class=\"class-name\">T</span>();", "bug": true}, {"text": "    }", "bug": false}, {"text": "}", "bug": false}], "clues": [{"text": "The code tries to instantiate the generic type parameter T.", "icon": "🔍"}, {"text": "Due to Type Erasure, the compiler does not know what T will be at runtime.", "icon": "👻"}, {"text": "You cannot instantiate an unknown type.", "icon": "🚫"}], "suspects": [{"name": "Forbidden Generic Instantiation", "icon": "❌", "correct": true}, {"name": "Raw Type", "icon": "📦", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Constructor mismatch", "icon": "🏗️", "correct": false}], "reasons": [{"text": "You cannot instantiate an unknown type.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Pass a factory or Class<T> into the method to create instances", "correct": true}, {"text": "evidence = new Object();", "correct": false}, {"text": "evidence = T.new();", "correct": false}, {"text": "evidence = new T[];", "correct": false}], "orderIndex": 7}, {"id": "U4-09", "unitId": "UNIT_4", "caseNumber": "Case 9", "title": "The Immutable Message", "description": "Understanding String Immutability.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Letter.java", "bannerSnippet": "message.<span class=\"text-crimson\">concat(\" Detective\")</span>;", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "Understanding String Immutability.", "criminal": "\"Java\"", "code": [{"text": "<span class=\"type\">String</span> message = <span class=\"string\">\"Java\"</span>;", "bug": false}, {"text": "message.<span class=\"method\">concat</span>(<span class=\"string\">\" Detective\"</span>);", "bug": true}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(message);", "bug": false}], "clues": [{"text": "The concat() method joins two strings together.", "icon": "🔍"}, {"text": "Strings in Java are Immutable, meaning they can never be changed after creation.", "icon": "🔒"}, {"text": "concat() creates a BRAND NEW string and returns it, but doesn't change the original.", "icon": "✨"}], "suspects": [{"name": "\"Java\"", "icon": "☕", "correct": true}, {"name": "\"Java Detective\"", "icon": "🕵️", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}], "reasons": [{"text": "concat() creates a BRAND NEW string and returns it, but doesn't change the original.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "message = message.concat(\" Detective\");", "correct": true}, {"text": "message.append(\" Detective\");", "correct": false}, {"text": "String message2 = \" Detective\";", "correct": false}, {"text": "System.out.println(message);", "correct": false}], "orderIndex": 8}, {"id": "U4-10", "unitId": "UNIT_4", "caseNumber": "Case 10", "title": "The StringBuffer Operation", "description": "Using mutable String structures.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Report.java", "bannerSnippet": "<span class=\"text-cyan\">sb.append(\"Detective\")</span>;", "topic": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "detectorNote": "Using mutable String structures.", "criminal": "evitceteD avaJ", "code": [{"text": "<span class=\"class-name\">StringBuffer</span> sb = <span class=\"keyword\">new</span> <span class=\"class-name\">StringBuffer</span>(<span class=\"string\">\"Java \"</span>);", "bug": false}, {"text": "sb.<span class=\"method\">append</span>(<span class=\"string\">\"Detective\"</span>);", "bug": false}, {"text": "sb.<span class=\"method\">reverse</span>();", "bug": false}, {"text": "<span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(sb);", "bug": false}], "clues": [{"text": "StringBuffer is MUTABLE, unlike String.", "icon": "🔍"}, {"text": "append() adds text to the end, resulting in 'Java Detective'.", "icon": "📝"}, {"text": "reverse() flips the entire string backward.", "icon": "🔄"}], "suspects": [{"name": "evitceteD avaJ", "icon": "🔄", "correct": true}, {"name": "Java Detective", "icon": "🕵️", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "Java evitceteD", "icon": "🧩", "correct": false}], "reasons": [{"text": "reverse() flips the entire string backward.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "The code is fully functional.", "correct": true}, {"text": "sb = sb.append(\"Detective\");", "correct": false}, {"text": "sb.reverse(\"Detective\");", "correct": false}, {"text": "String sb = new String();", "correct": false}], "orderIndex": 9}, {"id": "U5-01", "unitId": "UNIT_5", "caseNumber": "Case 1", "title": "The Dead Button", "description": "Event Handling Basics.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "UI.java", "bannerSnippet": "Button btn = new Button(\"Scan Evidence\"); <span class=\"text-crimson\">// Nothing happens on click</span>", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Event Handling Basics.", "criminal": "Missing Action Handler", "code": [{"text": "<span class=\"class-name\">Button</span> btn = <span class=\"keyword\">new</span> <span class=\"class-name\">Button</span>(<span class=\"string\">\"Scan Evidence\"</span>);", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"comment\">// Add button to layout...</span>", "bug": false}, {"text": "<span class=\"class-name\">VBox</span> layout = <span class=\"keyword\">new</span> <span class=\"class-name\">VBox</span>(btn);", "bug": false}], "clues": [{"text": "The button is created and added to the layout.", "icon": "🔍"}, {"text": "It is visible on the screen and can be clicked physically.", "icon": "👁️"}, {"text": "However, there is no code telling the application what to do when a click occurs.", "icon": "🔌"}], "suspects": [{"name": "Missing Action Handler", "icon": "🔌", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Button Not Enabled", "icon": "🔒", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}], "reasons": [{"text": "However, there is no code telling the application what to do when a click occurs.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "btn.setOnAction(event -> { System.out.println(\"Scanning...\"); });", "correct": true}, {"text": "btn.setClickable(true);", "correct": false}, {"text": "btn.start();", "correct": false}, {"text": "layout.enable(btn);", "correct": false}], "orderIndex": 0}, {"id": "U5-02", "unitId": "UNIT_5", "caseNumber": "Case 2", "title": "The Missing Click", "description": "Mouse Events on generic nodes.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "ImagePanel.java", "bannerSnippet": "imageView.<span class=\"text-crimson\">setOnAction</span>(e -> zoom());", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Mouse Events on generic nodes.", "criminal": "Compilation Error", "code": [{"text": "<span class=\"class-name\">ImageView</span> imageView = <span class=\"keyword\">new</span> <span class=\"class-name\">ImageView</span>(evidencePhoto);", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"comment\">// We want to zoom when the user clicks the photo</span>", "bug": false}, {"text": "imageView.<span class=\"method\">setOnAction</span>(e -> <span class=\"method\">zoom</span>());", "bug": true}], "clues": [{"text": "The code attempts to attach an action to an ImageView.", "icon": "🔍"}, {"text": "Buttons use setOnAction() for standard clicks.", "icon": "🔘"}, {"text": "ImageView is not a Button. It does not have an 'Action' event natively.", "icon": "🚫"}], "suspects": [{"name": "Compilation Error", "icon": "❌", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Missing inheritance", "icon": "🧬", "correct": false}, {"name": "TypeMismatch", "icon": "🎭", "correct": false}], "reasons": [{"text": "ImageView is not a Button. It does not have an 'Action' event natively.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "imageView.setOnMouseClicked(e -> zoom());", "correct": true}, {"text": "imageView.setClickable(true);", "correct": false}, {"text": "imageView.addEventHandler(ActionEvent.ACTION, e -> zoom());", "correct": false}, {"text": "imageView.addEventFilter(KeyEvent.KEY_PRESSED, e -> zoom());", "correct": false}], "orderIndex": 1}, {"id": "U5-03", "unitId": "UNIT_5", "caseNumber": "Case 3", "title": "The Silent Keyboard", "description": "Key Event handling.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Terminal.java", "bannerSnippet": "scene.<span class=\"text-crimson\">setOnKeyTyped</span>(e -> { ... });", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Key Event handling.", "criminal": "Invalid Event Type", "code": [{"text": "<span class=\"class-name\">Scene</span> scene = <span class=\"keyword\">new</span> <span class=\"class-name\">Scene</span>(root);", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"comment\">// We want to detect if the user holds down the SHIFT key</span>", "bug": false}, {"text": "scene.<span class=\"method\">setOnKeyTyped</span>(e -> {", "bug": true}, {"text": "    <span class=\"keyword\">if</span> (e.<span class=\"method\">isShiftDown</span>()) {", "bug": false}, {"text": "        <span class=\"class-name\">System</span>.<span class=\"variable\">out</span>.<span class=\"method\">println</span>(<span class=\"string\">\"Shift held\"</span>);", "bug": false}, {"text": "    }", "bug": false}, {"text": "});", "bug": true}], "clues": [{"text": "The developer wants to detect when the SHIFT key is held down.", "icon": "🔍"}, {"text": "KEY_TYPED events are only fired for printable characters (like 'A', '1', '?').", "icon": "🔤"}, {"text": "Modifier keys like SHIFT, CTRL, and ALT do not produce a typed character.", "icon": "🔇"}], "suspects": [{"name": "Invalid Event Type", "icon": "🚫", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "Missing Focus", "icon": "🎯", "correct": false}], "reasons": [{"text": "Modifier keys like SHIFT, CTRL, and ALT do not produce a typed character.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "scene.setOnKeyPressed(e -> { if (e.isShiftDown()) ... });", "correct": true}, {"text": "scene.setOnKeyReleased(...);", "correct": false}, {"text": "scene.addEventHandler(MouseEvent.MOUSE_CLICKED, ...);", "correct": false}, {"text": "e.getCharacter().equals(\"SHIFT\")", "correct": false}], "orderIndex": 2}, {"id": "U5-04", "unitId": "UNIT_5", "caseNumber": "Case 4", "title": "The Checkbox Alibi", "description": "Checkbox vs RadioButton mechanics.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "SuspectForm.java", "bannerSnippet": "Has Tattoo: ○ Has Scar: ○ <span class=\"text-crimson\">// (Mutually exclusive)</span>", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Checkbox vs RadioButton mechanics.", "criminal": "Incorrect UI Control", "code": [{"text": "<span class=\"comment\">// We need to record multiple identifying marks</span>", "bug": false}, {"text": "<span class=\"class-name\">RadioButton</span> rb1 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Has Tattoo\"</span>);", "bug": true}, {"text": "<span class=\"class-name\">RadioButton</span> rb2 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Has Scar\"</span>);", "bug": true}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">ToggleGroup</span> group = <span class=\"keyword\">new</span> <span class=\"class-name\">ToggleGroup</span>();", "bug": true}, {"text": "rb1.<span class=\"method\">setToggleGroup</span>(group);", "bug": true}, {"text": "rb2.<span class=\"method\">setToggleGroup</span>(group);", "bug": true}], "clues": [{"text": "The UI asks the detective to check identifying marks (Tattoo, Scar).", "icon": "🔍"}, {"text": "A suspect can have BOTH a tattoo and a scar.", "icon": "👥"}, {"text": "RadioButtons in a ToggleGroup enforce mutually exclusive choices (only ONE can be selected).", "icon": "⚖️"}], "suspects": [{"name": "Incorrect UI Control", "icon": "🎛️", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}, {"name": "Missing Event Handler", "icon": "🔌", "correct": false}], "reasons": [{"text": "RadioButtons in a ToggleGroup enforce mutually exclusive choices (only ONE can be selected).", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Use CheckBox instead: CheckBox cb1 = new CheckBox(\"Has Tattoo\"); CheckBox cb2 = new CheckBox(\"Has Scar\");", "correct": true}, {"text": "Remove the ToggleGroup entirely.", "correct": false}, {"text": "Set RadioButtons to multiSelect = true", "correct": false}, {"text": "Use a ChoiceBox", "correct": false}], "orderIndex": 3}, {"id": "U5-05", "unitId": "UNIT_5", "caseNumber": "Case 5", "title": "The Toggle Conflict", "description": "Radio Buttons missing a ToggleGroup.", "difficulty": "Rookie", "difficultyColor": "green", "xpReward": 100, "filename": "Settings.java", "bannerSnippet": "Difficulty: ◉ Easy ◉ Medium ◉ Hard <span class=\"text-crimson\">// Wait, all are selected?!</span>", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Radio Buttons missing a ToggleGroup.", "criminal": "Missing ToggleGroup", "code": [{"text": "<span class=\"class-name\">RadioButton</span> r1 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Easy\"</span>);", "bug": false}, {"text": "<span class=\"class-name\">RadioButton</span> r2 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Medium\"</span>);", "bug": false}, {"text": "<span class=\"class-name\">RadioButton</span> r3 = <span class=\"keyword\">new</span> <span class=\"class-name\">RadioButton</span>(<span class=\"string\">\"Hard\"</span>);", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">VBox</span> layout = <span class=\"keyword\">new</span> <span class=\"class-name\">VBox</span>(r1, r2, r3);", "bug": true}], "clues": [{"text": "The user is supposed to select ONLY ONE difficulty level.", "icon": "🔍"}, {"text": "RadioButtons are used, which is correct for single choices.", "icon": "🔘"}, {"text": "However, they currently act independently, allowing all three to be selected simultaneously.", "icon": "⚠️"}], "suspects": [{"name": "Missing Event Handler", "icon": "🔌", "correct": false}, {"name": "Missing ToggleGroup", "icon": "🔗", "correct": true}, {"name": "Incorrect UI Control", "icon": "🎛️", "correct": false}, {"name": "Layout Error", "icon": "📐", "correct": false}], "reasons": [{"text": "However, they currently act independently, allowing all three to be selected simultaneously.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "ToggleGroup g = new ToggleGroup(); r1.setToggleGroup(g); r2.setToggleGroup(g); r3.setToggleGroup(g);", "correct": true}, {"text": "r1.setSingleSelect(true);", "correct": false}, {"text": "layout.setToggleGroup(true);", "correct": false}, {"text": "Use ChoiceBox instead", "correct": false}], "orderIndex": 4}, {"id": "U5-06", "unitId": "UNIT_5", "caseNumber": "Case 6", "title": "The Selection Mystery", "description": "Control Selection: ListView vs ComboBox.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Database.java", "bannerSnippet": "We need to select a criminal from <span class=\"text-crimson\">1,000 records</span>.", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Control Selection: ListView vs ComboBox.", "criminal": "ComboBox", "code": [{"text": "<span class=\"comment\">// Requirement: User must select ONE criminal from a list of 1,000.</span>", "bug": false}, {"text": "<span class=\"comment\">// The UI space is very limited (only 1 row high available).</span>", "bug": false}, {"text": "<span class=\"comment\">// Which JavaFX control is the correct suspect?</span>", "bug": false}], "clues": [{"text": "Requirement 1: Select ONE item from a very large list.", "icon": "🔍"}, {"text": "Requirement 2: UI space is limited (1 row high).", "icon": "📏"}, {"text": "A ListView displays multiple rows at once.", "icon": "📋"}], "suspects": [{"name": "ListView", "icon": "📋", "correct": false}, {"name": "ComboBox", "icon": "🔽", "correct": true}, {"name": "RadioButton", "icon": "🔘", "correct": false}, {"name": "TextField", "icon": "📝", "correct": false}], "reasons": [{"text": "A ListView displays multiple rows at once.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "ComboBox<String> criminals = new ComboBox<>();", "correct": true}, {"text": "ListView<String> criminals = new ListView<>();", "correct": false}, {"text": "ChoiceBox<String> criminals = new ChoiceBox<>(); // Good for small lists, bad for 1000", "correct": false}, {"text": "ToggleGroup group = new ToggleGroup();", "correct": false}], "orderIndex": 5}, {"id": "U5-07", "unitId": "UNIT_5", "caseNumber": "Case 7", "title": "The Missing Text", "description": "Text Controls: TextField vs TextArea.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Report.java", "bannerSnippet": "TextField report = <span class=\"text-crimson\">new TextField();</span>", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Text Controls: TextField vs TextArea.", "criminal": "Incorrect UI Control", "code": [{"text": "<span class=\"comment\">// UI for entering a long, multi-paragraph investigation report</span>", "bug": false}, {"text": "<span class=\"class-name\">TextField</span> reportInput = <span class=\"keyword\">new</span> <span class=\"class-name\">TextField</span>();", "bug": true}, {"text": "reportInput.<span class=\"method\">setPrefHeight</span>(<span class=\"number\">300</span>);", "bug": true}, {"text": "reportInput.<span class=\"method\">setPrefWidth</span>(<span class=\"number\">400</span>);", "bug": true}], "clues": [{"text": "The developer wants the user to enter a multi-paragraph report.", "icon": "🔍"}, {"text": "They increased the height of the TextField to 300 pixels.", "icon": "📏"}, {"text": "TextField only supports a SINGLE line of text, regardless of how tall you make it.", "icon": "⚠️"}], "suspects": [{"name": "Incorrect UI Control", "icon": "🎛️", "correct": true}, {"name": "Missing ScrollPane", "icon": "📜", "correct": false}, {"name": "Layout Error", "icon": "📐", "correct": false}, {"name": "NullPointerException", "icon": "💀", "correct": false}], "reasons": [{"text": "TextField only supports a SINGLE line of text, regardless of how tall you make it.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "TextArea reportInput = new TextArea();", "correct": true}, {"text": "reportInput.setMultiLine(true);", "correct": false}, {"text": "ScrollPane sp = new ScrollPane(reportInput);", "correct": false}, {"text": "PasswordField reportInput = new PasswordField();", "correct": false}], "orderIndex": 6}, {"id": "U5-08", "unitId": "UNIT_5", "caseNumber": "Case 8", "title": "The Layout Disaster", "description": "Understanding JavaFX Layouts.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 250, "filename": "MainView.java", "bannerSnippet": "HBox root = <span class=\"text-crimson\">new HBox(topMenu, leftNav, centerContent);</span>", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Understanding JavaFX Layouts.", "criminal": "BorderPane", "code": [{"text": "<span class=\"comment\">// We want a standard application layout:</span>", "bug": false}, {"text": "<span class=\"comment\">// Menu at TOP, Navigation on LEFT, Content in CENTER</span>", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">HBox</span> root = <span class=\"keyword\">new</span> <span class=\"class-name\">HBox</span>();", "bug": true}, {"text": "root.<span class=\"method\">getChildren</span>().<span class=\"method\">addAll</span>(topMenu, leftNav, centerContent);", "bug": true}], "clues": [{"text": "The developer wants components explicitly pinned to Top, Left, and Center.", "icon": "🔍"}, {"text": "HBox aligns all its children in a single horizontal row from left to right.", "icon": "➡️"}, {"text": "The result is the Menu, Navigation, and Content side-by-side in a single line.", "icon": "❌"}], "suspects": [{"name": "VBox", "icon": "⬇️", "correct": false}, {"name": "BorderPane", "icon": "🖼️", "correct": true}, {"name": "GridPane", "icon": "🔲", "correct": false}, {"name": "StackPane", "icon": "🥞", "correct": false}], "reasons": [{"text": "The result is the Menu, Navigation, and Content side-by-side in a single line.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "BorderPane root = new BorderPane(); root.setTop(topMenu); root.setLeft(leftNav); root.setCenter(centerContent);", "correct": true}, {"text": "VBox root = new VBox(topMenu, leftNav, centerContent);", "correct": false}, {"text": "StackPane root = new StackPane(topMenu, leftNav, centerContent);", "correct": false}, {"text": "FlowPane root = new FlowPane(topMenu, leftNav, centerContent);", "correct": false}], "orderIndex": 7}, {"id": "U5-09", "unitId": "UNIT_5", "caseNumber": "Case 9", "title": "The Hidden Evidence", "description": "Scrolling in JavaFX.", "difficulty": "Code Investigator", "difficultyColor": "amber", "xpReward": 150, "filename": "Gallery.java", "bannerSnippet": "VBox gallery = new VBox(); <span class=\"text-crimson\">// 50 images added</span>", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Scrolling in JavaFX.", "criminal": "Missing ScrollPane", "code": [{"text": "<span class=\"comment\">// Displaying 50 suspect photos in a vertical column</span>", "bug": false}, {"text": "<span class=\"class-name\">VBox</span> gallery = <span class=\"keyword\">new</span> <span class=\"class-name\">VBox</span>();", "bug": false}, {"text": "<span class=\"keyword\">for</span> (<span class=\"class-name\">Image</span> img : suspectPhotos) {", "bug": false}, {"text": "    gallery.<span class=\"method\">getChildren</span>().<span class=\"method\">add</span>(<span class=\"keyword\">new</span> <span class=\"class-name\">ImageView</span>(img));", "bug": false}, {"text": "}", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">Scene</span> scene = <span class=\"keyword\">new</span> <span class=\"class-name\">Scene</span>(gallery, <span class=\"number\">400</span>, <span class=\"number\">600</span>);", "bug": true}], "clues": [{"text": "50 images are stacked vertically in a VBox.", "icon": "🔍"}, {"text": "The Scene is only 600 pixels tall.", "icon": "📏"}, {"text": "Most of the images spill off the bottom of the screen and cannot be reached.", "icon": "🙈"}], "suspects": [{"name": "Missing ScrollPane", "icon": "📜", "correct": true}, {"name": "Layout Error", "icon": "📐", "correct": false}, {"name": "Missing EventHandler", "icon": "🔌", "correct": false}, {"name": "Compilation Error", "icon": "❌", "correct": false}], "reasons": [{"text": "Most of the images spill off the bottom of the screen and cannot be reached.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "ScrollPane scroll = new ScrollPane(gallery); Scene scene = new Scene(scroll, 400, 600);", "correct": true}, {"text": "gallery.setScrollable(true);", "correct": false}, {"text": "scene.enableScrolling();", "correct": false}, {"text": "ListView gallery = new ListView();", "correct": false}], "orderIndex": 8}, {"id": "U5-10", "unitId": "UNIT_5", "caseNumber": "Case 10", "title": "The Broken Menu Bar", "description": "Constructing JavaFX Menus.", "difficulty": "Senior Investigator", "difficultyColor": "crimson", "xpReward": 300, "filename": "MenuBar.java", "bannerSnippet": "MenuBar bar = <span class=\"text-crimson\">new MenuBar(fileMenuItem);</span>", "topic": "JavaFX UI", "division": "Unit V - JavaFX", "detectorNote": "Constructing JavaFX Menus.", "criminal": "Compilation Error", "code": [{"text": "<span class=\"comment\">// We want a top bar with \"File\" -> \"Exit\"</span>", "bug": false}, {"text": "<span class=\"class-name\">MenuItem</span> exitItem = <span class=\"keyword\">new</span> <span class=\"class-name\">MenuItem</span>(<span class=\"string\">\"Exit\"</span>);", "bug": false}, {"text": "", "bug": false}, {"text": "<span class=\"class-name\">MenuBar</span> bar = <span class=\"keyword\">new</span> <span class=\"class-name\">MenuBar</span>();", "bug": false}, {"text": "bar.<span class=\"method\">getMenus</span>().<span class=\"method\">add</span>(exitItem);", "bug": true}], "clues": [{"text": "A MenuBar holds Menus.", "icon": "🔍"}, {"text": "A Menu holds MenuItems.", "icon": "📂"}, {"text": "The code tries to add a MenuItem directly into the MenuBar.", "icon": "🚫"}], "suspects": [{"name": "Compilation Error", "icon": "❌", "correct": true}, {"name": "NullPointerException", "icon": "💀", "correct": false}, {"name": "ClassCastException", "icon": "🎭", "correct": false}, {"name": "Missing EventHandler", "icon": "🔌", "correct": false}], "reasons": [{"text": "The code tries to add a MenuItem directly into the MenuBar.", "correct": true}, {"text": "The displayed Java logic needs no correction.", "correct": false}, {"text": "Only the source file name is causing the problem.", "correct": false}, {"text": "Restarting the program alone resolves the issue.", "correct": false}], "fixes": [{"text": "Menu fileMenu = new Menu(\"File\"); fileMenu.getItems().add(exitItem); bar.getMenus().add(fileMenu);", "correct": true}, {"text": "bar.getItems().add(exitItem);", "correct": false}, {"text": "bar.getChildren().add(exitItem);", "correct": false}, {"text": "Menu fileMenu = new Menu(\"File\", exitItem);", "correct": false}], "orderIndex": 9}];
+  const MASTERY_TOPICS = [{"id": "UNIT_1", "label": "Data Types & Operators", "name": "Data Types & Operators", "division": "Unit I - Basics", "cases": ["U1-01", "U1-02", "U1-03", "U1-04", "U1-05", "U1-06", "U1-07", "U1-08", "U1-09", "U1-10"], "solved": 0}, {"id": "UNIT_2", "label": "OOP - Inheritance & Polymorphism", "name": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "cases": ["U2-01", "U2-02", "U2-03", "U2-04", "U2-05", "U2-06", "U2-07", "U2-08", "U2-09", "U2-10"], "solved": 0}, {"id": "UNIT_3", "label": "Exceptions & Threads", "name": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "cases": ["U3-01", "U3-02", "U3-03", "U3-04", "U3-05", "U3-06", "U3-07", "U3-08", "U3-09", "U3-10"], "solved": 0}, {"id": "UNIT_4", "label": "I/O, Strings & Generics", "name": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "cases": ["U4-01", "U4-02", "U4-03", "U4-04", "U4-05", "U4-06", "U4-07", "U4-08", "U4-09", "U4-10"], "solved": 0}, {"id": "UNIT_5", "label": "JavaFX UI", "name": "JavaFX UI", "division": "Unit V - JavaFX", "cases": ["U5-01", "U5-02", "U5-03", "U5-04", "U5-05", "U5-06", "U5-07", "U5-08", "U5-09", "U5-10"], "solved": 0}, {"id":"JAVA_OOP_UNIT1","label":"OBJECT ORIENTED PROGRAMMING USING JAVA","name":"Unit I – Introduction to OOP and Java","division":"OBJECT ORIENTED PROGRAMMING USING JAVA — Unit I","cases":(window.JAVA_OOP_UNIT1_CASES || []).map(c => c.id),"solved":0}];
+  // New pack is appended so existing investigations, IDs, and saved progress stay intact.
+  if (Array.isArray(window.JAVA_OOP_UNIT1_CASES)) CASES.push(...window.JAVA_OOP_UNIT1_CASES);
+  const CRIMINALS = [{"name": "Numeric overflow", "alias": "Numeric overflow", "exceptionClass": "Numeric overflow", "icon": "🌊", "description": "Java data types and integer overflow.", "attack": "evidence++;", "cause": "The maximum value for a byte is 127. Incrementing past it causes an overflow to its minimum value (-128).", "solvedCount": 0, "unlocked": true}, {"name": "ArrayIndexOutOfBoundsException", "alias": "ArrayIndexOutOfBoundsException", "exceptionClass": "ArrayIndexOutOfBoundsException", "icon": "📊", "description": "Accessing an array out of its bounds.", "attack": "System.out.println(marks[3]);", "cause": "The valid indices for this array are 0, 1, and 2. Index 3 does not exist.", "solvedCount": 0, "unlocked": true}, {"name": "70", "alias": "70", "exceptionClass": "70", "icon": "🎯", "description": "Operator precedence and compound assignment.", "attack": "total_dxp += 10 * 2;", "cause": "First, 10 * 2 is evaluated (20). Then, 20 is added to 50.", "solvedCount": 0, "unlocked": true}, {"name": "Incorrect condition ordering", "alias": "Incorrect condition ordering", "exceptionClass": "Incorrect condition ordering", "icon": "🔀", "description": "Incorrect condition ordering in an if-else chain.", "attack": "if (marks >= 40)", "cause": "Because 85 >= 40 is true, the first block executes and the rest are ignored.", "solvedCount": 0, "unlocked": true}, {"name": "Missing Blueprint (Class structure error)", "alias": "Missing Blueprint (Class structure error)", "exceptionClass": "Missing Blueprint (Class structure error)", "icon": "🏗️", "description": "Code Reconstruction of Classes and Objects.", "attack": "Student s = new Student();", "cause": "The method display() belongs inside the Student class.", "solvedCount": 0, "unlocked": true}, {"name": "Constructor mismatch", "alias": "Constructor mismatch", "exceptionClass": "Constructor mismatch", "icon": "🏗️", "description": "Constructor argument mismatch.", "attack": "Student s = new Student();", "cause": "The instantiation calls new Student(), passing NO arguments.", "solvedCount": 0, "unlocked": true}, {"name": "Missing return statement", "alias": "Missing return statement", "exceptionClass": "Missing return statement", "icon": "📤", "description": "A method promises a return value but fails to deliver.", "attack": "static int add(int a, int b)", "cause": "The method ends without sending anything back to the caller.", "solvedCount": 0, "unlocked": true}, {"name": "Encapsulation Violation", "alias": "Encapsulation Violation", "exceptionClass": "Encapsulation Violation", "icon": "🔒", "description": "Illegal private-member access.", "attack": "System.out.println(account.balance);", "cause": "The main method is trying to access balance directly from outside the class.", "solvedCount": 0, "unlocked": true}, {"name": "3", "alias": "3", "exceptionClass": "3", "icon": "🎯", "description": "Determine the output of a shared static counter.", "attack": "static int count = 0;", "cause": "Static variables are shared among all instances of the class.", "solvedCount": 0, "unlocked": true}, {"name": "Incorrect Comment Format", "alias": "Incorrect Comment Format", "exceptionClass": "Incorrect Comment Format", "icon": "❌", "description": "Identify the correct JavaDoc format.", "attack": "// Calculates the total", "cause": "JavaDoc uses tags like @param and @return to generate API documentation.", "solvedCount": 0, "unlocked": true}, {"name": "Compilation Error (Duplicate Method)", "alias": "Compilation Error (Duplicate Method)", "exceptionClass": "Compilation Error (Duplicate Method)", "icon": "❌", "description": "Invalid method overloading by only changing the return type.", "attack": "int investigate(int evidence)", "cause": "The return types are different, but Java method signatures only care about the name and parameter list.", "solvedCount": 0, "unlocked": true}, {"name": "\"Guilty\"", "alias": "\"Guilty\"", "exceptionClass": "\"Guilty\"", "icon": "😈", "description": "Understanding object references as method parameters.", "attack": "tamperEvidence(suspect);", "cause": "Java passes object references by value. The method gets a copy of the reference pointing to the SAME object in memory.", "solvedCount": 0, "unlocked": true}, {"name": "Missing Return", "alias": "Missing Return", "exceptionClass": "Missing Return", "icon": "📤", "description": "Returning objects from a method.", "attack": "________;", "cause": "The method ends abruptly. It must return the created object to satisfy the contract.", "solvedCount": 0, "unlocked": true}, {"name": "Invalid inner class instantiation", "alias": "Invalid inner class instantiation", "exceptionClass": "Invalid inner class instantiation", "icon": "❌", "description": "Constructing an inner class object.", "attack": "Outer.Inner inner = new Inner();", "cause": "You cannot instantiate Inner directly without going through an Outer object.", "solvedCount": 0, "unlocked": true}, {"name": "Missing inheritance relationship", "alias": "Missing inheritance relationship", "exceptionClass": "Missing inheritance relationship", "icon": "🧬", "description": "Missing inheritance relationship.", "attack": "Dog d = new Dog(); d.eat();", "cause": "A class must use `extends` to inherit methods from another class.", "solvedCount": 0, "unlocked": true}, {"name": "Parent constructor mismatch", "alias": "Parent constructor mismatch", "exceptionClass": "Parent constructor mismatch", "icon": "🧬", "description": "Subclass fails to invoke the parent constructor properly.", "attack": "Student() { // empty }", "cause": "The default parent constructor does not exist, causing an error.", "solvedCount": 0, "unlocked": true}, {"name": "Incorrect method override", "alias": "Incorrect method override", "exceptionClass": "Incorrect method override", "icon": "🔀", "description": "A method override fails silently due to a typo in the method signature.", "attack": "void Sound() { }", "cause": "Java is case-sensitive, so these are treated as completely different methods.", "solvedCount": 0, "unlocked": true}, {"name": "\"Dog\"", "alias": "\"Dog\"", "exceptionClass": "\"Dog\"", "icon": "🐕", "description": "Understanding runtime polymorphism and method dispatch.", "attack": "Animal suspect = new Dog(); suspect.sound();", "cause": "The method execution is determined by the actual object type at runtime.", "solvedCount": 0, "unlocked": true}, {"name": "Abstract Instantiation", "alias": "Abstract Instantiation", "exceptionClass": "Abstract Instantiation", "icon": "👻", "description": "An attempt to instantiate an abstract class.", "attack": "Shape s = new Shape();", "cause": "You cannot instantiate an abstract class directly.", "solvedCount": 0, "unlocked": true}, {"name": "Unimplemented Interface", "alias": "Unimplemented Interface", "exceptionClass": "Unimplemented Interface", "icon": "🤝", "description": "Mini-Boss: Interfaces and Implementations.", "attack": "class Card implements Payment", "cause": "Implementing an interface is a strict contract to provide all its methods.", "solvedCount": 0, "unlocked": true}, {"name": "ArithmeticException", "alias": "ArithmeticException", "exceptionClass": "ArithmeticException", "icon": "➗", "description": "Exception Basics: Division by zero.", "attack": "System.out.println(a / b);", "cause": "The math operation is division (/).", "solvedCount": 0, "unlocked": true}, {"name": "Catch Ordering", "alias": "Catch Ordering", "exceptionClass": "Catch Ordering", "icon": "🔀", "description": "Catch block ordering error.", "attack": "} catch (Exception e) {", "cause": "Java catches exceptions from top to bottom.", "solvedCount": 0, "unlocked": true}, {"name": "Outer Catch", "alias": "Outer Catch", "exceptionClass": "Outer Catch", "icon": "📤", "description": "Determine which catch block handles a nested exception.", "attack": "int[] a = {1}; a[5] = 10;", "cause": "The inner catch block only looks for ArithmeticException.", "solvedCount": 0, "unlocked": true}, {"name": "NullPointerException", "alias": "NullPointerException", "exceptionClass": "NullPointerException", "icon": "💀", "description": "Built-in Exceptions: Using a null reference.", "attack": "witness.length();", "cause": "The code tries to call the length() method on an object that doesn't exist.", "solvedCount": 0, "unlocked": true}, {"name": "Missing 'throws' declaration", "alias": "Missing 'throws' declaration", "exceptionClass": "Missing 'throws' declaration", "icon": "📜", "description": "User-Defined Exception.", "attack": "throw new InvalidAgeException(\"Too young\");", "cause": "Methods that throw checked exceptions must declare them in their signature using 'throws'.", "solvedCount": 0, "unlocked": true}, {"name": "Thread not started correctly", "alias": "Thread not started correctly", "exceptionClass": "Thread not started correctly", "icon": "🌟", "description": "Thread creation and start.", "attack": "Investigation i = new Investigation(); i.run();", "cause": "To actually spawn a NEW thread, a different method must be called.", "solvedCount": 0, "unlocked": true}, {"name": "Race Condition", "alias": "Race Condition", "exceptionClass": "Race Condition", "icon": "🏃", "description": "Multiple threads modifying shared state.", "attack": "balance++; // Accessed by 10 threads", "cause": "Multiple threads are reading the same old balance simultaneously and writing back identical incremented values.", "solvedCount": 0, "unlocked": true}, {"name": "Missing Synchronization", "alias": "Missing Synchronization", "exceptionClass": "Missing Synchronization", "icon": "🔒", "description": "Synchronization solution to a race condition.", "attack": "void deposit() { balance++; }", "cause": "Java provides a specific keyword to lock a method to a single thread.", "solvedCount": 0, "unlocked": true}, {"name": "Missing notify()", "alias": "Missing notify()", "exceptionClass": "Missing notify()", "icon": "🔔", "description": "Inter-thread communication using wait() and notify().", "attack": "Thread 1: wait(); Thread 2: _______;", "cause": "Thread 2 needs a way to wake up Thread 1.", "solvedCount": 0, "unlocked": true}, {"name": "Autoboxing and Unboxing", "alias": "Autoboxing and Unboxing", "exceptionClass": "Autoboxing and Unboxing", "icon": "📦", "description": "Wrappers and Autoboxing.", "attack": "Integer evidence = 100;", "cause": "We are assigning an Object (evidence) directly to a primitive (result).", "solvedCount": 0, "unlocked": true}, {"name": "TypeMismatch", "alias": "TypeMismatch", "exceptionClass": "TypeMismatch", "icon": "🎭", "description": "Console I/O and Type Mismatch.", "attack": "Scanner sc = new Scanner(System.in); int age = sc.nextLine();", "cause": "The Scanner's 'nextLine()' method returns a String, not an int.", "solvedCount": 0, "unlocked": true}, {"name": "FileNotFoundException", "alias": "FileNotFoundException", "exceptionClass": "FileNotFoundException", "icon": "📄", "description": "File I/O and Checked Exceptions.", "attack": "FileReader reader = new FileReader(\"evidence.txt\");", "cause": "Java forces you to handle this possibility with a checked exception.", "solvedCount": 0, "unlocked": true}, {"name": "Resource Leak", "alias": "Resource Leak", "exceptionClass": "Resource Leak", "icon": "🔓", "description": "Resource Handling and Memory Leaks.", "attack": "reader.read(); // Done reading", "cause": "The code finishes without closing the resource, which can cause memory leaks or file locks.", "solvedCount": 0, "unlocked": true}, {"name": "Raw Type Vulnerability", "alias": "Raw Type Vulnerability", "exceptionClass": "Raw Type Vulnerability", "icon": "📦", "description": "The need for Generics for type safety.", "attack": "evidence.add(\"Fingerprint\"); evidence.add(100);", "cause": "This usually leads to ClassCastExceptions later when you retrieve the data.", "solvedCount": 0, "unlocked": true}, {"name": "Generic Type Parameter", "alias": "Generic Type Parameter", "exceptionClass": "Generic Type Parameter", "icon": "🔠", "description": "Constructing Generic Classes.", "attack": "class EvidenceBox&lt;____&gt; {", "cause": "The letter acts as a placeholder for the actual type that will be used later.", "solvedCount": 0, "unlocked": true}, {"name": "Valid Generic Execution", "alias": "Valid Generic Execution", "exceptionClass": "Valid Generic Execution", "icon": "✅", "description": "Generic Methods.", "attack": "static &lt;T&gt; void inspect(T evidence)", "cause": "We are passing a String, an Integer, and a Double to the same method.", "solvedCount": 0, "unlocked": true}, {"name": "Compilation Error", "alias": "Compilation Error", "exceptionClass": "Compilation Error", "icon": "❌", "description": "Bounded Type Parameters.", "attack": "class EvidenceBox&lt;T extends Number&gt;", "cause": "Integer and Double are subclasses of Number. String is not.", "solvedCount": 0, "unlocked": true}, {"name": "Forbidden Generic Instantiation", "alias": "Forbidden Generic Instantiation", "exceptionClass": "Forbidden Generic Instantiation", "icon": "❌", "description": "Generic instantiation restrictions (Type Erasure).", "attack": "T evidence = new T();", "cause": "You cannot instantiate an unknown type.", "solvedCount": 0, "unlocked": true}, {"name": "\"Java\"", "alias": "\"Java\"", "exceptionClass": "\"Java\"", "icon": "☕", "description": "Understanding String Immutability.", "attack": "message.concat(\" Detective\");", "cause": "concat() creates a BRAND NEW string and returns it, but doesn't change the original.", "solvedCount": 0, "unlocked": true}, {"name": "evitceteD avaJ", "alias": "evitceteD avaJ", "exceptionClass": "evitceteD avaJ", "icon": "🔄", "description": "Using mutable String structures.", "attack": "sb.append(\"Detective\");", "cause": "reverse() flips the entire string backward.", "solvedCount": 0, "unlocked": true}, {"name": "Missing Action Handler", "alias": "Missing Action Handler", "exceptionClass": "Missing Action Handler", "icon": "🔌", "description": "Event Handling Basics.", "attack": "Button btn = new Button(\"Scan Evidence\"); // Nothing happens on click", "cause": "However, there is no code telling the application what to do when a click occurs.", "solvedCount": 0, "unlocked": true}, {"name": "Invalid Event Type", "alias": "Invalid Event Type", "exceptionClass": "Invalid Event Type", "icon": "🚫", "description": "Key Event handling.", "attack": "scene.setOnKeyTyped(e -> { ... });", "cause": "Modifier keys like SHIFT, CTRL, and ALT do not produce a typed character.", "solvedCount": 0, "unlocked": true}, {"name": "Incorrect UI Control", "alias": "Incorrect UI Control", "exceptionClass": "Incorrect UI Control", "icon": "🎛️", "description": "Checkbox vs RadioButton mechanics.", "attack": "Has Tattoo: ○ Has Scar: ○ // (Mutually exclusive)", "cause": "RadioButtons in a ToggleGroup enforce mutually exclusive choices (only ONE can be selected).", "solvedCount": 0, "unlocked": true}, {"name": "Missing ToggleGroup", "alias": "Missing ToggleGroup", "exceptionClass": "Missing ToggleGroup", "icon": "🔗", "description": "Radio Buttons missing a ToggleGroup.", "attack": "Difficulty: ◉ Easy ◉ Medium ◉ Hard // Wait, all are selected?!", "cause": "However, they currently act independently, allowing all three to be selected simultaneously.", "solvedCount": 0, "unlocked": true}, {"name": "ComboBox", "alias": "ComboBox", "exceptionClass": "ComboBox", "icon": "🔽", "description": "Control Selection: ListView vs ComboBox.", "attack": "We need to select a criminal from 1,000 records.", "cause": "A ListView displays multiple rows at once.", "solvedCount": 0, "unlocked": true}, {"name": "BorderPane", "alias": "BorderPane", "exceptionClass": "BorderPane", "icon": "🖼️", "description": "Understanding JavaFX Layouts.", "attack": "HBox root = new HBox(topMenu, leftNav, centerContent);", "cause": "The result is the Menu, Navigation, and Content side-by-side in a single line.", "solvedCount": 0, "unlocked": true}, {"name": "Missing ScrollPane", "alias": "Missing ScrollPane", "exceptionClass": "Missing ScrollPane", "icon": "📜", "description": "Scrolling in JavaFX.", "attack": "VBox gallery = new VBox(); // 50 images added", "cause": "Most of the images spill off the bottom of the screen and cannot be reached.", "solvedCount": 0, "unlocked": true}];
+  const RANKS = [{"name": "Rookie Detective", "threshold": 0}, {"name": "Code Investigator", "threshold": 1000}, {"name": "Senior Investigator", "threshold": 2000}, {"name": "Master Detective", "threshold": 5000}, {"name": "Chief Detective", "threshold": 7500}];
+  const CASE_COMPLETION_XP = {
+    criminalIdentified: 50,
+    causeIdentified: 25,
+    noHintsUsed: 25,
+    codeRepaired: 50,
+    allTestsPassed: 50
+  };
+  const CASE_COMPLETION_TOTAL_XP = Object.values(CASE_COMPLETION_XP).reduce((sum, value) => sum + value, 0);
+
+  function getCaseCompletionXP(caseData) {
+    const activeCase = caseData || (typeof CASES !== 'undefined' && typeof state !== 'undefined' ? CASES[state.currentCaseIndex] : null);
+    return Number(activeCase?.xpReward) || CASE_COMPLETION_TOTAL_XP;
+  }
+  
+  </script>
+
+  <script>
+    // =============================================
+    // APPLICATION STATE (required by every renderer)
+    // =============================================
+    const state = {
+      currentScreen: 'dashboard',
+      currentCaseIndex: 0,
+      totalXP: 0,
+      casesCompleted: 0,
+      streak: 0,
+      accuracy: 0,
+      rank: '',
+      profileDisplayName: '',
+      profileUsername: '',
+      profileAvatar: '',
+      completedCaseIds: new Set(),
+      caseState: { suspectSelected: null, reasonSelected: null, fixSelected: null, cluesRevealed: 0, revealedClueIndexes: [], step: 1 },
+      themePreference: 'system',
+      notifications: [],
+      assignments: [],
+      progressRows: [],
+      selectedSubject: '',
+      profileCreatedAt: '',
+      profileCollege: '',
+      profileDepartment: '',
+      profileRole: '',
+      hqLoading: true,
+      hqErrors: {},
+      notificationsOpen: false,
+      profileModalOpen: false,
+      notificationFilter: 'all',
+      notificationQuery: ''
+    };
+
+    // Gameplay economy. Change these two values to rebalance penalties globally.
+    const WRONG_ANSWER_DXP_PENALTY = 10;
+    const CLUE_DXP_PENALTY = 5;
+
+
+    const sharedSupabasePromise = import('data:text/javascript;base64,aW1wb3J0IHsgY3JlYXRlQ2xpZW50IH0gZnJvbSAnaHR0cHM6Ly9lc20uc2gvQHN1cGFiYXNlL3N1cGFiYXNlLWpzQDInDQoNCmNvbnN0IGZhbGxiYWNrVXJsID0gJ2h0dHBzOi8vbWJ0d2RoYWR5b25saXJhaW5teG0uc3VwYWJhc2UuY28nDQoNCmNvbnN0IGZhbGxiYWNrUHVibGlzaGFibGVLZXkgPQ0KICAnc2JfcHVibGlzaGFibGVfbmY2dGVzbmtrNzFhX05XaHdGSWpHQV9WTnRLSmdDTCcNCg0KLy8gQWxsb3cgb3B0aW9uYWwgcnVudGltZSBjb25maWd1cmF0aW9uLg0KLy8gSWYgbm9uZSBpcyBwcm92aWRlZCwgdXNlIHRoZSBwcm9qZWN0J3MgcHVibGljIFN1cGFiYXNlIGNyZWRlbnRpYWxzLg0KY29uc3QgcnVudGltZVVybCA9DQogICh0eXBlb2Ygd2luZG93ICE9PSAndW5kZWZpbmVkJyAmJiB3aW5kb3cuX19TVVBBQkFTRV9VUkxfXykgfHwNCiAgZmFsbGJhY2tVcmwNCg0KY29uc3QgcnVudGltZUtleSA9DQogICh0eXBlb2Ygd2luZG93ICE9PSAndW5kZWZpbmVkJyAmJg0KICAgIHdpbmRvdy5fX1NVUEFCQVNFX1BVQkxJU0hBQkxFX0tFWV9fKSB8fA0KICBmYWxsYmFja1B1Ymxpc2hhYmxlS2V5DQoNCmlmICghcnVudGltZVVybCB8fCAhcnVudGltZUtleSkgew0KICB0aHJvdyBuZXcgRXJyb3IoJ01pc3NpbmcgU3VwYWJhc2UgY29uZmlndXJhdGlvbicpDQp9DQoNCmV4cG9ydCBjb25zdCBzdXBhYmFzZSA9IGNyZWF0ZUNsaWVudChydW50aW1lVXJsLCBydW50aW1lS2V5KQ==').then((module) => module.supabase);
+    let notificationRealtimeChannel = null;
+    let notificationRefreshTimer = null;
+
+    // Add presentation metadata expected by the Mastery Board.
+    const rankIcons = ['🔎','🕵️','⭐','🏆','👑'];
+    RANKS.forEach((rank, i) => { if (!rank.icon) rank.icon = rankIcons[i] || '🏅'; });
+
+    // =============================================
+    // UTILITY FUNCTIONS
+    // =============================================
+    function getRank(xp) {
+      let rank = RANKS[0];
+      for (const r of RANKS) {
+        if (xp >= r.threshold) rank = r;
+        else break;
+      }
+      return rank;
+    }
+
+    function formatXP(n) {
+      return n.toLocaleString();
+    }
+
+    function showToast(type, icon, message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    function animateNumber(el, from, to, duration = 800) {
+      const start = performance.now();
+      const update = (now) => {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = formatXP(Math.round(from + (to - from) * eased));
+        if (progress < 1) requestAnimationFrame(update);
+      };
+      requestAnimationFrame(update);
+    }
+
+    function getEl(id) {
+      return document.getElementById(id);
+    }
+
+    function getStoredValue(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function setStoredValue(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function normalizeTheme(value) {
+      return value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
+    }
+
+    function updateThemeMenuUI() {
+      document.querySelectorAll('.theme-option').forEach(option => {
+        const isActive = option.dataset.theme === state.themePreference;
+        option.classList.toggle('active', isActive);
+        option.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+
+      const themeLabel = document.getElementById('theme-menu-label');
+      if (themeLabel) {
+        const labelMap = {
+          system: 'Appearance',
+          light: 'Light Mode',
+          dark: 'Dark Mode'
+        };
+        themeLabel.textContent = labelMap[state.themePreference] || 'Appearance';
+      }
+
+      const appearanceOption = document.getElementById('appearance-option');
+      if (appearanceOption) {
+        appearanceOption.classList.toggle('active', state.themePreference !== 'system');
+      }
+    }
+
+    function applyTheme(themeValue = state.themePreference) {
+      const normalized = normalizeTheme(themeValue);
+      state.themePreference = normalized;
+      const resolvedTheme = normalized === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : normalized;
+      document.body.setAttribute('data-theme', resolvedTheme);
+      setStoredValue('codeDetectiveTheme', normalized);
+      updateThemeMenuUI();
+    }
+
+    function initThemeSystem() {
+      const storedTheme = normalizeTheme(getStoredValue('codeDetectiveTheme', 'system'));
+      state.themePreference = storedTheme;
+      applyTheme(storedTheme);
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleSystemTheme = () => {
+        if (state.themePreference === 'system') applyTheme('system');
+      };
+      if (typeof mediaQuery.addEventListener === 'function') {
+        mediaQuery.addEventListener('change', handleSystemTheme);
+      } else if (typeof mediaQuery.addListener === 'function') {
+        mediaQuery.addListener(handleSystemTheme);
+      }
+    }
+
+    function createNotification(type, title, message, icon, meta = '') {
+      return {
+        id: `notif-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        type,
+        title,
+        message,
+        icon,
+        meta,
+        read: false,
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function normalizeSupabaseNotification(item) {
+      return {
+        id: item.id,
+        type: item.type,
+        title: item.title,
+        message: item.message,
+        icon: item.type === 'assignment' ? '📚' : item.type === 'critical' ? '🚨' : item.type === 'important' ? '📢' : '🔔',
+        meta: item.created_at ? new Date(item.created_at).toLocaleString('en-IN') : '',
+        read: Boolean(item.is_read),
+        createdAt: item.created_at,
+        assignment_id: item.assignment_id || null
+      };
+    }
+
+    function upsertNotification(item, { announce = false } = {}) {
+      const normalized = normalizeSupabaseNotification(item);
+      const existingIndex = state.notifications.findIndex(notification => notification.id === normalized.id);
+
+      if (existingIndex >= 0) {
+        state.notifications[existingIndex] = {
+          ...state.notifications[existingIndex],
+          ...normalized
+        };
+      } else {
+        state.notifications = [normalized, ...state.notifications];
+        if (announce) {
+          const icon = normalized.icon || '🔔';
+          showToast('success', icon, normalized.title || 'New notification');
+        }
+      }
+
+      state.notifications.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      renderNotifications();
+      renderActivityStream();
+    }
+
+    async function loadNotificationsFromSupabase() {
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) return;
+
+        let data;
+let error;
+
+// First load using the columns that exist in the current
+// notifications table.
+const baseQuery = await supabase
+  .from('notifications')
+  .select(
+    'id,title,message,type,sender_id,recipient_id,is_read,created_at'
+  )
+  .eq('recipient_id', userId)
+  .order('created_at', { ascending: false });
+
+data = baseQuery.data;
+error = baseQuery.error;
+
+if (error) {
+  throw error;
+}
+
+// assignment_id is optional. If the database migration has
+// already added it, enrich the notifications with it.
+// If it doesn't exist yet, notifications still load normally.
+try {
+  const { data: assignmentData, error: assignmentError } =
+    await supabase
+      .from('notifications')
+      .select('id,assignment_id')
+      .eq('recipient_id', userId);
+
+  if (!assignmentError && Array.isArray(assignmentData)) {
+    const assignmentMap = new Map(
+      assignmentData.map(row => [
+        row.id,
+        row.assignment_id || null
+      ])
+    );
+
+    data = (data || []).map(notification => ({
+      ...notification,
+      assignment_id:
+        assignmentMap.get(notification.id) || null
+    }));
+  }
+} catch (assignmentLookupError) {
+  console.warn(
+    '[Notifications] assignment_id is not available yet; continuing without it.',
+    assignmentLookupError
+  );
+}
+        if (error) throw error;
+
+        state.notifications = Array.isArray(data) ? data.map(normalizeSupabaseNotification) : [];
+        renderNotifications();
+        renderActivityStream();
+      } catch (e) {
+        state.hqErrors.notifications = e?.message || 'Notifications could not be loaded.';
+        state.notifications = [];
+        console.error('Failed to load notifications from Supabase:', e);
+        renderNotifications();
+        renderActivityStream();
+      }
+    }
+
+    async function initNotificationRealtime() {
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) return;
+
+        if (notificationRealtimeChannel) {
+          await supabase.removeChannel(notificationRealtimeChannel);
+        }
+
+        notificationRealtimeChannel = supabase
+          .channel(`code-detective-notifications-${userId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'notifications',
+              filter: `recipient_id=eq.${userId}`
+            },
+            payload => upsertNotification(payload.new, { announce: true })
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'notifications',
+              filter: `recipient_id=eq.${userId}`
+            },
+            payload => upsertNotification(payload.new)
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: 'DELETE',
+              schema: 'public',
+              table: 'notifications',
+              filter: `recipient_id=eq.${userId}`
+            },
+            payload => {
+              state.notifications = state.notifications.filter(item => item.id !== payload.old?.id);
+              renderNotifications();
+              renderActivityStream();
+            }
+          )
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[Notifications] Realtime subscription active');
+            } else if (status === 'CHANNEL_ERROR') {
+              console.warn('[Notifications] Realtime subscription unavailable; focus refresh remains active.');
+            }
+          });
+
+        // Lightweight fallback for browsers/webviews where realtime is unavailable.
+        if (!notificationRefreshTimer) {
+          notificationRefreshTimer = window.setInterval(() => {
+            if (!document.hidden) loadNotificationsFromSupabase();
+          }, 60000);
+        }
+      } catch (e) {
+        console.error('Failed to initialize notification realtime:', e);
+      }
+    }
+
+    async function clearLegacyLearningCache() {
+      // Older builds stored demo assignments locally. Do not read or display them.
+      try {
+        localStorage.removeItem('codeDetectiveAssignments');
+      } catch (_) {
+        // Storage may be unavailable in private/webview contexts; remote data remains authoritative.
+      }
+      state.assignments = [];
+    }
+
+    function setNotificationFilter(filter) {
+      state.notificationFilter = filter;
+      renderNotifications();
+    }
+
+    function setNotificationQuery(query) {
+      state.notificationQuery = String(query || '').trim().toLowerCase();
+      renderNotifications();
+    }
+
+    async function archiveReadNotifications() {
+      const readNotifs = state.notifications.filter(item => item.read).map(item => item.id);
+      state.notifications = state.notifications.filter(item => !item.read);
+      renderNotifications();
+      if (readNotifs.length > 0) {
+        try {
+          const supabase = await sharedSupabasePromise;
+          await supabase.from('notifications').delete().in('id', readNotifs);
+        } catch (e) {
+          console.error('Failed to delete archived notifications', e);
+        }
+      }
+    }
+
+    function escapeNotificationHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getNotificationTypeLabel(type) {
+  const labels = {
+    assignment: 'New Assignment',
+    broadcast: 'Announcement',
+    important: 'Important',
+    critical: 'Critical Alert'
   };
 
-  function optionsFor(question, key, iconsForOptions) {
-    const values = [...question.distractors];
-    values.splice(question.at, 0, question.correct);
-    return values.map((value, i) => ({ [key]: value, icon: iconsForOptions ? iconsForOptions[i] : undefined, correct: value === question.correct }));
+  return labels[type] || 'Notification';
+}
+
+function getNotificationTypeIcon(type) {
+  const icons = {
+    assignment: '📚',
+    broadcast: '📢',
+    important: '📢',
+    critical: '🚨'
+  };
+
+  return icons[type] || '🔔';
+}
+
+function renderNotifications() {
+  const panel = getEl('notification-panel');
+  if (!panel) return;
+
+  const unreadCount = state.notifications.filter(
+    item => !item.read
+  ).length;
+
+  const badge = getEl('nav-bell-badge');
+
+  if (badge) {
+    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    badge.classList.toggle('active', unreadCount > 0);
   }
-  window.JAVA_OOP_UNIT1_CASES = cases.map((row, index) => {
-    const [id,title,topic,difficulty,xp,estimatedTime,badge,story,source,legacyCriminal,explanation,fix] = row;
-    const challenge = challenges[id];
-    const criminal = challenge.suspect.correct;
-    const repair = challenge.fix.correct;
-    const isMaster = difficulty === 'Master Detective';
-    const color = difficulty === 'Chief Detective' ? 'purple' : isMaster ? 'amber' : 'crimson';
-    const types = ['Multiple Choice', 'Identify the Error', 'Complete the Java Code'];
-    return {
-      id, unitId: 'JAVA_OOP_UNIT1', caseNumber: `Case ${index + 1}`, orderIndex: index,
-      title, topic, division: 'OBJECT ORIENTED PROGRAMMING USING JAVA — Unit I',
-      difficulty, detectiveRank: difficulty, difficultyColor: color, xpReward: xp, estimatedTime,
-      filename: `Case${index + 1}.java`, description: story, bannerSnippet: source.split('\n')[0],
-      criminal, detectorNote: `Mission objective: use the Java evidence to resolve the ${topic} incident, then document the verified repair.`,
-      story: {
-        introduction: `Introduction: ${story}`,
-        crimeScene: `Crime Scene: ${topic} has been mishandled in the headquarters system.`,
-        evidence: `Evidence: The recovered Java fragment is preserved in ${id}.`,
-        witnessStatements: ['The operator saw the symptom after a recent code change.', `The analyst confirms: ${explanation}`],
-        investigation: `Investigation: establish the concept, identify the defect, and apply a safe Java repair.`,
-        finalReport: `Final Report: ${criminal} was responsible. ${explanation}`,
-        verdict: 'Verdict: case closed after the corrected Java evidence was verified.',
-        learningSummary: explanation
-      },
-      missionObjective: `Recover the correct ${topic} design decision and repair the affected case file.`,
-      evidenceFolder: { name: `${id}-evidence`, files: [`${id}.java`, 'witness-statement.txt', 'forensic-notes.md'] },
-      code: source.split('\n').map((text, i) => ({ text: text.replace(/</g,'&lt;').replace(/>/g,'&gt;'), bug: i === source.split('\n').length - 1 })),
-      javaCodeEvidence: source,
-      clues: Array.from({ length: 6 }, (_, i) => ({ icon: icons[i], text: [explanation, `The mission objective is to resolve ${topic}.`, 'Read the Java types, names and scopes literally.', 'Reject repairs that change the symptom without satisfying the Java language rule.', 'A correct answer should preserve the intended behavior.', `The final report must connect the code to ${topic}.`][i] })),
-      investigationNotebook: { prompts: ['What does the code currently do?', 'Which Java rule applies?', 'What repair protects the case?'], finalReportTemplate: 'Cause → Java rule → repair → verified outcome.' },
-      interactiveQuestions: types.map((type, i) => {
-        const sourceQuestion = [challenge.suspect, challenge.reason, challenge.fix][i];
-        const values = [...sourceQuestion.distractors];
-        const correctAt = sourceQuestion.at;
-        values.splice(correctAt, 0, sourceQuestion.correct);
-        return { id: `${id}-Q${i + 1}`, type, prompt: sourceQuestion.prompt, options: values, correctIndex: correctAt, answer: sourceQuestion.correct, feedback: sourceQuestion.correct };
-      }),
-      hints: ['Start by separating what the code proves from what it merely suggests.', `Apply this Java rule: ${explanation}`, `Test the repair against the evidence, not the option wording.`],
-      completionBadge: badge, learningSummary: explanation,
-      xpCalculation: { baseXP: xp, hintsUsed: '-10 DXP each (minimum 0)', accuracy: 'Tracked from investigation decisions' },
-      suspectPrompt: challenge.suspect.prompt,
-      reasonPrompt: challenge.reason.prompt,
-      fixPrompt: challenge.fix.prompt,
-      suspects: optionsFor(challenge.suspect, 'name', ['🧩', '🔍', '🎯', '⚖️']),
-      reasons: optionsFor(challenge.reason, 'text'),
-      fixes: optionsFor(challenge.fix, 'text')
-    };
+
+  const filtered = state.notifications.filter(item => {
+
+    const matchesFilter =
+      state.notificationFilter === 'all'
+        ? true
+        : state.notificationFilter === 'unread'
+          ? !item.read
+          : state.notificationFilter === 'important'
+            ? ['assignment', 'broadcast', 'important', 'critical'].includes(item.type)
+            : true;
+
+    const haystack = [
+      item.title,
+      item.message,
+      item.type,
+      item.meta
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    const matchesQuery =
+      !state.notificationQuery ||
+      haystack.includes(state.notificationQuery);
+
+    return matchesFilter && matchesQuery;
   });
+
+  const notificationCountText =
+    unreadCount > 0
+      ? `${unreadCount} unread`
+      : 'You’re all caught up';
+
+  panel.innerHTML = `
+    <div class="notification-panel-header">
+
+      <div>
+        <h3 style="margin:0;">Notifications</h3>
+        <small>${notificationCountText}</small>
+      </div>
+
+      <div class="notification-controls">
+
+        <button
+          class="btn btn-ghost"
+          type="button"
+          onclick="markAllNotificationsRead()"
+          style="padding:6px 9px; font-size:10px;"
+        >
+          Mark all read
+        </button>
+
+        <button
+          class="btn btn-ghost"
+          type="button"
+          onclick="archiveReadNotifications()"
+          style="padding:6px 9px; font-size:10px;"
+        >
+          Archive
+        </button>
+
+      </div>
+
+    </div>
+
+    <input
+      class="notification-search"
+      type="search"
+      placeholder="Search notifications..."
+      value="${escapeNotificationHtml(state.notificationQuery)}"
+      oninput="setNotificationQuery(this.value)"
+    >
+
+    <div class="notification-controls">
+
+      <button
+        class="notification-chip ${state.notificationFilter === 'all' ? 'active' : ''}"
+        type="button"
+        onclick="setNotificationFilter('all')"
+      >
+        All
+      </button>
+
+      <button
+        class="notification-chip ${state.notificationFilter === 'unread' ? 'active' : ''}"
+        type="button"
+        onclick="setNotificationFilter('unread')"
+      >
+        Unread
+      </button>
+
+      <button
+        class="notification-chip ${state.notificationFilter === 'important' ? 'active' : ''}"
+        type="button"
+        onclick="setNotificationFilter('important')"
+      >
+        Important
+      </button>
+
+    </div>
+
+    <div class="notification-list">
+
+      ${
+        filtered.length
+          ? filtered.map(item => {
+
+              const icon =
+                item.icon ||
+                getNotificationTypeIcon(item.type);
+
+              const typeLabel =
+                getNotificationTypeLabel(item.type);
+
+              return `
+                <div
+                  class="notification-item ${item.read ? '' : 'unread'}"
+                  data-id="${escapeNotificationHtml(item.id)}"
+                  onclick="openNotificationDetails('${escapeNotificationHtml(item.id)}')"
+                >
+
+                  <div class="notification-item-icon">
+                    ${escapeNotificationHtml(icon)}
+                  </div>
+
+                  <div class="notification-item-content">
+
+                    <div class="notification-type-badge">
+                      ${escapeNotificationHtml(typeLabel)}
+                    </div>
+
+                    <div class="notification-item-title">
+
+                      ${
+                        !item.read
+                          ? '<span class="notification-unread-dot"></span>'
+                          : ''
+                      }
+
+                      ${escapeNotificationHtml(item.title || 'Notification')}
+
+                    </div>
+
+                    <div class="notification-item-message">
+                      ${escapeNotificationHtml(item.message || '')}
+                    </div>
+
+                    <div class="notification-item-meta">
+                      ${escapeNotificationHtml(item.meta || '')}
+                    </div>
+
+                    <div class="notification-item-actions">
+
+                      <button
+                        class="notification-open-btn"
+                        type="button"
+                        onclick="event.stopPropagation(); openNotificationDetails('${escapeNotificationHtml(item.id)}')"
+                      >
+                        View details
+                      </button>
+
+                      <button
+                        class="notification-read-btn"
+                        type="button"
+                        onclick="event.stopPropagation(); markNotificationRead('${escapeNotificationHtml(item.id)}')"
+                      >
+                        ${item.read ? 'Read' : 'Mark read'}
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              `;
+            }).join('')
+          : `
+            <div class="notification-empty">
+
+              ${
+                state.notificationQuery
+                  ? `
+                    <strong>No notifications found</strong><br>
+                    No notifications match your search.
+                  `
+                  : state.notificationFilter === 'unread'
+                    ? `
+                      <strong>You're all caught up.</strong><br>
+                      There are no unread notifications.
+                    `
+                    : `
+                      <strong>No notifications yet.</strong><br>
+                      Stay tuned for study updates.
+                    `
+              }
+
+            </div>
+          `
+      }
+
+    </div>
+  `;
+}
+function openNotificationDetails(id) {
+  const item = state.notifications.find(
+    notification => notification.id === id
+  );
+
+  if (!item) return;
+
+  const overlay = getEl('notification-detail-overlay');
+
+  if (!overlay) return;
+
+  const icon =
+    item.icon ||
+    getNotificationTypeIcon(item.type);
+
+  const typeLabel =
+    getNotificationTypeLabel(item.type);
+
+  const titleEl =
+    getEl('notification-detail-title');
+
+  const typeEl =
+    getEl('notification-detail-type');
+
+  const iconEl =
+    getEl('notification-detail-icon');
+
+  const messageEl =
+    getEl('notification-detail-message');
+
+  const metaEl =
+    getEl('notification-detail-meta');
+
+  if (titleEl) {
+    titleEl.textContent =
+      item.title || 'Notification';
+  }
+
+  if (typeEl) {
+    typeEl.textContent = typeLabel;
+  }
+
+  if (iconEl) {
+    iconEl.textContent = icon;
+  }
+
+  if (messageEl) {
+    messageEl.textContent =
+      item.message || 'No additional information provided.';
+  }
+
+  if (metaEl) {
+
+    const metaParts = [];
+
+    if (item.meta) {
+      metaParts.push(item.meta);
+    }
+
+    if (item.createdAt) {
+      metaParts.push(
+        new Date(item.createdAt).toLocaleString('en-IN')
+      );
+    }
+
+    metaParts.push(
+      item.read ? 'Read' : 'Unread'
+    );
+
+    metaEl.innerHTML = metaParts
+      .map(
+        value => `
+          <span class="notification-detail-meta-item">
+            ${escapeNotificationHtml(value)}
+          </span>
+        `
+      )
+      .join('');
+
+    if (item.assignment_id) {
+      metaEl.innerHTML += `
+        <button type="button" class="notification-open-btn" style="margin-left:auto;" onclick="openAssignmentFromNotification('${escapeNotificationHtml(item.assignment_id)}')">
+          📚 Open Assignment
+        </button>`;
+    }
+  }
+
+  overlay.classList.add('active');
+
+  document.body.style.overflow = 'hidden';
+
+  /*
+   * Opening a notification marks it as read.
+   */
+  if (!item.read) {
+    markNotificationRead(id);
+  }
+}
+
+function openAssignmentFromNotification(assignmentId) {
+  closeNotificationDetails();
+  showScreen('dashboard');
+  setTimeout(() => {
+    const target = document.getElementById('assignments-list') || document.getElementById('assignment-widget-list');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 120);
+}
+
+function closeNotificationDetails() {
+  const overlay =
+    getEl('notification-detail-overlay');
+
+  if (!overlay) return;
+
+  overlay.classList.remove('active');
+
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    closeNotificationDetails();
+  }
+});
+
+document.addEventListener('click', event => {
+  const overlay =
+    getEl('notification-detail-overlay');
+
+  if (
+    overlay &&
+    event.target === overlay
+  ) {
+    closeNotificationDetails();
+  }
+});
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) loadNotificationsFromSupabase();
+    });
+
+    function toggleNotifications() {
+      const panel = getEl('notification-panel');
+      const bell = getEl('nav-bell-btn');
+      if (!panel || !bell) return;
+      state.notificationsOpen = !state.notificationsOpen;
+      panel.classList.toggle('active', state.notificationsOpen);
+      if (state.notificationsOpen) {
+        renderNotifications();
+        loadNotificationsFromSupabase();
+      }
+    }
+
+    async function markNotificationRead(id) {
+      state.notifications = state.notifications.map(item => item.id === id ? { ...item, read: true } : item);
+      renderNotifications();
+      try {
+        const supabase = await sharedSupabasePromise;
+        await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+      } catch (e) {
+        console.error('Failed to update notification in Supabase', e);
+      }
+    }
+
+    async function markAllNotificationsRead() {
+      state.notifications = state.notifications.map(item => ({ ...item, read: true }));
+      renderNotifications();
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user) {
+          await supabase.from('notifications').update({ is_read: true }).eq('recipient_id', sessionData.session.user.id);
+        }
+      } catch (e) {
+        console.error('Failed to update all notifications in Supabase', e);
+      }
+    }
+
+    function getAssignmentStatus(assignment) {
+      const dueAt = new Date(`${assignment.dueDate}T${assignment.dueTime || '23:59'}`);
+      const now = new Date();
+      if (assignment.submitted) return { label: 'Submitted', className: 'submitted' };
+      if (dueAt < now) return { label: 'Overdue', className: 'overdue' };
+      return { label: 'Pending', className: 'pending' };
+    }
+
+    async function toggleAssignmentSubmission(id) {
+      const assignment = state.assignments.find(item => item.id === id);
+      if (!assignment) return;
+      const nextSubmitted = !assignment.submitted;
+      state.assignments = state.assignments.map(item => item.id === id ? { ...item, submitted: nextSubmitted, submittedAt: nextSubmitted ? new Date().toISOString() : null } : item);
+      renderLearningHub();
+      updateDashboard();
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (userId) {
+          const { error } = await supabase.from('assignment_recipients').update({ submitted: nextSubmitted, submitted_at: nextSubmitted ? new Date().toISOString() : null }).eq('assignment_id', id).eq('recipient_id', userId);
+          if (error) throw error;
+        }
+        showToast('success', '✅', nextSubmitted ? 'Assignment marked submitted.' : 'Assignment returned to pending.');
+      } catch (error) {
+        console.error('[Assignments] Failed to sync submission:', error);
+        showToast('error', '⚠️', 'Could not sync assignment status.');
+      }
+    }
+
+    function getSubjectData() {
+      const accents = ['var(--cyan)', 'var(--amber)', 'var(--purple)', 'var(--green)', 'var(--crimson)', 'var(--cyan)'];
+      const icons = ['📚', '🧬', '⚡', '📂', '🖥️', '☕'];
+
+      return MASTERY_TOPICS
+        .filter(topic => Array.isArray(topic.cases) && topic.cases.length > 0)
+        .map((topic, index) => {
+          const total = topic.cases.length;
+          const solved = topic.cases.filter(id => state.completedCaseIds.has(id)).length;
+          const progress = total ? Math.round((solved / total) * 100) : 0;
+          const xp = topic.cases
+            .map(id => state.progressRows.find(row => row.case_id === id))
+            .filter(Boolean)
+            .reduce((sum, row) => sum + Number(row.xp_earned || 0), 0);
+
+          return {
+            id: topic.id,
+            name: topic.label || topic.name || topic.id,
+            icon: icons[index % icons.length],
+            description: topic.division || topic.name || topic.id,
+            progress,
+            xp,
+            solved,
+            total,
+            streak: state.streak,
+            accent: accents[index % accents.length]
+          };
+        });
+    }
+
+    function getAchievementData() {
+      const achievements = [];
+      const solved = state.casesCompleted || 0;
+      const streak = state.streak || 0;
+      const xp = Number(state.totalXP || 0);
+      const masteredUnit = getSubjectData().find(subject => subject.progress >= 100);
+
+      if (solved >= 1) {
+        achievements.push({ icon: '🏅', title: 'First Case Closed', subtitle: `${solved} case${solved === 1 ? '' : 's'} solved` });
+      }
+      if (streak >= 7) {
+        achievements.push({ icon: '🔥', title: 'Streak Keeper', subtitle: `${streak}-day streak` });
+      }
+      if (masteredUnit) {
+        achievements.push({ icon: '🧠', title: 'Unit Master', subtitle: `${masteredUnit.name} completed` });
+      }
+      if (xp >= 1000) {
+        achievements.push({ icon: '⚡', title: 'DXP Milestone', subtitle: `${formatXP(xp)} DXP earned` });
+      }
+
+      return achievements;
+    }
+
+    function renderQuickActions() {
+      const container = getEl('quick-actions-list');
+      if (!container) return;
+      const actions = [
+        { icon: '🧭', label: 'Continue' },
+        { icon: '📝', label: 'Assignments' },
+        { icon: '🎯', label: 'Practice' },
+        { icon: '📚', label: 'Resources' },
+        { icon: '🏆', label: 'Leaderboard' },
+        { icon: '🎖️', label: 'Certificates' }
+      ];
+      container.innerHTML = actions.map(action => `
+        <button class="action-button" type="button">
+          <span style="font-size:16px;">${action.icon}</span>
+          <span>${action.label}</span>
+        </button>
+      `).join('');
+    }
+
+    function hqEmptyState(message = 'No data available yet.') {
+      return `<div class="notification-empty">${message}</div>`;
+    }
+
+    function renderAssignmentWidget() {
+      const container = getEl('assignment-widget-list');
+      if (!container) return;
+
+      if (state.hqLoading) {
+        container.innerHTML = hqEmptyState('Loading your assignments…');
+        return;
+      }
+
+      if (!state.assignments.length) {
+        const message = state.hqErrors.assignments
+          ? 'Assignments are unavailable right now.'
+          : 'No assignments have been assigned to you yet.';
+        container.innerHTML = hqEmptyState(message);
+        return;
+      }
+
+      const sorted = [...state.assignments]
+        .sort((a, b) => new Date(`${a.dueDate}T${a.dueTime || '23:59'}`) - new Date(`${b.dueDate}T${b.dueTime || '23:59'}`));
+
+      container.innerHTML = sorted.slice(0, 3).map(assignment => {
+        const dueAt = new Date(`${assignment.dueDate}T${assignment.dueTime || '23:59'}`);
+        const now = new Date();
+        const daysLeft = Math.max(0, Math.ceil((dueAt - now) / (1000 * 60 * 60 * 24)));
+        const progress = assignment.submitted ? 100 : 0;
+        const priority = daysLeft <= 2 ? 'high' : daysLeft <= 5 ? 'medium' : 'low';
+        return `
+          <div class="assignment-widget-item">
+            <div class="assignment-widget-top">
+              <div class="assignment-widget-title">${escapeNotificationHtml(assignment.title)}</div>
+              <div class="assignment-widget-priority ${priority}">${priority}</div>
+            </div>
+            <div class="assignment-widget-meta">${escapeNotificationHtml(assignment.subject)} • ${assignment.submitted ? 'Submitted' : `Due in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`}</div>
+            <div class="assignment-widget-progress"><span style="width:${progress}%"></span></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAchievementWidget() {
+      const container = getEl('achievement-grid');
+      if (!container) return;
+
+      if (state.hqLoading) {
+        container.innerHTML = hqEmptyState('Loading earned achievements…');
+        return;
+      }
+
+      const achievements = getAchievementData();
+      container.innerHTML = achievements.length
+        ? achievements.map(item => `
+            <div class="achievement-badge">
+              <div class="icon">${item.icon}</div>
+              <div class="text">
+                <strong>${escapeNotificationHtml(item.title)}</strong>
+                <span>${escapeNotificationHtml(item.subtitle)}</span>
+              </div>
+            </div>
+          `).join('')
+        : hqEmptyState('No achievements earned yet.');
+    }
+
+    function getWeeklyCaseActivity() {
+      const now = new Date();
+      const days = [];
+      for (let offset = 6; offset >= 0; offset--) {
+        const day = new Date(now);
+        day.setHours(0, 0, 0, 0);
+        day.setDate(now.getDate() - offset);
+        const key = day.toLocaleDateString('en-CA');
+        const count = state.progressRows.filter(row => {
+          if (!row.completed_at) return false;
+          return new Date(row.completed_at).toLocaleDateString('en-CA') === key;
+        }).length;
+        days.push({
+          label: day.toLocaleDateString('en-IN', { weekday: 'short' }),
+          value: count,
+          key
+        });
+      }
+      return days;
+    }
+
+    function renderAnalyticsWidget() {
+      const ring = getEl('analytics-progress-ring');
+      const bars = getEl('analytics-bars');
+      if (!ring || !bars) return;
+
+      if (state.hqLoading) {
+        ring.textContent = '…';
+        bars.innerHTML = hqEmptyState('Loading your weekly activity…');
+        return;
+      }
+
+      const subjects = getSubjectData();
+      if (!subjects.length || !state.progressRows.length) {
+        ring.textContent = '—';
+        ring.style.background = 'conic-gradient(var(--cyan) 0 0%, rgba(255,255,255,0.06) 0 100%)';
+        bars.innerHTML = hqEmptyState('No completed cases yet.');
+        return;
+      }
+
+      const overall = Math.round(subjects.reduce((sum, item) => sum + item.progress, 0) / subjects.length);
+      ring.textContent = `${overall}%`;
+      ring.style.background = `conic-gradient(var(--cyan) 0 ${overall}%, rgba(255,255,255,0.06) ${overall}% 100%)`;
+
+      const week = getWeeklyCaseActivity();
+      const max = Math.max(...week.map(item => item.value), 0);
+      bars.innerHTML = week.map(item => {
+        const percent = max > 0 ? Math.round((item.value / max) * 100) : 0;
+        return `
+          <div class="analytics-bar-row">
+            <div class="label"><span>${item.label}</span><strong>${item.value} case${item.value === 1 ? '' : 's'}</strong></div>
+            <div class="analytics-bar-track"><div class="analytics-bar-fill" style="width:${percent}%"></div></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getRecentHQActivity() {
+      const items = [];
+
+      state.progressRows
+        .filter(row => row.completed_at)
+        .sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
+        .slice(0, 5)
+        .forEach(row => {
+          const caseData = CASES.find(item => item.id === row.case_id);
+          if (caseData) {
+            items.push({
+              timestamp: row.completed_at,
+              title: `Completed ${caseData.title}`,
+              detail: `Earned ${Number(row.xp_earned || 0)} DXP`,
+              icon: '✅'
+            });
+          }
+        });
+
+      state.assignments
+        .filter(item => item.submitted && item.submittedAt)
+        .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
+        .slice(0, 3)
+        .forEach(item => {
+          items.push({
+            timestamp: item.submittedAt,
+            title: `Submitted ${item.title}`,
+            detail: `${item.subject} assignment`,
+            icon: '📝'
+          });
+        });
+
+      state.notifications.slice(0, 5).forEach(item => {
+        items.push({
+          timestamp: item.createdAt,
+          title: item.title,
+          detail: item.message,
+          icon: item.icon || '🔔'
+        });
+      });
+
+      return items
+        .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
+        .slice(0, 5);
+    }
+
+    function renderActivityTimeline() {
+      const container = getEl('activity-timeline-list');
+      if (!container) return;
+
+      if (state.hqLoading) {
+        container.innerHTML = hqEmptyState('Loading your recent activity…');
+        return;
+      }
+
+      const items = getRecentHQActivity();
+      container.innerHTML = items.length
+        ? items.map(item => `
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <strong>${escapeNotificationHtml(item.title)}</strong>
+                <span>${escapeNotificationHtml(item.detail)}</span>
+              </div>
+            </div>
+          `).join('')
+        : hqEmptyState('No recent activity yet.');
+    }
+
+    function renderActivityStream() {
+      const activityList = getEl('activity-list');
+      if (!activityList) return;
+
+      const items = [
+        ...state.notifications.slice(0, 3).map(item => ({
+          title: item.title,
+          detail: item.message,
+          icon: item.icon || '🔔',
+          tone: item.read ? 'neutral' : 'active'
+        })),
+        ...state.assignments.slice(0, 2).map(assignment => ({
+          title: assignment.title,
+          detail: `${assignment.subject} • ${assignment.submitted ? 'Submitted' : 'Pending submission'}`,
+          icon: assignment.submitted ? '✅' : '📝',
+          tone: assignment.submitted ? 'neutral' : 'active'
+        }))
+      ].slice(0, 5);
+
+      activityList.innerHTML = items.length ? items.map(item => `
+        <div class="activity-item">
+          <div class="activity-dot" style="${item.tone === 'active' ? '' : 'background: linear-gradient(135deg, var(--amber), var(--crimson)); box-shadow: 0 0 8px rgba(245,185,66,.2);'}"></div>
+          <div>
+            <div style="font-size:13px; font-weight:700; color:var(--text-primary);">${item.title}</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:3px;">${item.detail}</div>
+          </div>
+          <div style="margin-left:auto; font-size:12px; color:var(--text-muted);">${item.icon}</div>
+        </div>
+      `).join('') : '<div class="notification-empty">No recent activity yet.</div>';
+    }
+
+    function renderLearningHub() {
+      const subjectGrid = getEl('subject-grid');
+      const subjectDetail = getEl('subject-detail-card');
+      const assignmentsList = getEl('assignments-list');
+      if (!subjectGrid || !subjectDetail || !assignmentsList) return;
+
+      if (state.hqLoading) {
+        setText('hub-total-subjects', '…');
+        setText('hub-overall-progress', '…');
+        setText('hub-daily-streak', '…');
+        setText('hub-total-xp', '…');
+        subjectGrid.innerHTML = hqEmptyState('Loading your learning progress…');
+        subjectDetail.innerHTML = '';
+        assignmentsList.innerHTML = hqEmptyState('Loading your assignments…');
+        return;
+      }
+
+      const subjects = getSubjectData();
+      const selectedSubject = subjects.find(subject => subject.id === state.selectedSubject) || subjects[0];
+
+      if (!subjects.length) {
+        setText('hub-total-subjects', '0');
+        setText('hub-overall-progress', '—');
+        setText('hub-daily-streak', state.streak || 0);
+        setText('hub-total-xp', formatXP(state.totalXP));
+        subjectGrid.innerHTML = hqEmptyState('No learning units are available yet.');
+        subjectDetail.innerHTML = '';
+      } else {
+        const metrics = subjects.reduce((sum, subject) => sum + subject.progress, 0) / subjects.length;
+        setText('hub-total-subjects', subjects.length);
+        setText('hub-overall-progress', `${Math.round(metrics)}%`);
+        setText('hub-daily-streak', state.streak || 0);
+        setText('hub-total-xp', formatXP(state.totalXP));
+
+        subjectGrid.innerHTML = subjects.map(subject => `
+          <div class="subject-card ${subject.id === selectedSubject.id ? 'active' : ''}" data-subject="${subject.id}">
+            <div class="subject-card-head">
+              <div class="subject-card-icon" style="color:${subject.accent}; border:1px solid ${subject.accent}">${subject.icon}</div>
+              <div class="subject-progress-ring" style="background: conic-gradient(${subject.accent} 0 calc(${subject.progress} * 1%), rgba(255,255,255,0.08) 0); margin:0; width:46px; height:46px;">
+                ${subject.progress}%
+              </div>
+            </div>
+            <div class="subject-card-title">${escapeNotificationHtml(subject.name)}</div>
+            <div class="subject-card-meta">${escapeNotificationHtml(subject.description)}</div>
+            <div class="subject-progress-bar"><div class="subject-progress-fill" style="width:${subject.progress}%"></div></div>
+            <div class="subject-card-footer">
+              <span>${subject.progress}% done</span>
+              <span>${formatXP(subject.xp)} XP</span>
+            </div>
+          </div>
+        `).join('');
+
+        subjectGrid.querySelectorAll('.subject-card').forEach(card => {
+          card.addEventListener('click', () => {
+            state.selectedSubject = card.dataset.subject;
+            renderLearningHub();
+          });
+        });
+
+        if (selectedSubject) {
+          subjectDetail.innerHTML = `
+            <div class="panel-card" style="padding:16px;">
+              <div class="panel-card-header" style="margin-bottom:10px;">
+                <div>
+                  <div class="panel-card-title">${selectedSubject.icon} ${escapeNotificationHtml(selectedSubject.name)}</div>
+                  <div class="panel-card-subtitle">${escapeNotificationHtml(selectedSubject.description)}</div>
+                </div>
+                <div class="badge badge-cyan">⚡ ${formatXP(selectedSubject.xp)} XP</div>
+              </div>
+              <div style="display:grid; gap:12px; grid-template-columns:1.1fr .9fr; align-items:start;">
+                <div>
+                  <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.16em; font-weight:700; margin-bottom:6px;">Current mastery</div>
+                  <div style="font-size:16px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">${selectedSubject.progress}% complete</div>
+                  <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;">${selectedSubject.solved} of ${selectedSubject.total} cases closed in this unit.</div>
+                </div>
+                <div class="panel-card" style="padding:12px;">
+                  <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.16em; font-weight:700; margin-bottom:8px;">Focus tile</div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px;">
+                    <span style="font-size:13px; color:var(--text-secondary);">Cases remaining</span>
+                    <strong style="color:var(--text-primary);">${Math.max(0, selectedSubject.total - selectedSubject.solved)}</strong>
+                  </div>
+                  <div class="subject-progress-bar"><div class="subject-progress-fill" style="width:${selectedSubject.progress}%"></div></div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          subjectDetail.innerHTML = '';
+        }
+      }
+
+      if (!state.assignments.length) {
+        assignmentsList.innerHTML = hqEmptyState(
+          state.hqErrors.assignments
+            ? 'Assignments are unavailable right now.'
+            : 'No assignments have been assigned to you yet.'
+        );
+        return;
+      }
+
+      assignmentsList.innerHTML = state.assignments.map(assignment => {
+        const status = getAssignmentStatus(assignment);
+        return `
+          <div class="assignment-card">
+            <div class="assignment-card-top">
+              <div>
+                <div style="font-weight:800; color:var(--text-primary);">${escapeNotificationHtml(assignment.title)}</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${escapeNotificationHtml(assignment.subject)} • Due ${escapeNotificationHtml(assignment.dueDate)} ${escapeNotificationHtml(assignment.dueTime || '')}</div>
+              </div>
+              <div class="assignment-status ${status.className}">${status.label}</div>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary);">${escapeNotificationHtml(assignment.description)}</div>
+            <div class="assignment-actions">
+              <button type="button" onclick="toggleAssignmentSubmission('${assignment.id}')">${assignment.submitted ? 'Mark Pending' : 'Mark Submitted'}</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+
+    function setNotificationPanelVisibility(visible) {
+      const panel = getEl('notification-panel');
+      if (panel) panel.classList.toggle('active', visible);
+    }
+
+    function setText(id, value) {
+      const el = getEl(id);
+      if (el) el.textContent = value ?? '';
+    }
+
+    function setHtml(id, value) {
+      const el = getEl(id);
+      if (el) el.innerHTML = value ?? '';
+    }
+
+    function normalizeUsername(value) {
+      const trimmed = String(value || '').trim();
+      if (!trimmed) return '';
+      const cleaned = trimmed
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9._-]/g, '');
+      return cleaned.slice(0, 24);
+    }
+
+    async function saveProfileUsername(nextUsername) {
+      const supabase = await sharedSupabasePromise;
+      const {
+        data: { session },
+        error: sessionError
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.user) {
+        showToast('error', '⚠️', 'You need to be signed in to update your username.');
+        return false;
+      }
+
+      const normalizedUsername = normalizeUsername(nextUsername);
+      if (!normalizedUsername) {
+        showToast('error', '⚠️', 'Please enter a username.');
+        return false;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: normalizedUsername, updated_at: new Date().toISOString() })
+        .eq('id', session.user.id);
+
+      if (error) {
+        console.error('[Code Detective] Failed to update username:', error);
+        showToast('error', '⚠️', 'Unable to update username right now.');
+        return false;
+      }
+
+      const previousDisplay = (state.profileDisplayName || '').trim();
+      const shouldReplaceDisplay = !previousDisplay || previousDisplay.toLowerCase() === (state.profileUsername || '').toLowerCase();
+      state.profileUsername = normalizedUsername;
+      state.profileDisplayName = shouldReplaceDisplay ? normalizedUsername : previousDisplay;
+      updateDashboard();
+      showToast('success', '✅', 'Username updated successfully.');
+      return true;
+    }
+
+  
+    // =============================================
+    // NAVIGATION
+    // =============================================
+      // Mobile navigation history
+const screenHistory = [];
+
+    function showScreen(screenId, isBackNavigation = false)
+{
+  // Close notification details before navigating
+  if (typeof closeNotificationDetails === 'function') {
+    closeNotificationDetails();
+  }
+
+  // Close notification dropdown
+  const notificationPanel =
+    document.getElementById('notification-panel');
+
+  if (notificationPanel) {
+    notificationPanel.classList.remove('active');
+  }
+
+  state.notificationsOpen = false;
+
+  // Remember the previous screen for Android Back navigation
+  if (
+    !isBackNavigation &&
+    state.currentScreen &&
+    state.currentScreen !== screenId
+  ) {
+    screenHistory.push(state.currentScreen);
+  }
+
+  // Remove active state from all screens
+  document
+    .querySelectorAll('.screen')
+    .forEach(s => s.classList.remove('active'));
+
+  // Remove active state from all navigation tabs
+  document
+    .querySelectorAll('.nav-tab')
+    .forEach(t => t.classList.remove('active'));
+
+  // Activate requested screen
+  const screen =
+    document.getElementById(`screen-${screenId}`);
+
+  const tab =
+    document.getElementById(`tab-${screenId}`);
+
+  if (screen) {
+    screen.classList.add('active');
+  }
+
+  if (tab) {
+    tab.classList.add('active');
+  }
+
+  state.currentScreen = screenId;
+
+  // Render screen-specific content
+  if (screenId === 'crime-scene') {
+    renderCrimeScene();
+  }
+
+  if (screenId === 'criminal-db') {
+    renderCriminalDatabase();
+    renderCaseLibrary();
+  }
+
+  if (screenId === 'mastery') {
+    renderMasteryBoard();
+  }
+
+  if (screenId === 'notes') {
+    window.CodeDetectiveNotes?.initNotesTutor();
+  }
+
+  if (screenId === 'dashboard') {
+    updateDashboard();
+  }
+}
+    // ==========================================
+// ANDROID BACK BUTTON
+// ==========================================
+
+let isBackNavigation = false;
+
+async function setupAndroidBackButton() {
+  // Only run inside the Capacitor Android app
+  if (!window.Capacitor?.isNativePlatform?.()) {
+    return;
+  }
+
+  try {
+    const App = window.Capacitor?.Plugins?.App;
+    if (!App) {
+  console.warn('[Code Detective] Capacitor App plugin unavailable');
+  return;
+}
+
+    App.addListener('backButton', () => {
+
+      // If we have a previous screen, return to it
+      if (screenHistory.length > 0) {
+        const previousScreen = screenHistory.pop();
+
+        // Prevent showScreen() from adding the current
+        // screen back into history
+        isBackNavigation = true;
+
+        showScreen(previousScreen);
+
+        isBackNavigation = false;
+        return;
+      }
+
+      // No previous screen:
+      // go to dashboard first
+      if (state.currentScreen !== 'dashboard') {
+        isBackNavigation = true;
+
+        showScreen('dashboard');
+
+        isBackNavigation = false;
+        return;
+      }
+
+      // Already on dashboard → exit Android app
+      App.exitApp();
+    });
+
+  } catch (error) {
+    console.warn('[Code Detective] Android back handler unavailable:', error);
+  }
+}
+
+setupAndroidBackButton();
+
+    // Profile Dropdown Logic
+    document.getElementById('nav-avatar-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('profile-dropdown').classList.toggle('active');
+    });
+    document.getElementById('nav-xp-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('profile-dropdown').classList.toggle('active');
+    });
+    document.getElementById('nav-bell-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleNotifications();
+      document.getElementById('profile-dropdown').classList.remove('active');
+    });
+   document.addEventListener('click', (event) => {
+  const profileDropdown =
+    document.getElementById('profile-dropdown');
+
+  const notificationPanel =
+    document.getElementById('notification-panel');
+
+  const notificationButton =
+    document.getElementById('nav-bell-btn');
+
+  if (
+    profileDropdown &&
+    !profileDropdown.contains(event.target)
+  ) {
+    profileDropdown.classList.remove('active');
+  }
+
+  if (
+    notificationPanel &&
+    notificationButton &&
+    !notificationPanel.contains(event.target) &&
+    !notificationButton.contains(event.target)
+  ) {
+    setNotificationPanelVisibility(false);
+    state.notificationsOpen = false;
+  }
+});
+
+ document.querySelectorAll('.nav-tab').forEach(tab => {
+
+  tab.addEventListener('click', (event) => {
+
+    const screenId = tab.dataset.screen;
+
+    if (!screenId) return;
+
+    event.preventDefault();
+
+    // Close notification UI
+    if (typeof closeNotificationDetails === 'function') {
+      closeNotificationDetails();
+    }
+
+    const notificationPanel =
+      document.getElementById('notification-panel');
+
+    if (notificationPanel) {
+      notificationPanel.classList.remove('active');
+    }
+
+    state.notificationsOpen = false;
+
+    // Close profile dropdown
+    const profileDropdown =
+      document.getElementById('profile-dropdown');
+
+    if (profileDropdown) {
+      profileDropdown.classList.remove('active');
+    }
+
+    showScreen(screenId);
+
+  });
+
+});
+
+    document.getElementById('profile-option')?.addEventListener('click', () => {
+      document.getElementById('profile-dropdown').classList.remove('active');
+      openProfileModal();
+    });
+
+    document.getElementById('appearance-option')?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const submenu = document.getElementById('theme-submenu');
+      const parent = document.getElementById('appearance-option');
+      if (submenu && parent) {
+        submenu.classList.toggle('active');
+        parent.classList.toggle('active');
+      }
+    });
+
+    document.querySelectorAll('.theme-option').forEach(option => {
+      option.addEventListener('click', (event) => {
+        event.stopPropagation();
+        applyTheme(option.dataset.theme);
+        document.getElementById('profile-dropdown').classList.remove('active');
+      });
+    });
+
+
+    document.getElementById('edit-username-option')?.addEventListener('click', async () => {
+      const currentUsername = (state.profileUsername || '').trim();
+      const nextUsername = window.prompt('Choose a new username:', currentUsername);
+      if (nextUsername === null) return;
+      const saved = await saveProfileUsername(nextUsername);
+      if (saved) {
+        document.getElementById('profile-dropdown').classList.remove('active');
+      }
+    });
+
+    document.getElementById('signin-option')?.addEventListener('click', () => {
+      window.location.replace(new URL('index.html', window.location.href).href);
+    });
+
+    document.getElementById('logout-option')?.addEventListener('click', async () => {
+      const supabase = await sharedSupabasePromise;
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error('[Code Detective] Logout failed:', error);
+        return;
+      }
+
+      state.currentScreen = 'dashboard';
+      state.currentCaseIndex = 0;
+      state.totalXP = 0;
+      state.casesCompleted = 0;
+      state.streak = 0;
+      state.accuracy = 0;
+      state.rank = '';
+      state.profileDisplayName = '';
+      state.profileUsername = '';
+      state.profileAvatar = '';
+      state.completedCaseIds = new Set();
+      state.caseState = { suspectSelected: null, reasonSelected: null, fixSelected: null, cluesRevealed: 0, step: 1 };
+
+      console.log('[Code Detective] Logout successful');
+      window.location.replace(new URL('index.html', window.location.href).href);
+    });
+
+    function goToCrimeScene() {
+      showScreen('crime-scene');
+    }
+
+    // =============================================
+    // DASHBOARD
+    // =============================================
+    async function loadProfile() {
+      try {
+        const supabase = await sharedSupabasePromise;
+        const {
+          data: { session },
+          error: sessionError
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('[Code Detective] Failed to read profile session:', sessionError);
+          return null;
+        }
+
+        if (!session?.user) {
+          return null;
+        }
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (error) {
+          state.hqErrors.profile = error.message || 'Profile could not be loaded.';
+          console.error('[Code Detective] Failed to load profile:', error);
+          return null;
+        }
+
+        const profile = data || {};
+        const emailUsername = session.user.email?.split('@')[0] || '';
+        const metadata = session.user?.user_metadata || {};
+        const metadataDisplayName = String(metadata.display_name || '').trim();
+        const displayName = metadataDisplayName
+          || String(profile.display_name || '').trim()
+          || String(profile.username || '').trim()
+          || emailUsername;
+        const displayNameCapitalized = displayName ? displayName.charAt(0).toUpperCase() + displayName.slice(1) : '';
+        const avatar = String(profile.avatar || metadata.avatar || '🕵️');
+
+        let restoredXP = Number(profile.total_dxp ?? 0);
+        let restoredCases = Number(profile.cases_solved ?? profile.cases_completed ?? 0);
+        let restoredStreak = Number(profile.streak ?? profile.current_streak ?? 0);
+        let restoredAccuracy = Number.isFinite(Number(profile.accuracy)) ? Number(profile.accuracy) : 0;
+
+        state.profileCreatedAt = profile.created_at || session.user.created_at || '';
+        state.profileCollege = String(profile.college || metadata.college || '').trim();
+        state.profileDepartment = String(profile.department || metadata.department || '').trim();
+        state.profileRole = String(profile.role || metadata.role || '').trim();
+
+        const { data: progressRows, error: progressError } = await supabase
+          .from('case_progress')
+          .select('case_id, xp_earned, completed, completed_at')
+          .eq('user_id', session.user.id)
+          .eq('completed', true);
+
+        state.progressRows = !progressError && Array.isArray(progressRows) ? progressRows : [];
+
+        if (!progressError && Array.isArray(progressRows) && progressRows.length > 0) {
+          const completedCount = progressRows.length;
+          const xpFromProgress = progressRows.reduce((sum, row) => sum + Number(row.xp_earned || 0), 0);
+
+          // DXP reconciliation for accounts that completed cases before profile.total_dxp
+          // was wired up correctly. Prefer the reward stored with each completed case;
+          // for legacy rows whose xp_earned is 0, use the current case-completion reward.
+          // Once repaired, profile.total_dxp becomes the persistent source of truth, so
+          // clue/wrong-answer deductions are never re-added on ordinary reloads.
+          // Run ONLY for accounts that have never been initialized.
+// Never overwrite an existing DXP value.
+
+if (profile.total_dxp === null && completedCount > 0) {
+            const legacyFallbackXP = progressRows.reduce((sum, row) => {
+              const savedXP = Number(row.xp_earned || 0);
+              return sum + (savedXP > 0 ? savedXP : getCaseCompletionXP());
+            }, 0);
+            restoredXP = Math.max(0, xpFromProgress > 0 ? xpFromProgress : legacyFallbackXP);
+
+            if (restoredXP > 0) {
+              const { error: dxpRepairError } = await supabase
+                .from('profiles')
+                .update({ total_dxp: restoredXP, updated_at: new Date().toISOString() })
+                .eq('id', session.user.id);
+
+              if (dxpRepairError) {
+                console.error('[Code Detective] Failed to repair legacy DXP:', dxpRepairError);
+              } else {
+                console.log('[Code Detective] Legacy DXP repaired:', restoredXP);
+              }
+            }
+          }
+
+          restoredCases = completedCount;
+
+          // A streak is consecutive calendar days with at least one completed case,
+          // not the number of cases solved. Multiple cases on one day count once.
+          const activityDays = [...new Set(progressRows
+            .map(row => row.completed_at ? new Date(row.completed_at).toLocaleDateString('en-CA') : null)
+            .filter(Boolean))].sort().reverse();
+          if (activityDays.length > 0) {
+            const today = new Date();
+            const todayKey = today.toLocaleDateString('en-CA');
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const yesterdayKey = yesterday.toLocaleDateString('en-CA');
+
+            if (activityDays[0] === todayKey || activityDays[0] === yesterdayKey) {
+              let streak = 1;
+              let cursor = new Date(`${activityDays[0]}T12:00:00`);
+              for (let i = 1; i < activityDays.length; i++) {
+                cursor.setDate(cursor.getDate() - 1);
+                if (activityDays[i] === cursor.toLocaleDateString('en-CA')) streak++;
+                else break;
+              }
+              restoredStreak = streak;
+            } else {
+              restoredStreak = 0;
+            }
+          }
+
+        }
+
+        state.profileDisplayName = displayNameCapitalized;
+        state.profileUsername = (profile.username || '').trim() || emailUsername;
+        state.profileAvatar = avatar;
+        state.totalXP = restoredXP;
+        state.casesCompleted = restoredCases;
+        state.streak = restoredStreak;
+        state.accuracy = restoredAccuracy;
+        state.rank = profile.rank || getRank(state.totalXP).name;
+
+        console.log('[Code Detective] Profile loaded');
+        console.log('[Code Detective] Username restored:', displayName);
+        console.log('[Code Detective] total_dxp restored:', state.totalXP);
+
+        setText('profile-name', displayNameCapitalized);
+        setText('profile-avatar', avatar);
+        setText('nav-avatar-btn', avatar);
+        const navAvatarBtn = getEl('nav-avatar-btn');
+        if (navAvatarBtn) navAvatarBtn.title = 'Profile';
+
+        const welcomeHeading = getEl('welcome-heading');
+        if (welcomeHeading) {
+          welcomeHeading.textContent = displayNameCapitalized ? `Welcome, ${displayNameCapitalized}` : 'Welcome';
+        }
+        const nextRankLabel = getEl('next-rank-label');
+        if (nextRankLabel) {
+          nextRankLabel.textContent = displayNameCapitalized || 'Detective';
+        }
+
+        return profile;
+      } catch (error) {
+        console.error('[Code Detective] Unexpected profile load error:', error);
+        return null;
+      }
+    }
+
+   async function saveProfileStats() {
+  try {
+    const supabase = await sharedSupabasePromise;
+
+    const {
+      data: { session },
+      error: sessionError
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session?.user) {
+      return false;
+    }
+
+    const nextCaseId = (() => {
+      const nextIncompleteCase =
+        CASES.find(c => !state.completedCaseIds.has(c.id));
+
+      return nextIncompleteCase?.id ??
+             CASES[CASES.length - 1]?.id ??
+             null;
+    })();
+
+    // Always save the CURRENT state.
+    const profilePayload = {
+      id: session.user.id,
+
+      total_dxp: Math.max(0, Number(state.totalXP || 0)),
+
+      cases_solved: Number(state.casesCompleted || 0),
+
+      streak: Number(state.streak || 0),
+
+      accuracy: Number(state.accuracy || 0),
+
+      current_case_id: nextCaseId,
+
+      updated_at: new Date().toISOString()
+    };
+    console.log("[DXP DEBUG] Payload:", profilePayload);
+
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(profilePayload, {
+        onConflict: "id"
+      });
+console.log("[DXP DEBUG] Save Error:", error);
+    if (error) {
+      console.error(
+  "[DXP] Failed saving profile:",
+  JSON.stringify(error, null, 2)
+);
+      return false;
+    }
+
+    console.log(
+      "[DXP] Saved successfully:",
+      state.totalXP
+    );
+
+    return true;
+
+  } catch (err) {
+
+    console.error(
+      "[DXP] Unexpected save error:",
+      err
+    );
+
+    return false;
+  }
+}
+
+    function updateDonutCards() {
+      const totalCases = Array.isArray(CASES) ? CASES.length : 0;
+      const solvedCases = Math.min(Math.max(state.casesCompleted || 0, 0), totalCases);
+      const unsolvedCases = Math.max(totalCases - solvedCases, 0);
+      const solvedPct = totalCases > 0 ? Math.round((solvedCases / totalCases) * 100) : 0;
+      const unsolvedPct = totalCases > 0 ? Math.round((unsolvedCases / totalCases) * 100) : 0;
+      const circumference = 2 * Math.PI * 58;
+
+      const solvedFill = document.getElementById('donut-solved-fill');
+      const unsolvedFill = document.getElementById('donut-unsolved-fill');
+
+      if (solvedFill) {
+        solvedFill.style.strokeDasharray = circumference;
+        solvedFill.style.strokeDashoffset = `${circumference * (1 - solvedPct / 100)}`;
+      }
+
+      if (unsolvedFill) {
+        unsolvedFill.style.strokeDasharray = circumference;
+        unsolvedFill.style.strokeDashoffset = `${circumference * (1 - unsolvedPct / 100)}`;
+      }
+
+      const solvedNum = document.getElementById('donut-solved-num');
+      const solvedSub = document.getElementById('donut-solved-sub');
+      const unsolvedNum = document.getElementById('donut-unsolved-num');
+      const unsolvedSub = document.getElementById('donut-unsolved-sub');
+
+      if (solvedNum) solvedNum.textContent = solvedPct;
+      if (solvedSub) solvedSub.textContent = `${solvedCases} / ${totalCases}`;
+      if (unsolvedNum) unsolvedNum.textContent = unsolvedPct;
+      if (unsolvedSub) unsolvedSub.textContent = `${unsolvedCases} / ${totalCases}`;
+    }
+
+    function renderProfileModal() {
+      // The current build uses a dynamic profile drawer instead of a static
+      // profile-modal element. Keep this renderer lightweight and idempotent.
+      let modal = document.getElementById('profile-detail-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'profile-detail-modal';
+        modal.className = 'notification-detail-overlay';
+        modal.innerHTML = `
+          <div class="notification-detail-modal" style="max-width:560px;">
+            <div class="notification-detail-header">
+              <div class="notification-detail-heading">
+                <div class="notification-detail-icon" id="profile-detail-avatar">🕵️</div>
+                <div><div class="notification-detail-type">Detective Profile</div><h2 class="notification-detail-title" id="profile-detail-name">Detective</h2></div>
+              </div>
+              <button class="notification-detail-close" type="button" aria-label="Close" onclick="closeProfileModal()">×</button>
+            </div>
+            <div class="notification-detail-body">
+              <div class="notification-detail-message" id="profile-detail-content"></div>
+            </div>
+          </div>`;
+        document.body.appendChild(modal);
+      }
+      const name = state.profileDisplayName || 'Detective';
+      const avatar = state.profileAvatar || '🕵️';
+      const avatarEl = document.getElementById('profile-detail-avatar');
+      const nameEl = document.getElementById('profile-detail-name');
+      const contentEl = document.getElementById('profile-detail-content');
+      if (avatarEl) avatarEl.textContent = avatar;
+      if (nameEl) nameEl.textContent = name;
+      if (contentEl) {
+        contentEl.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+            <div class="notification-detail-meta-item">XP: ${formatXP(state.totalXP)}</div>
+            <div class="notification-detail-meta-item">Cases: ${state.casesCompleted}</div>
+            <div class="notification-detail-meta-item">Streak: ${state.streak} days</div>
+            <div class="notification-detail-meta-item">Accuracy: ${state.accuracy}%</div>
+            <div class="notification-detail-meta-item">Rank: ${state.rank || 'Rookie'}</div>
+            <div class="notification-detail-meta-item">Username: ${escapeNotificationHtml(state.profileUsername || '—')}</div>
+          </div>`;
+      }
+    }
+
+    function openProfileModal() {
+      renderProfileModal();
+      const modal = document.getElementById('profile-detail-modal');
+      if (modal) { modal.classList.add('active'); document.body.style.overflow = 'hidden'; }
+    }
+
+    function closeProfileModal() {
+      const modal = document.getElementById('profile-detail-modal');
+      if (modal) modal.classList.remove('active');
+      if (!document.getElementById('notification-detail-overlay')?.classList.contains('active')) document.body.style.overflow = '';
+    }
+
+    async function loadAssignmentsFromSupabase() {
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) return false;
+        const { data, error } = await supabase
+          .from('assignment_recipients')
+          .select('assignment_id, submitted, submitted_at, assignments(id,title,subject,description,difficulty,due_date,due_time,max_marks,instructions,attachment,created_at,updated_at)')
+          .eq('recipient_id', userId);
+        if (error) {
+          state.assignments = [];
+          state.hqErrors.assignments = error.message || 'Assignments could not be loaded.';
+          console.warn('[Assignments] Remote assignments unavailable:', error.message);
+          renderAssignmentWidget();
+          renderLearningHub();
+          return false;
+        }
+        state.assignments = (data || []).filter(row => row.assignments).map(row => ({
+          id: row.assignments.id,
+          title: row.assignments.title,
+          subject: row.assignments.subject,
+          description: row.assignments.description || '',
+          difficulty: row.assignments.difficulty || '',
+          dueDate: row.assignments.due_date,
+          dueTime: row.assignments.due_time,
+          maxMarks: Number(row.assignments.max_marks || 0),
+          instructions: row.assignments.instructions || '',
+          attachment: row.assignments.attachment || '',
+          submitted: Boolean(row.submitted),
+          submittedAt: row.submitted_at || null
+        }));
+        delete state.hqErrors.assignments;
+        renderLearningHub();
+        renderAssignmentWidget();
+        updateDashboard();
+        return true;
+      } catch (error) {
+        console.warn('[Assignments] Remote load failed:', error);
+        return false;
+      }
+    }
+
+    async function initAssignmentRealtime() {
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) return;
+        if (window.__codeDetectiveAssignmentChannel) await supabase.removeChannel(window.__codeDetectiveAssignmentChannel);
+        window.__codeDetectiveAssignmentChannel = supabase
+          .channel(`code-detective-assignments-${userId}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'assignment_recipients', filter: `recipient_id=eq.${userId}` }, () => loadAssignmentsFromSupabase())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, () => loadAssignmentsFromSupabase())
+          .subscribe();
+      } catch (error) {
+        console.warn('[Assignments] Realtime unavailable:', error);
+      }
+    }
+
+    function updateDashboard() {
+      const rank = getRank(state.totalXP);
+      const rankName = rank.name;
+      state.rank = rankName;
+      const nextRankIdx = RANKS.findIndex(r => r.name === rank.name) + 1;
+      const nextRank = RANKS[nextRankIdx];
+      const xpDisplay = `${formatXP(state.totalXP)} / ${formatXP(nextRank ? nextRank.threshold : 9999)}`;
+      const pct = nextRank
+        ? ((state.totalXP - rank.threshold) / (nextRank.threshold - rank.threshold)) * 100
+        : 100;
+      const rankProgress = nextRank ? Math.max(0, Math.min(100, pct)) : 100;
+      const totalCaseCount = Array.isArray(CASES) ? CASES.length : 0;
+      const overallProgress = totalCaseCount > 0
+        ? Math.max(0, Math.min(100, Math.round((state.casesCompleted / totalCaseCount) * 100)))
+        : 0;
+      const assignmentsCompleted = state.assignments.filter(item => item.submitted).length;
+      const pendingAssignments = Math.max(0, state.assignments.length - assignmentsCompleted);
+
+      setText('profile-name', state.profileDisplayName || '');
+      setText('profile-rank', rankName);
+      setText('profile-avatar', state.profileAvatar || '');
+      setText('nav-avatar-btn', state.profileAvatar || '');
+      setText('dropdown-name', state.profileDisplayName || '');
+      setText('dropdown-rank', rankName);
+      setText('dropdown-email', state.profileUsername || '');
+      setText('nav-xp', `${formatXP(state.totalXP)} DXP`);
+      setText('stat-cases', state.casesCompleted);
+      setText('case-catalog-total', Array.isArray(CASES) ? CASES.length : 0);
+      setText('stat-streak', state.streak);
+      setText('stat-accuracy', `${state.accuracy}%`);
+      setText('dash-streak', `${state.streak} Day Streak`);
+      setText('xp-display', xpDisplay);
+
+      const dashboardTitle = getEl('dashboard-title-heading');
+      if (dashboardTitle) {
+        dashboardTitle.textContent = state.profileDisplayName ? `Welcome, ${state.profileDisplayName}` : 'Welcome';
+      }
+      const heroTitle = getEl('hero-title');
+      if (heroTitle) {
+        heroTitle.textContent = state.profileDisplayName ? `Welcome, ${state.profileDisplayName}` : 'Welcome';
+      }
+      const heroSummary = getEl('hero-summary');
+      if (heroSummary) {
+        heroSummary.textContent = state.profileDisplayName
+          ? `${state.profileDisplayName}, your next mission is ready. Continue the case and keep your streak alive.`
+          : 'Your next mission is ready. Continue the case and keep your streak alive.';
+      }
+      const heroStreak = getEl('hero-streak');
+      if (heroStreak) heroStreak.textContent = `${state.streak || 0} day streak`;
+      const heroLevel = getEl('hero-level');
+      if (heroLevel) heroLevel.textContent = `Level ${Math.max(1, Math.floor(state.totalXP / 1000) + 1)}`;
+      const heroGoal = getEl('hero-goal');
+      if (heroGoal) heroGoal.textContent = `${pendingAssignments} assignment${pendingAssignments === 1 ? '' : 's'} pending`;
+      const heroMission = getEl('hero-mission');
+      if (heroMission) heroMission.textContent = `Today's mission • ${rankName}`;
+      const heroMissionText = getEl('hero-mission-text');
+      const nextCase = CASES.find(item => !state.completedCaseIds.has(item.id));
+      if (heroMissionText) {
+        heroMissionText.textContent = nextCase
+          ? `Next case: ${nextCase.title}. Close it to keep building your investigation record.`
+          : 'All available cases are closed. Check back when new investigations are added.';
+      }
+      const statOverallProgress = getEl('stat-overall-progress');
+      if (statOverallProgress) statOverallProgress.textContent = `${Math.round(overallProgress)}%`;
+      const statOverallTrend = getEl('stat-overall-trend');
+      if (statOverallTrend) statOverallTrend.textContent = overallProgress >= 70 ? 'Excellent pace' : overallProgress >= 40 ? 'Solid rhythm' : 'Momentum building';
+      const statXpValue = getEl('stat-xp-value');
+      if (statXpValue) statXpValue.textContent = formatXP(state.totalXP);
+      const statXpTrend = getEl('stat-xp-trend');
+      if (statXpTrend) statXpTrend.textContent = `Rank: ${rankName}`;
+      const statCasesValue = getEl('stat-cases-value');
+      if (statCasesValue) statCasesValue.textContent = state.casesCompleted;
+      const statCasesTrend = getEl('stat-cases-trend');
+      if (statCasesTrend) statCasesTrend.textContent = `${Array.isArray(CASES) ? CASES.length : 0} total cases`;
+      const statAssignmentsValue = getEl('stat-assignments-value');
+      if (statAssignmentsValue) statAssignmentsValue.textContent = assignmentsCompleted;
+      const statAssignmentsTrend = getEl('stat-assignments-trend');
+      if (statAssignmentsTrend) statAssignmentsTrend.textContent = pendingAssignments ? `${pendingAssignments} pending` : 'All caught up';
+
+      const profileLevel = getEl('profile-level');
+      if (profileLevel) profileLevel.textContent = `${Math.max(1, Math.floor(state.totalXP / 1000) + 1)}`;
+      const profileXpTotal = getEl('profile-xp-total');
+      if (profileXpTotal) profileXpTotal.textContent = `${formatXP(state.totalXP)} XP`;
+      const profileJoin = getEl('profile-join');
+      if (profileJoin) {
+        profileJoin.textContent = state.profileCreatedAt
+          ? new Date(state.profileCreatedAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+          : 'Not provided';
+      }
+      const profileRole = getEl('profile-role');
+      if (profileRole) profileRole.textContent = state.profileRole || 'Not provided';
+      const profileCollege = getEl('profile-college');
+      if (profileCollege) profileCollege.textContent = state.profileCollege || 'Not provided';
+      const profileDepartment = getEl('profile-department');
+      if (profileDepartment) profileDepartment.textContent = state.profileDepartment || 'Not provided';
+      const subjects = getSubjectData();
+      const selectedSubject = subjects.find(subject => subject.id === state.selectedSubject) || subjects[0];
+      const continueSubject = getEl('continue-subject');
+      const continueLesson = getEl('continue-lesson');
+      const continueRemaining = getEl('continue-remaining');
+      const continueTime = getEl('continue-time');
+      const continueXp = getEl('continue-xp');
+
+      if (selectedSubject) {
+        if (continueSubject) continueSubject.textContent = selectedSubject.name;
+        if (continueLesson) continueLesson.textContent = `${selectedSubject.name} • ${selectedSubject.progress}% complete`;
+        if (continueRemaining) continueRemaining.textContent = `${Math.max(0, selectedSubject.total - selectedSubject.solved)} cases`;
+        if (continueTime) continueTime.textContent = 'Not available';
+        if (continueXp) continueXp.textContent = `${formatXP(selectedSubject.xp)} XP`;
+      } else {
+        if (continueSubject) continueSubject.textContent = 'No active unit';
+        if (continueLesson) continueLesson.textContent = 'No investigation data is available yet.';
+        if (continueRemaining) continueRemaining.textContent = '—';
+        if (continueTime) continueTime.textContent = '—';
+        if (continueXp) continueXp.textContent = '—';
+      }
+
+      const nextRankLabel = getEl('next-rank-label');
+      if (nextRankLabel) {
+        nextRankLabel.textContent = state.profileDisplayName || 'Detective';
+      }
+
+      setText('sidebar-xp', formatXP(state.totalXP));
+      setText('sidebar-rank', rankName);
+      const sidebarBar = getEl('sidebar-xp-bar');
+      if (sidebarBar) {
+        const overallPct = Math.max(0, Math.min(100, (state.totalXP / (nextRank ? nextRank.threshold : Math.max(state.totalXP,1))) * 100));
+        sidebarBar.style.width = `${overallPct}%`;
+      }
+
+      const xpBar = getEl('xp-bar');
+      if (xpBar) xpBar.style.width = `${rankProgress}%`;
+
+      if (nextRank) {
+        setHtml('xp-to-next', `${formatXP(nextRank.threshold - state.totalXP)} DXP to <strong style="color:var(--amber)">${nextRank.name}</strong>`);
+      }
+
+      renderLearningHub();
+      renderNotifications();
+      renderProfileModal();
+      renderActivityStream();
+      renderQuickActions();
+      renderAssignmentWidget();
+      renderAchievementWidget();
+      renderAnalyticsWidget();
+      renderActivityTimeline();
+
+      const casesToNextLevelEl = getEl('cases-to-next-level');
+      if (casesToNextLevelEl) {
+        const nextLevel = Math.max(1, Math.floor(state.totalXP / 1000) + 1);
+        const nextLevelXP = nextLevel * 1000;
+        casesToNextLevelEl.textContent = `${Math.max(0, nextLevelXP - state.totalXP)} DXP to next level`;
+      }
+
+      updateDonutCards();
+    }
+
+    function accuracyStatsKey() {
+      return `codeDetectiveAccuracyStats:${state.profileUsername || 'anonymous'}`;
+    }
+
+    async function recordQuestionAnswer(isCorrect) {
+      let stats;
+      try {
+        stats = JSON.parse(localStorage.getItem(accuracyStatsKey()) || 'null');
+      } catch (_) {
+        stats = null;
+      }
+      if (!stats || !Number.isFinite(stats.correct) || !Number.isFinite(stats.attempts)) {
+        // Preserve the existing profile percentage as a baseline for players who
+        // began investigating before per-answer tracking was introduced.
+        stats = state.accuracy > 0
+          ? { correct: Math.round(state.accuracy), attempts: 100 }
+          : { correct: 0, attempts: 0 };
+      }
+      stats.attempts += 1;
+      if (isCorrect) stats.correct += 1;
+      localStorage.setItem(accuracyStatsKey(), JSON.stringify(stats));
+      state.accuracy = Math.round((stats.correct / stats.attempts) * 100);
+      updateDashboard();
+      await saveProfileStats();
+    }
+
+    // =============================================
+    // CRIME SCENE RENDERER
+    // =============================================
+    function syncCurrentCaseIndexToProgress() {
+      if (!Array.isArray(CASES) || CASES.length === 0) return;
+
+      const nextIncompleteIndex = CASES.findIndex(c => !state.completedCaseIds.has(c.id));
+      state.currentCaseIndex = nextIncompleteIndex >= 0
+        ? nextIncompleteIndex
+        : CASES.length - 1;
+    }
+
+    function restoreCurrentCaseFromProfile(profile) {
+      if (!profile || !Array.isArray(CASES)) return;
+
+      const requestedCaseIndex = CASES.findIndex(c => c.id === profile.current_case_id);
+      if (requestedCaseIndex >= 0) {
+        state.currentCaseIndex = requestedCaseIndex;
+        console.log('[Code Detective] Current case restored:', profile.current_case_id);
+        return;
+      }
+
+      syncCurrentCaseIndexToProgress();
+      console.log('[Code Detective] Current case restored:', CASES[state.currentCaseIndex]?.id || null);
+    }
+
+    function getPackCaseState(caseId) {
+      const all = JSON.parse(localStorage.getItem('codeDetectivePackProgress') || '{}');
+      return { all, record: all[caseId] || { hintsUsed: 0, mistakes: 0, questionsLogged: 0, startedAt: Date.now() } };
+    }
+
+    function savePackCaseState(caseId, record) {
+      const entry = getPackCaseState(caseId);
+      entry.all[caseId] = record;
+      localStorage.setItem('codeDetectivePackProgress', JSON.stringify(entry.all));
+    }
+
+    function isJavaOOPPackCase(c) {
+      return c?.unitId === 'JAVA_OOP_UNIT1';
+    }
+
+    function setPackModeVisibility(isPack) {
+      const evidenceBody = document.getElementById('evidence-body');
+      const evidenceLocker = evidenceBody?.closest('.evidence-locker');
+      if (evidenceLocker) {
+        evidenceLocker.style.display = isPack ? 'none' : '';
+        if (evidenceLocker.previousElementSibling) evidenceLocker.previousElementSibling.style.display = isPack ? 'none' : '';
+      }
+      const suspects = document.getElementById('suspects-grid');
+      if (suspects) {
+        suspects.style.display = isPack ? 'none' : '';
+        if (suspects.previousElementSibling) suspects.previousElementSibling.style.display = isPack ? 'none' : '';
+      }
+      document.getElementById('root-cause-section').style.display = 'none';
+      document.getElementById('code-fix-section').style.display = 'none';
+      document.getElementById('submit-section').style.display = 'none';
+    }
+
+    function setPackStepLabels(isPack, activeIndex = 0, total = 3) {
+      const labels = isPack
+        ? [['Review Evidence', 'Inspect the recovered Java evidence'], ['Test the Theory', 'Apply the language rule'], ['Close the Report', 'Verify the final repair']]
+        : [['Identify the Criminal', 'Select the exception type'], ['Find Root Cause', 'Why did it go wrong?'], ['Apply the Fix', 'Repair the broken code']];
+      [1, 2, 3].forEach((stepNumber, index) => {
+        const step = document.getElementById(`step-${stepNumber}`);
+        if (!step) return;
+        const label = step.querySelector('.step-label');
+        if (label) label.textContent = labels[index][0];
+        if (label?.nextElementSibling) label.nextElementSibling.textContent = labels[index][1];
+        if (isPack) {
+          step.classList.toggle('done', index < activeIndex);
+          step.classList.toggle('active', index === Math.min(activeIndex, total - 1));
+        }
+      });
+    }
+
+    function renderInvestigationBriefing(c) {
+      const briefing = document.getElementById('investigation-briefing');
+      const meta = document.getElementById('case-file-pack-meta');
+      if (!isJavaOOPPackCase(c)) {
+        briefing.style.display = 'none';
+        meta.style.display = 'none';
+        setPackModeVisibility(false);
+        setPackStepLabels(false);
+        return;
+      }
+
+      const { record } = getPackCaseState(c.id);
+      const questions = c.interactiveQuestions || [];
+      record.questionResults = record.questionResults || {};
+      record.activeQuestion = Math.max(0, Math.min(Number(record.activeQuestion) || 0, questions.length));
+      const correctCount = questions.filter(question => record.questionResults[question.id]?.correct).length;
+      const investigationComplete = correctCount === questions.length && questions.length > 0;
+      if (!investigationComplete && record.activeQuestion >= questions.length) {
+        record.activeQuestion = questions.findIndex(question => !record.questionResults[question.id]?.correct);
+        savePackCaseState(c.id, record);
+      }
+      const activeIndex = investigationComplete ? questions.length : record.activeQuestion;
+      const question = questions[activeIndex];
+      const answered = question ? record.questionResults[question.id] : null;
+      const evidence = c.clues?.[Math.min(activeIndex, (c.clues?.length || 1) - 1)];
+      const hintIndex = Number(record.activeHint);
+      const activeHint = Number.isInteger(hintIndex) ? c.hints?.[hintIndex] : '';
+
+      setPackModeVisibility(true);
+      setPackStepLabels(true, Math.min(activeIndex, 2), questions.length);
+      briefing.style.display = 'block';
+      briefing.innerHTML = `
+        <div class="section-label"><span class="section-label-text">📁 Investigation Flow</span><div class="section-label-line"></div><span style="font-size:11px;color:var(--text-muted)">${c.evidenceFolder.name}</span></div>
+        <p style="font-size:13px;line-height:1.6;color:var(--text-secondary);margin:12px 0 8px;">${c.story.introduction}</p>
+        <div style="display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 14px;"><span class="badge badge-cyan">${correctCount}/${questions.length} evidence questions verified</span><span class="badge badge-amber">${c.estimatedTime}</span><span class="badge badge-crimson">${record.hintsUsed || 0} hints used</span></div>
+        ${investigationComplete ? `
+          <div style="padding:16px; border:1px solid rgba(0,255,136,.35); border-radius:var(--radius-md); background:rgba(0,255,136,.04);">
+            <div style="font-weight:800;color:var(--green);margin-bottom:8px;">FINAL INVESTIGATION REPORT READY</div>
+            <div style="font-size:13px;line-height:1.6;color:var(--text-secondary);">${c.story.finalReport}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">${c.story.verdict}</div>
+            <button class="btn btn-primary" id="pack-submit-case" style="margin-top:14px; width:100%; justify-content:center;">🔒 Submit Final Report</button>
+          </div>` : `
+          <div style="padding:16px; border:1px solid var(--border); border-radius:var(--radius-md); background:rgba(0,0,0,.12);">
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;"><span style="font-family:var(--font-code);font-size:11px;color:var(--cyan);">QUESTION ${activeIndex + 1} OF ${questions.length}</span><span style="font-size:11px;color:var(--text-muted);">${question.type}</span></div>
+            ${evidence ? `<div style="font-size:12px;line-height:1.55;color:var(--amber);padding:9px 10px;border-left:2px solid var(--amber);background:rgba(255,183,0,.05);margin-bottom:12px;"><strong>Evidence:</strong> ${evidence.text}</div>` : ''}
+            <div style="font-size:14px;line-height:1.55;color:var(--text-secondary);margin-bottom:12px;">${question.prompt}</div>
+            <div style="display:grid;gap:7px;">${(question.options || []).map((option, optionIndex) => {
+              const isCorrect = answered?.correct && optionIndex === question.correctIndex;
+              const isWrong = answered?.selected === optionIndex && !answered?.correct;
+              const stateStyle = isCorrect ? 'border-color:var(--green);color:var(--green);' : isWrong ? 'border-color:var(--crimson);color:var(--crimson);' : '';
+              return `<button class="btn btn-ghost pack-question-option" data-option="${optionIndex}" ${answered?.correct ? 'disabled' : ''} style="text-align:left;padding:10px 12px;font-size:12px;white-space:normal;${stateStyle}">${String.fromCharCode(65 + optionIndex)}. ${option}</button>`;
+            }).join('')}</div>
+            ${answered ? `<div style="font-size:12px;line-height:1.55;margin-top:12px;color:${answered.correct ? 'var(--green)' : 'var(--crimson)'};">${answered.correct ? `Verified: ${question.feedback}` : 'That conclusion does not fit the evidence. Re-check the Java rule and select another theory.'}</div>` : ''}
+            ${answered?.correct ? `<button class="btn btn-primary pack-next-question" style="margin-top:14px;">${activeIndex + 1 === questions.length ? 'Prepare Final Report →' : 'Next Evidence Question →'}</button>` : ''}
+          </div>`}
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">${(c.hints || []).map((_, index) => `<button class="btn btn-ghost pack-hint" data-hint="${index}" style="padding:7px 10px;font-size:10px;">Hint ${index + 1}</button>`).join('')}</div>
+        ${activeHint ? `<div style="font-size:12px;line-height:1.55;color:var(--amber);margin-top:8px;">${activeHint}</div>` : ''}`;
+
+      meta.style.display = 'flex';
+      document.getElementById('case-file-rank').textContent = c.detectiveRank;
+      document.getElementById('case-file-time').textContent = c.estimatedTime;
+      document.getElementById('case-file-progress').textContent = `${state.completedCaseIds.has(c.id) ? 100 : Math.round((correctCount / questions.length) * 100)}%`;
+      document.getElementById('case-file-score').textContent = `${record.hintsUsed || 0} / ${Math.max(0, 100 - (record.mistakes || 0) * 10)}%`;
+
+      briefing.querySelectorAll('.pack-hint').forEach(button => button.addEventListener('click', () => {
+        const selectedHint = Number(button.dataset.hint);
+        record.usedHints = record.usedHints || [];
+        if (!record.usedHints.includes(selectedHint)) {
+          record.usedHints.push(selectedHint);
+          record.hintsUsed = record.usedHints.length;
+        }
+        record.activeHint = selectedHint;
+        savePackCaseState(c.id, record);
+        renderInvestigationBriefing(c);
+      }));
+
+      briefing.querySelectorAll('.pack-question-option').forEach(button => button.addEventListener('click', async () => {
+        const selected = Number(button.dataset.option);
+        const isCorrect = selected === question.correctIndex;
+        const previous = record.questionResults[question.id];
+        record.questionResults[question.id] = { selected, correct: isCorrect };
+        if (isCorrect) {
+          record.questionsLogged = questions.filter(item => record.questionResults[item.id]?.correct).length;
+        } else if (!previous || previous.selected !== selected) {
+          record.mistakes = (record.mistakes || 0) + 1;
+        }
+        savePackCaseState(c.id, record);
+        if (isCorrect || !previous || previous.selected !== selected) await recordQuestionAnswer(isCorrect);
+        renderInvestigationBriefing(c);
+      }));
+
+      briefing.querySelector('.pack-next-question')?.addEventListener('click', () => {
+        record.activeQuestion = Math.min(activeIndex + 1, questions.length);
+        savePackCaseState(c.id, record);
+        renderInvestigationBriefing(c);
+      });
+      briefing.querySelector('#pack-submit-case')?.addEventListener('click', submitCase);
+    }
+
+    function renderCrimeScene() {
+      const currentCase = CASES[state.currentCaseIndex];
+      if (currentCase && state.completedCaseIds.has(currentCase.id)) {
+        const nextIncompleteIndex = CASES.findIndex(c => !state.completedCaseIds.has(c.id));
+        if (nextIncompleteIndex >= 0 && nextIncompleteIndex !== state.currentCaseIndex) {
+          state.currentCaseIndex = nextIncompleteIndex;
+          renderCrimeScene();
+          return;
+        }
+      }
+
+      const c = CASES[state.currentCaseIndex];
+      if (!c) {
+        console.error('[Crime Scene] No case found for index', state.currentCaseIndex);
+        return;
+      }
+      resetCaseState();
+      renderInvestigationBriefing(c);
+
+      // Header
+      const crimeCaseId = document.getElementById('crime-case-id');
+      if (crimeCaseId) crimeCaseId.textContent = `CASE ${c.id} — ${String(c.topic || '').toUpperCase()} DIVISION`;
+      const crimeCaseTitle = document.getElementById('crime-case-title');
+      if (crimeCaseTitle) crimeCaseTitle.textContent = c.title || 'Untitled Case';
+
+      // Older builds had banner-case-* nodes; the current Crime Scene does not.
+      // Keep them optional so a missing legacy node can never stop the case renderer.
+      const bannerCaseTitle = document.getElementById('banner-case-title');
+      if (bannerCaseTitle) bannerCaseTitle.textContent = `Case ${c.id}: ${c.title}`;
+      const bannerCaseSubtitle = document.getElementById('banner-case-subtitle');
+      if (bannerCaseSubtitle) bannerCaseSubtitle.innerHTML = `
+        <span class="text-muted">${c.filename || ''}</span>
+        <span class="text-crimson">${c.description ? ` — ${c.description}` : ''}</span>
+      `;
+      const terminalFilename = document.getElementById('terminal-filename');
+      if (terminalFilename) terminalFilename.textContent = c.filename || '';
+
+      // Tags
+      const tagsEl = document.getElementById('crime-case-tags');
+      tagsEl.innerHTML = `
+    <div class="badge badge-${c.difficultyColor}">⚡ ${c.difficulty}</div>
+    <div class="badge badge-crimson">🏷️ ${c.topic}</div>
+    <div class="badge badge-cyan">+${getCaseCompletionXP(c)} DXP</div>
+  `;
+
+      // Case file
+      document.getElementById('case-file-id').textContent = c.id;
+      document.getElementById('case-file-topic').textContent = c.topic;
+      document.getElementById('case-file-reward').textContent = `+${getCaseCompletionXP(c)} DXP`;
+      document.getElementById('case-file-diff').innerHTML = `<span class="badge badge-${c.difficultyColor}">${c.difficulty}</span>`;
+      document.getElementById('detective-notes').textContent = c.detectorNote;
+
+      // Code block
+      const codeBlock = document.getElementById('code-block');
+      codeBlock.innerHTML = '';
+
+      // Some local case files contain an empty/missing code array.
+      // Supply the canonical Calculator.java program for the Division Murder case.
+      const calculatorProgram = [
+        { text: '<span class="type">int</span> a = <span class="number">100</span>;', bug: false },
+        { text: '<span class="type">int</span> b = <span class="number">0</span>;', bug: false },
+        { text: '', bug: false },
+        { text: '<span class="class-name">System</span>.<span class="variable">out</span>.<span class="method">println</span>(a / b);', bug: true }
+      ];
+
+      let codeLines = Array.isArray(c.code) ? c.code : [];
+
+      // Also support Supabase-shaped case objects if they are used later.
+      if (codeLines.length === 0 && c.game_data) {
+        let gd = c.game_data;
+        if (typeof gd === 'string') {
+          try { gd = JSON.parse(gd); } catch (_) { gd = {}; }
+        }
+        if (Array.isArray(gd.code)) codeLines = gd.code;
+      }
+
+      // Exact fallback for Calculator.java / Division Murder.
+      if (
+        codeLines.length === 0 &&
+        (c.filename === 'Calculator.java' || c.id === 'U3-01' || c.title === 'The Division Murder')
+      ) {
+        codeLines = calculatorProgram;
+      }
+
+      if (codeLines.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'code-line';
+        div.innerHTML = '<span class="line-number">1</span><span class="line-content comment">// No program data found for this case.</span>';
+        codeBlock.appendChild(div);
+      } else {
+        codeLines.forEach((line, i) => {
+          const lineObj = (line && typeof line === 'object') ? line : { text: String(line ?? '') };
+          const div = document.createElement('div');
+          div.className = 'code-line' + (lineObj.bug ? ' bug-line' : '');
+          div.innerHTML = `<span class="line-number">${i + 1}</span><span class="line-content">${lineObj.text || '&nbsp;'}</span>`;
+          codeBlock.appendChild(div);
+        });
+      }
+
+      // Pack cases own the investigation panel above. Legacy cases retain the
+      // existing evidence/suspect/reason/repair flow.
+      if (!isJavaOOPPackCase(c)) {
+        renderEvidence(c);
+        renderSuspects(c);
+      }
+
+      // Update nav buttons
+      document.getElementById('prev-case-btn').disabled = state.currentCaseIndex === 0;
+      document.getElementById('next-case-nav-btn').disabled = state.currentCaseIndex === CASES.length - 1;
+
+      // Steps
+      if (isJavaOOPPackCase(c)) {
+        const { record } = getPackCaseState(c.id);
+        setPackStepLabels(true, Math.min(Number(record.activeQuestion) || 0, 2), (c.interactiveQuestions || []).length);
+      } else {
+        updateSteps();
+      }
+    }
+
+    function resetCaseState() {
+      state.caseState = {
+        suspectSelected: null,
+        reasonSelected: null,
+        fixSelected: null,
+        cluesRevealed: 0,
+        revealedClueIndexes: [],
+        step: 1,
+      };
+      document.getElementById('root-cause-section').style.display = 'none';
+      document.getElementById('code-fix-section').style.display = 'none';
+      document.getElementById('submit-section').style.display = 'none';
+      document.getElementById('clues-unlocked').textContent = `0/${((CASES[state.currentCaseIndex] || {}).clues || []).length} Clues Revealed`;
+    }
+
+    function renderEvidence(c) {
+      const body = document.getElementById('evidence-body');
+      body.innerHTML = '';
+      const clues = Array.isArray(c.clues) ? c.clues : [];
+      const revealed = new Set(state.caseState.revealedClueIndexes || []);
+
+      clues.forEach((clue, i) => {
+        const div = document.createElement('div');
+        const isRevealed = revealed.has(i);
+        // Clue 1 is available immediately. Each later clue unlocks only after
+        // the matching investigation step before it has been cleared.
+        const isUnlocked = i === 0 || state.caseState.step >= i + 1;
+        div.className = `clue-item ${isRevealed ? 'revealed' : (isUnlocked ? '' : 'locked')}`;
+        div.id = `clue-${i}`;
+
+        const costText = i === 0 ? 'FREE' : `-${CLUE_DXP_PENALTY} DXP`;
+        div.innerHTML = `
+      <div class="clue-icon ${isRevealed ? 'clue-icon-unlocked' : 'clue-icon-locked'}">${isRevealed ? clue.icon : (isUnlocked ? '🔍' : '🔒')}</div>
+      <div class="clue-content">
+        <div class="clue-num">Clue #${i + 1}</div>
+        ${isRevealed
+            ? `<div class="clue-text">${clue.text}</div>`
+            : isUnlocked
+              ? `<div class="clue-text">Evidence available — ${costText}</div><div class="clue-reveal-hint">→ Tap to examine evidence</div>`
+              : `<div class="clue-text">🔒 Clear investigation step ${i} to unlock</div>`
+          }
+      </div>`;
+
+        if (!isRevealed && isUnlocked) {
+          div.addEventListener('click', () => revealClue(i));
+        } else if (isRevealed) {
+          div.style.cursor = 'default';
+        }
+        body.appendChild(div);
+      });
+      updateClueCounter();
+    }
+
+    async function applyDXPPenalty(amount, reason) {
+    const penalty = Math.min(Math.max(0, Number(amount) || 0), Math.max(0, Number(state.totalXP) || 0));
+
+    if (penalty <= 0) {
+        showToast('info', '⚠️', `${reason} No DXP available to deduct.`);
+        return 0;
+    }
+
+    state.totalXP = Math.max(0, state.totalXP - penalty);
+    state.rank = getRank(state.totalXP).name;
+
+    updateDashboard();
+
+    await saveProfileStats();
+
+    showToast('error', '📉', `${reason} -${penalty} DXP`);
+
+    return penalty;
+}
+
+    async function revealClue(index) {
+      const c = CASES[state.currentCaseIndex];
+      const clues = Array.isArray(c.clues) ? c.clues : [];
+      if (!clues[index]) return;
+
+      const revealed = new Set(state.caseState.revealedClueIndexes || []);
+      const isUnlocked = index === 0 || state.caseState.step >= index + 1;
+      if (!isUnlocked || revealed.has(index)) return;
+
+      revealed.add(index);
+      state.caseState.revealedClueIndexes = [...revealed].sort((a, b) => a - b);
+      state.caseState.cluesRevealed = revealed.size;
+      renderEvidence(c);
+
+      if (index === 0) {
+        showToast('info', c.clues[index].icon, 'Clue #1 revealed — free evidence.');
+      } else {
+        await applyDXPPenalty(CLUE_DXP_PENALTY, `Clue #${index + 1} used.`);
+      }
+    }
+
+    function updateClueCounter() {
+      const total = ((CASES[state.currentCaseIndex] || {}).clues || []).length;
+      document.getElementById('clues-unlocked').textContent = `${state.caseState.cluesRevealed}/${total} Clues Revealed`;
+    }
+
+    function renderSuspects(c) {
+      const grid = document.getElementById('suspects-grid');
+      grid.innerHTML = '';
+      if (c.suspectPrompt) {
+        const prompt = document.createElement('div');
+        prompt.style.cssText = 'grid-column:1 / -1; font-size:13px; color:var(--text-secondary); margin:0 0 4px;';
+        prompt.textContent = c.suspectPrompt;
+        grid.appendChild(prompt);
+      }
+      (Array.isArray(c.suspects) ? c.suspects : []).forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = 'suspect-card';
+        div.id = `suspect-${i}`;
+        div.innerHTML = `<div class="suspect-icon">${s.icon}</div><div class="suspect-name">${s.name}</div>`;
+        div.addEventListener('click', () => selectSuspect(i, s, c));
+        grid.appendChild(div);
+      });
+    }
+
+     async function selectSuspect(i, suspect, c) {
+      if (state.caseState.suspectSelected !== null) return;
+
+      state.caseState.suspectSelected = i;
+      const card = document.getElementById(`suspect-${i}`);
+
+      if (suspect.correct) {
+        await recordQuestionAnswer(true);
+        card.classList.add('correct');
+        state.caseState.step = 2;
+        showToast('success', '🎯', `Correct! The criminal is ${suspect.name}`);
+        updateSteps();
+        setTimeout(() => {
+          document.getElementById('root-cause-section').style.display = 'block';
+          renderReasons(c);
+          document.getElementById('root-cause-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Step 1 cleared: clue #2 is now unlocked, but remains hidden until used.
+          renderEvidence(c);
+        }, 400);
+      } else {
+        await recordQuestionAnswer(false);
+        if (c.story) { const s = getPackCaseState(c.id); s.record.mistakes = (s.record.mistakes || 0) + 1; savePackCaseState(c.id, s.record); }
+        card.classList.add('wrong');
+        showToast('error', '❌', `Wrong! ${suspect.name} is not the culprit. Keep investigating.`);
+        await applyDXPPenalty(WRONG_ANSWER_DXP_PENALTY, 'Wrong suspect.');
+        state.caseState.suspectSelected = null;
+        setTimeout(() => card.classList.remove('wrong'), 800);
+      }
+    }
+
+    function renderReasons(c) {
+      const container = document.getElementById('reason-options');
+      container.innerHTML = '';
+      if (c.reasonPrompt) {
+        const prompt = document.createElement('div');
+        prompt.style.cssText = 'font-size:13px; color:var(--text-secondary); margin:0 0 10px;';
+        prompt.textContent = c.reasonPrompt;
+        container.appendChild(prompt);
+      }
+      (Array.isArray(c.reasons) ? c.reasons : []).forEach((r, i) => {
+        const div = document.createElement('div');
+        div.className = 'reason-option';
+        div.id = `reason-${i}`;
+        div.innerHTML = `<div class="reason-radio"></div><span>${r.text}</span>`;
+        div.addEventListener('click', () => selectReason(i, r, c));
+        container.appendChild(div);
+      });
+    }
+
+   async function selectReason(i, reason, c) {
+      if (state.caseState.reasonSelected !== null) return;
+
+      state.caseState.reasonSelected = i;
+      const el = document.getElementById(`reason-${i}`);
+
+      if (reason.correct) {
+        await recordQuestionAnswer(true);
+        el.classList.add('correct');
+        state.caseState.step = 3;
+        showToast('success', '💡', 'Root cause identified!');
+        updateSteps();
+        setTimeout(() => {
+          document.getElementById('code-fix-section').style.display = 'block';
+          renderFixes(c);
+          document.getElementById('code-fix-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Step 2 cleared: clue #3 is now unlocked, but remains hidden until used.
+          renderEvidence(c);
+        }, 400);
+      } else {
+        await recordQuestionAnswer(false);
+        if (c.story) { const s = getPackCaseState(c.id); s.record.mistakes = (s.record.mistakes || 0) + 1; savePackCaseState(c.id, s.record); }
+        el.classList.add('wrong');
+        showToast('error', '❌', 'Incorrect reasoning. Try another theory.');
+        await applyDXPPenalty(WRONG_ANSWER_DXP_PENALTY, 'Wrong reasoning.');
+        state.caseState.reasonSelected = null;
+        setTimeout(() => el.classList.remove('wrong'), 800);
+      }
+    }
+
+    function renderFixes(c) {
+      const container = document.getElementById('fix-options');
+      container.innerHTML = '';
+      if (c.fixPrompt) {
+        const prompt = document.createElement('div');
+        prompt.style.cssText = 'font-size:13px; color:var(--text-secondary); padding:12px 20px 2px;';
+        prompt.textContent = c.fixPrompt;
+        container.appendChild(prompt);
+      }
+      (Array.isArray(c.fixes) ? c.fixes : []).forEach((f, i) => {
+        const div = document.createElement('div');
+        div.className = 'fix-option';
+        div.id = `fix-${i}`;
+        div.innerHTML = `<span class="fix-prefix">→</span><code>${f.text}</code>`;
+        div.addEventListener('click', () => selectFix(i, f));
+        container.appendChild(div);
+      });
+    }
+
+    async function selectFix(i, fix) {
+      if (state.caseState.fixSelected !== null) return;
+      state.caseState.fixSelected = i;
+      const el = document.getElementById(`fix-${i}`);
+
+      if (fix.correct) {
+        await recordQuestionAnswer(true);
+        el.classList.add('correct');
+        showToast('success', '🔧', 'Correct fix applied! Submit the case.');
+        setTimeout(() => {
+          document.getElementById('submit-section').style.display = 'block';
+          document.getElementById('submit-section').scrollIntoView({ behavior: 'smooth' });
+        }, 400);
+      } else {
+        await recordQuestionAnswer(false);
+        const activeCase = CASES[state.currentCaseIndex];
+        if (activeCase?.story) { const s = getPackCaseState(activeCase.id); s.record.mistakes = (s.record.mistakes || 0) + 1; savePackCaseState(activeCase.id, s.record); }
+        el.classList.add('wrong');
+        showToast('error', '❌', 'This fix won\'t solve the bug. Try another patch.');
+        await applyDXPPenalty(WRONG_ANSWER_DXP_PENALTY, 'Wrong fix.');
+        state.caseState.fixSelected = null;
+        setTimeout(() => el.classList.remove('wrong'), 800);
+      }
+    }
+
+    function updateSteps() {
+      const steps = [1, 2, 3];
+      steps.forEach(n => {
+        const el = document.getElementById(`step-${n}`);
+        el.classList.remove('active', 'done');
+        if (n < state.caseState.step) el.classList.add('done');
+        else if (n === state.caseState.step) el.classList.add('active');
+      });
+    }
+
+    async function loadCaseProgress() {
+      try {
+        const supabase = await sharedSupabasePromise;
+        const {
+          data: { session },
+          error: sessionError
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error(
+            '[Code Detective] Failed to get authenticated session for progress restore:',
+            sessionError
+          );
+          return [];
+        }
+
+        if (!session?.user) {
+          return [];
+        }
+
+        const { data, error } = await supabase
+          .from('case_progress')
+          .select('case_id, completed, xp_earned, completed_at')
+          .eq('user_id', session.user.id)
+          .eq('completed', true);
+
+        if (error) {
+          console.error(
+            '[Code Detective] Failed to load case progress:',
+            error
+          );
+          return [];
+        }
+
+        console.log(
+          '[Code Detective] Restoring progress for authenticated user',
+          session.user.id
+        );
+        console.log(
+          '[Code Detective] Loaded progress rows:',
+          Array.isArray(data) ? data.length : 0
+        );
+
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error(
+          '[Code Detective] Unexpected progress load error:',
+          error
+        );
+        return [];
+      }
+    }
+
+    async function restoreCaseProgress() {
+      const progressRows = await loadCaseProgress();
+      state.progressRows = Array.isArray(progressRows) ? progressRows : [];
+      const completedIds = new Set(
+        progressRows
+          .filter(row => row?.completed && row.case_id)
+          .map(row => row.case_id)
+      );
+
+      console.log(
+        '[Code Detective] Completed case IDs:',
+        [...completedIds]
+      );
+
+      state.completedCaseIds = completedIds;
+      state.casesCompleted = completedIds.size;
+
+      MASTERY_TOPICS.forEach(topic => {
+        if (Array.isArray(topic.cases)) {
+          topic.solved = topic.cases.filter(id => completedIds.has(id)).length;
+        }
+      });
+
+      console.log(
+        '[Code Detective] Cases solved restored:',
+        state.casesCompleted
+      );
+
+      return completedIds;
+    }
+
+    async function saveCaseProgress(caseId, xpEarned = 0) {
+      try {
+        const supabase = await sharedSupabasePromise;
+
+        const {
+          data: { session },
+          error: sessionError
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error(
+            '[Code Detective] Failed to get authenticated session:',
+            sessionError
+          );
+          return false;
+        }
+
+        if (!session?.user) {
+          console.warn(
+            '[Code Detective] Progress not saved because no authenticated user exists.'
+          );
+          return false;
+        }
+
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('display_name, username')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        const displayName = (profileData?.display_name || '').trim();
+        const username = (profileData?.username || '').trim();
+        const emailPrefix = (session.user.email || '').split('@')[0]?.trim() || '';
+        const playerName = displayName || username || emailPrefix;
+
+        if (profileError) {
+          console.warn(
+            '[Code Detective] Could not resolve authenticated profile name for case progress save:',
+            profileError
+          );
+        }
+
+        const now = new Date().toISOString();
+        const xpValueToSave = Number(xpEarned) || 0;
+
+        console.log('[Code Detective] XP reward before saving:', xpEarned);
+        console.log('[Code Detective] Value sent to Supabase:', xpValueToSave);
+
+        const { data: upsertedRows, error } = await supabase
+          .from('case_progress')
+          .upsert(
+            {
+              user_id: session.user.id,
+              case_id: caseId,
+              completed: true,
+              xp_earned: xpValueToSave,
+              completed_at: now,
+              updated_at: now,
+              player_name: playerName
+            },
+            {
+              onConflict: 'user_id,case_id'
+            }
+          )
+          .select();
+
+        if (error) {
+          console.error(
+            '[Code Detective] Failed to save case progress:',
+            error
+          );
+          return false;
+        }
+
+        console.log(
+          `[Code Detective] Progress saved successfully for ${caseId}`
+        );
+        console.log('[Code Detective] Value actually inserted:', upsertedRows?.[0]?.xp_earned ?? null);
+
+        return true;
+      } catch (error) {
+        console.error(
+          '[Code Detective] Unexpected progress save error:',
+          error
+        );
+        return false;
+      }
+    }
+
+    async function refreshDailyStreak() {
+      const rows = await loadCaseProgress();
+      const days = [...new Set(rows
+        .map(row => row.completed_at ? new Date(row.completed_at).toLocaleDateString('en-CA') : null)
+        .filter(Boolean))].sort().reverse();
+      if (!days.length) return 0;
+
+      const today = new Date();
+      const todayKey = today.toLocaleDateString('en-CA');
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const yesterdayKey = yesterday.toLocaleDateString('en-CA');
+      if (days[0] !== todayKey && days[0] !== yesterdayKey) return 0;
+
+      let streak = 1;
+      let cursor = new Date(`${days[0]}T12:00:00`);
+      for (let i = 1; i < days.length; i++) {
+        cursor.setDate(cursor.getDate() - 1);
+        if (days[i] === cursor.toLocaleDateString('en-CA')) streak++;
+        else break;
+      }
+      return streak;
+    }
+
+    async function submitCase() {
+      const c = CASES[state.currentCaseIndex];
+      if (isJavaOOPPackCase(c)) {
+        const { record } = getPackCaseState(c.id);
+        const questions = c.interactiveQuestions || [];
+        const complete = questions.length > 0 && questions.every(question => record.questionResults?.[question.id]?.correct);
+        if (!complete) {
+          showToast('error', '🔒', 'Verify every evidence question before submitting the final report.');
+          return;
+        }
+      }
+      const alreadyCompleted = state.completedCaseIds.has(c.id);
+      const xpGain = alreadyCompleted ? 0 : getCaseCompletionXP(c);
+      const oldXP = state.totalXP;
+      console.log('[Code Detective] submitCase() XP reward before saving:', xpGain);
+      if (!alreadyCompleted) {
+        state.completedCaseIds.add(c.id);
+        state.totalXP += xpGain;
+        state.casesCompleted = state.completedCaseIds.size;
+        // Streak is recalculated from distinct case-completion days after persistence.
+        state.accuracy = Math.max(0, Math.min(100, state.accuracy));
+        const topic = MASTERY_TOPICS.find(t => (t.cases || []).includes(c.id));
+        if (topic) topic.solved = (topic.cases || []).filter(id => state.completedCaseIds.has(id)).length;
+
+        const progressSaved = await saveCaseProgress(c.id, xpGain);
+        if (progressSaved) {
+          state.streak = await refreshDailyStreak();
+          await saveProfileStats();
+        }
+        if (c.story) {
+          const s = getPackCaseState(c.id);
+          s.record.completedCases = true;
+          s.record.earnedXP = xpGain;
+          s.record.accuracy = Math.max(0, 100 - (s.record.mistakes || 0) * 10);
+          s.record.timeTaken = Math.max(1, Math.round((Date.now() - (s.record.startedAt || Date.now())) / 1000));
+          s.record.badgeUnlocked = c.completionBadge;
+          s.record.currentCase = CASES[state.currentCaseIndex + 1]?.id || c.id;
+          s.record.learningProgress = 100;
+          s.record.caseHistory = [{ completedAt: new Date().toISOString(), score: s.record.accuracy }];
+          savePackCaseState(c.id, s.record);
+        }
+      }
+
+      // Update modal
+      document.getElementById('modal-xp-value').textContent = `+${xpGain} DXP`;
+      document.getElementById('modal-subtitle').textContent = `${c.criminal} has been apprehended. Case ${c.id} officially closed.`;
+      if (c.story) {
+        document.getElementById('modal-badge').textContent = '🏅';
+        document.getElementById('modal-subtitle').textContent = `${c.completionBadge} unlocked. ${c.story.verdict}`;
+      }
+      document.getElementById('modal-cases-solved').textContent = state.casesCompleted;
+      document.getElementById('modal-streak').textContent = state.streak + '🔥';
+
+      // Animate XP
+      const xpEl = document.getElementById('modal-total-xp');
+      xpEl.textContent = formatXP(oldXP);
+      document.getElementById('modal-overlay').classList.add('active');
+
+      setTimeout(() => {
+        animateNumber(xpEl, oldXP, state.totalXP);
+        spawnParticles();
+      }, 300);
+
+      // Update nav XP
+      document.getElementById('nav-xp').textContent = formatXP(state.totalXP) + ' DXP';
+      document.getElementById('sidebar-xp').textContent = formatXP(state.totalXP);
+      updateDashboard();
+    }
+
+    function spawnParticles() {
+      const modal = document.getElementById('case-closed-modal');
+      const colors = ['var(--cyan)', 'var(--amber)', 'var(--crimson)', 'var(--green)', 'var(--purple)'];
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const angle = (Math.random() * 360) * (Math.PI / 180);
+        const dist = 60 + Math.random() * 120;
+        p.style.cssText = `
+      left: 50%; top: 30%;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      --tx: ${Math.cos(angle) * dist}px;
+      --ty: ${Math.sin(angle) * dist}px;
+      animation-delay: ${Math.random() * 0.3}s;
+      animation-duration: ${0.6 + Math.random() * 0.6}s;
+    `;
+        modal.appendChild(p);
+        setTimeout(() => p.remove(), 1200);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('active');
+      showScreen('dashboard');
+    }
+
+    function nextCase() {
+      document.getElementById('modal-overlay').classList.remove('active');
+      if (state.currentCaseIndex < CASES.length - 1) {
+        const current = CASES[state.currentCaseIndex];
+        if (current?.unitId === 'JAVA_OOP_UNIT1' && !state.completedCaseIds.has(current.id)) {
+          showToast('error', '🔒', 'Close this investigation before advancing to the next case.');
+          return;
+        }
+        state.currentCaseIndex++;
+      } else {
+        showToast('info', '🏆', 'You\'ve completed all available cases! More coming soon.');
+        showScreen('dashboard');
+        return;
+      }
+      showScreen('crime-scene');
+    }
+
+    function prevCase() {
+      if (state.currentCaseIndex > 0) {
+        state.currentCaseIndex--;
+        showScreen('crime-scene');
+      }
+    }
+
+    // =============================================
+    // CRIMINAL DATABASE
+    // =============================================
+    function normalizeCriminal(c) {
+      // Support both old rich format and new simplified format
+      return {
+        alias: c.alias || c.name || 'Unknown Suspect',
+        exceptionClass: c.exceptionClass || c.name || 'Java Crime',
+        icon: c.icon || '🔴',
+        gradient: c.gradient || 'linear-gradient(135deg, rgba(0,243,255,0.08), transparent)',
+        borderColor: c.borderColor || 'rgba(0,243,255,0.15)',
+        attack: c.attack || (c.description ? c.description.substring(0, 60) + '...' : 'Pattern unknown'),
+        cause: c.cause || c.description || 'A cunning Java criminal.',
+        solvedCount: c.solvedCount || 0,
+        unlocked: c.unlocked !== undefined ? c.unlocked : true
+      };
+    }
+
+    function renderCriminalDatabase() {
+      const grid = document.getElementById('criminals-grid');
+      grid.innerHTML = '';
+      const normalized = CRIMINALS.map(normalizeCriminal);
+      const unlocked = normalized.filter(c => c.unlocked).length;
+      document.getElementById('unlocked-count').textContent = `${unlocked} Unlocked`;
+
+      normalized.forEach(criminal => {
+        const card = document.createElement('div');
+        card.className = 'criminal-card';
+        if (!criminal.unlocked) {
+          card.style.opacity = '0.4';
+          card.style.filter = 'grayscale(0.8)';
+        }
+        card.style.borderColor = criminal.unlocked ? criminal.borderColor : 'var(--border)';
+        card.innerHTML = `
+      <div class="criminal-card-top" style="--criminal-gradient: ${criminal.gradient}">
+        ${!criminal.unlocked ? '<div style="position:absolute;top:12px;right:12px;font-size:20px;">🔒</div>' : ''}
+        <div class="criminal-mugshot">${criminal.icon}</div>
+        <div class="criminal-alias">${criminal.alias}</div>
+        <div class="criminal-class">${criminal.exceptionClass}</div>
+        <div class="criminal-solved">
+          <span>Cases closed:</span>
+          <span class="criminal-solved-count">&nbsp;${criminal.solvedCount}</span>
+        </div>
+      </div>
+      <div class="criminal-card-bottom">
+        <div class="criminal-attack-label">Attack Pattern</div>
+        <div class="criminal-code-snippet">${criminal.attack}</div>
+        <div class="criminal-root-cause">${criminal.unlocked ? criminal.cause : '🔒 Solve more cases to unlock criminal profile.'}</div>
+      </div>
+    `;
+        if (criminal.unlocked) {
+          card.addEventListener('click', () => showToast('info', criminal.icon, `${criminal.alias} — ${criminal.exceptionClass}`));
+        }
+        grid.appendChild(card);
+      });
+    }
+
+    function getUnitUnlockState(topicIndex) {
+      // This is an independent curriculum pack. Its own cases are sequentially gated,
+      // but it does not require progress through the legacy departments.
+      if (MASTERY_TOPICS[topicIndex]?.id === 'JAVA_OOP_UNIT1') {
+        return { unlocked: true, completed: 0, total: 13, required: 0, previousLabel: 'this investigation pack' };
+      }
+      if (topicIndex === 0) {
+        return { unlocked: true, completed: 0, total: 0, required: 0, previousLabel: 'Unit I' };
+      }
+
+      const previousTopic = MASTERY_TOPICS[topicIndex - 1];
+      const previousCases = (previousTopic?.cases || [])
+        .map(id => CASES.find(c => c.id === id))
+        .filter(Boolean);
+      const completed = previousCases.filter(c => state.completedCaseIds.has(c.id)).length;
+      const total = previousCases.length;
+      const required = total > 0 ? Math.ceil(total * 0.75) : 0;
+
+      return {
+        unlocked: total === 0 || completed >= required,
+        completed,
+        total,
+        required,
+        previousLabel: previousTopic?.division || previousTopic?.label || `Unit ${topicIndex}`
+      };
+    }
+
+    function renderCaseLibrary() {
+      const container = document.getElementById('cases-unit-container');
+      container.innerHTML = '';
+
+      const divisionIcons = {
+        'Unit I - Basics': '📚',
+        'Unit II - OOP': '🧬',
+        'Unit III - Exceptions & Threads': '⚡',
+        'Unit IV - I/O & Generics': '📂',
+        'Unit V - JavaFX': '🖥️',
+        'OBJECT ORIENTED PROGRAMMING USING JAVA — Unit I': '☕'
+      };
+
+      const unitUnlockStates = MASTERY_TOPICS.map((_, index) => getUnitUnlockState(index));
+
+      // Group cases by Mastery Topic division
+      const casesByDivision = {};
+
+      MASTERY_TOPICS.forEach((topic, topicIndex) => {
+        if (!topic.division) return;
+        if (!casesByDivision[topic.division]) {
+          casesByDivision[topic.division] = {
+            icon: divisionIcons[topic.division] || '📁',
+            cases: [],
+            unlockState: unitUnlockStates[topicIndex]
+          };
+        }
+        // Find actual case objects based on IDs in topic.cases
+        (topic.cases || []).forEach(caseId => {
+          const caseObj = CASES.find(c => c.id === caseId);
+          if (caseObj) {
+            casesByDivision[topic.division].cases.push(caseObj);
+          }
+        });
+      });
+
+      // Render sections
+      Object.keys(casesByDivision).forEach(division => {
+        const data = casesByDivision[division];
+        if (data.cases.length === 0) return;
+
+        const unlockState = data.unlockState || { unlocked: true, completed: 0, total: 0, required: 0, previousLabel: 'the previous unit' };
+        const isLocked = !unlockState.unlocked;
+        const percent = unlockState.total > 0 ? Math.round((unlockState.required / unlockState.total) * 100) : 0;
+        const requiredLabel = unlockState.total > 0 ? `${unlockState.required}/${unlockState.total}` : '0/0';
+
+        const sectionTitle = document.createElement('div');
+        sectionTitle.className = 'unit-section-title';
+        sectionTitle.id = 'division-' + division.replace(/\W+/g, '-');
+        sectionTitle.innerHTML = `<span style="font-size:24px;">${data.icon}</span> ${division}${isLocked ? '<span style="font-size:14px; color:var(--red); margin-left:10px;">🔒 Locked</span>' : ''}`;
+        container.appendChild(sectionTitle);
+
+        if (isLocked) {
+          const lockNotice = document.createElement('div');
+          lockNotice.style.cssText = 'font-size:12px; color:var(--text-muted); margin:6px 0 14px;';
+          lockNotice.textContent = `Unlocks after completing ${requiredLabel} cases in ${unlockState.previousLabel} (${percent}%).`;
+          container.appendChild(lockNotice);
+        }
+
+        const grid = document.createElement('div');
+        grid.className = 'cases-grid';
+
+        data.cases.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'case-library-card';
+          const packIndex = c.unitId === 'JAVA_OOP_UNIT1' ? data.cases.findIndex(item => item.id === c.id) : 0;
+          const previousPackCase = packIndex > 0 ? data.cases[packIndex - 1] : null;
+          const isLockedCase = isLocked || Boolean(previousPackCase && !state.completedCaseIds.has(previousPackCase.id));
+          if (state.completedCaseIds.has(c.id)) {
+            card.style.borderColor = 'rgba(0, 255, 136, 0.5)';
+            card.style.boxShadow = '0 0 0 1px rgba(0, 255, 136, 0.25)';
+          }
+          if (isLockedCase) {
+            card.style.opacity = '0.6';
+            card.style.filter = 'grayscale(0.7)';
+            card.style.cursor = 'not-allowed';
+          }
+          const completedBadge = state.completedCaseIds.has(c.id)
+            ? '<div style="margin-top:8px; font-size:10px; color:var(--green);">✓ Completed</div>'
+            : '';
+          const lockBadge = isLockedCase
+            ? `<div style="margin-top:8px; font-size:10px; color:var(--red);">🔒 ${previousPackCase && !state.completedCaseIds.has(previousPackCase.id) ? `Close ${previousPackCase.id} first` : `Locked until ${unlockState.previousLabel} reaches 75% progress`}</div>`
+            : '';
+          card.innerHTML = `
+        <div class="case-library-header">
+          <span class="case-library-id">${c.id}</span>
+          <span class="badge badge-${c.difficultyColor}" style="font-size:9px; padding:2px 6px;">${c.difficulty}</span>
+        </div>
+        <div class="case-library-title">${c.title}</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Reward: <span style="color:var(--cyan)">+${getCaseCompletionXP(c)} DXP</span></div>
+        ${completedBadge}
+        ${lockBadge}
+      `;
+
+          card.addEventListener('click', () => {
+            if (isLockedCase) {
+              showToast('error', '🔒', `${division} unlocks after completing ${requiredLabel} cases in ${unlockState.previousLabel}.`);
+              return;
+            }
+            // Find index of this case in CASES array
+            const index = CASES.findIndex(caseObj => caseObj.id === c.id);
+            if (index !== -1) {
+              state.currentCaseIndex = index;
+              showScreen('crime-scene');
+            }
+          });
+
+          grid.appendChild(card);
+        });
+
+        container.appendChild(grid);
+      });
+    }
+
+    // =============================================
+    // MASTERY BOARD
+    // =============================================
+    function renderMasteryBoard() {
+      const list = document.getElementById('mastery-topics-list');
+      list.innerHTML = '';
+
+      const divisionColors = {
+        'Unit I - Basics': 'var(--cyan)',
+        'Unit II - OOP': 'var(--amber)',
+        'Unit III - Exceptions & Threads': 'var(--crimson)',
+        'Unit IV - I/O & Generics': 'var(--purple)',
+        'Unit V - JavaFX': 'var(--green)',
+        'OBJECT ORIENTED PROGRAMMING USING JAVA — Unit I': 'var(--cyan)'
+      };
+      const divisionIcons = {
+        'Unit I - Basics': '📚',
+        'Unit II - OOP': '🧬',
+        'Unit III - Exceptions & Threads': '⚡',
+        'Unit IV - I/O & Generics': '📂',
+        'Unit V - JavaFX': '🖥️',
+        'OBJECT ORIENTED PROGRAMMING USING JAVA — Unit I': '☕'
+      };
+
+      MASTERY_TOPICS.forEach(t => {
+        const solved = t.solved || 0;
+        const total = (t.cases || []).length;
+        const pct = total > 0 ? Math.round((solved / total) * 100) : 0;
+        const color = divisionColors[t.division] || 'var(--cyan)';
+        const icon = divisionIcons[t.division] || '🔍';
+        const label = t.label || t.name || t.id;
+        const division = t.division || '';
+
+        const row = document.createElement('div');
+        row.className = 'mastery-topic-row';
+        row.innerHTML = `
+      <div class="mastery-row-header">
+        <div class="mastery-topic-info">
+          <div class="mastery-icon">${icon}</div>
+          <div>
+            <div class="mastery-name">${label}</div>
+            <div class="mastery-cases">${division} &nbsp;·&nbsp; ${solved}/${total} cases solved</div>
+          </div>
+        </div>
+        <div class="mastery-percentage" style="color:${color}">${pct}%</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${pct}%; background: linear-gradient(90deg, ${color}, var(--purple));"></div>
+      </div>
+    `;
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', () => {
+          showScreen('criminal-db');
+          setTimeout(() => {
+            const target = document.getElementById('division-' + t.division.replace(/\W+/g, '-'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 50);
+        });
+        list.appendChild(row);
+      });
+
+      // Recommendations — highlight topics with 0% progress
+      const recList = document.getElementById('recommendations');
+      recList.innerHTML = '';
+      MASTERY_TOPICS.filter(t => (t.solved || 0) === 0).slice(0, 3).forEach(t => {
+        const icon = divisionIcons[t.division] || '🔍';
+        const color = divisionColors[t.division] || 'var(--cyan)';
+        const div = document.createElement('div');
+        div.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.02); border-radius:var(--radius-md); border:1px solid var(--border); cursor:pointer;" onclick="showScreen('crime-scene')">
+        <span style="font-size:18px;">${icon}</span>
+        <div>
+          <div style="font-size:13px; font-weight:600;">${t.label || t.id}</div>
+          <div style="font-size:11px; color:var(--text-muted);">0% mastery · Start investigating!</div>
+        </div>
+        <span style="margin-left:auto; color:${color}; font-size:12px;">→</span>
+      </div>
+    `;
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', () => {
+          showScreen('criminal-db');
+          setTimeout(() => {
+            const target = document.getElementById('division-' + t.division.replace(/\W+/g, '-'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 50);
+        });
+        recList.appendChild(div);
+      });
+
+      // Rank progression
+      const rankProg = document.getElementById('rank-progression');
+      rankProg.innerHTML = '';
+      RANKS.forEach((rank, i) => {
+        const achieved = state.totalXP >= rank.threshold;
+        const isCurrent = getRank(state.totalXP).name === rank.name;
+        const div = document.createElement('div');
+        div.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px;';
+        if (isCurrent) div.style.background = 'rgba(0, 243, 255, 0.06)';
+        div.innerHTML = `
+      <span style="font-size:16px;">${rank.icon}</span>
+      <div style="flex:1;">
+        <div style="font-size:12px; font-weight:600; color:${achieved ? 'var(--text-primary)' : 'var(--text-muted)'}">${rank.name}</div>
+        <div style="font-size:10px; color:var(--text-muted);">${rank.threshold.toLocaleString()} DXP</div>
+      </div>
+      ${achieved ? '<span style="color:var(--green); font-size:14px;">✓</span>' : ''}
+      ${isCurrent ? '<span class="badge badge-cyan" style="font-size:9px;">NOW</span>' : ''}
+    `;
+        rankProg.appendChild(div);
+      });
+
+      // Update stat cards
+      document.getElementById('mastery-total-xp').textContent = formatXP(state.totalXP);
+      document.getElementById('mastery-cases-solved').textContent = state.casesCompleted;
+      document.getElementById('mastery-accuracy').textContent = state.accuracy + '%';
+      document.getElementById('mastery-streak').textContent = state.streak;
+    }
+
+    // =============================================
+    // INITIALIZATION
+    // =============================================
+    async function init() {
+      const supabase = await sharedSupabasePromise;
+      const {
+        data: sessionData,
+        error: sessionError
+      } = await supabase.auth.getSession();
+
+      console.log(
+        '[AUTH DEBUG] Session exists =', Boolean(sessionData?.session)
+      );
+      console.log(
+        '[AUTH DEBUG] User exists =', Boolean(sessionData?.session?.user)
+      );
+      console.log(
+        '[AUTH DEBUG] User id =', sessionData?.session?.user?.id || null
+      );
+      console.log(
+        '[AUTH DEBUG] Session error =', sessionError
+      );
+
+      if (sessionError || !sessionData?.session?.user) {
+        console.warn('[Code Detective] No authenticated session. Redirecting to login.');
+        window.location.replace(new URL('index.html', window.location.href).href);
+        return;
+      }
+
+      // Administrators have a separate experience. The role decision is made
+      // through the server-side is_admin RPC; the client never grants admin access.
+      try {
+        const { isCurrentUserAdmin } = await import('data:text/javascript;base64,aW1wb3J0IHsgc3VwYWJhc2UgYXMgZGVmYXVsdFN1cGFiYXNlIH0gZnJvbSAnLi9zdXBhYmFzZS5qcyc7CgpleHBvcnQgYXN5bmMgZnVuY3Rpb24gaXNDdXJyZW50VXNlckFkbWluKHN1cGFiYXNlID0gZGVmYXVsdFN1cGFiYXNlKSB7CiAgICBjb25zdCB7IGRhdGEsIGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZS5ycGMoJ2lzX2FkbWluJyk7CiAgICByZXR1cm4gIWVycm9yICYmIGRhdGEgPT09IHRydWU7Cn0KCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBnZXRQb3N0QXV0aFJvdXRlKHN1cGFiYXNlID0gZGVmYXVsdFN1cGFiYXNlKSB7CiAgICByZXR1cm4gKGF3YWl0IGlzQ3VycmVudFVzZXJBZG1pbihzdXBhYmFzZSkpID8gJ2FkbWluLmh0bWwjZGFzaGJvYXJkJyA6ICdob21lLmh0bWwnOwp9CgpleHBvcnQgYXN5bmMgZnVuY3Rpb24gZW5zdXJlVXNlclByb2ZpbGUoc3VwYWJhc2UgPSBkZWZhdWx0U3VwYWJhc2UsIHVzZXIsIG92ZXJyaWRlcyA9IHt9KSB7CiAgICBpZiAoIXVzZXI/LmlkKSByZXR1cm4gbnVsbDsKCiAgICBjb25zdCB7IGRhdGE6IGV4aXN0aW5nLCBlcnJvcjogcmVhZEVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZQogICAgICAgIC5mcm9tKCdwcm9maWxlcycpCiAgICAgICAgLnNlbGVjdCgnKicpCiAgICAgICAgLmVxKCdpZCcsIHVzZXIuaWQpCiAgICAgICAgLm1heWJlU2luZ2xlKCk7CgogICAgaWYgKHJlYWRFcnJvcikgdGhyb3cgcmVhZEVycm9yOwogICAgaWYgKGV4aXN0aW5nKSByZXR1cm4gZXhpc3Rpbmc7CgogICAgY29uc3QgbWV0YWRhdGEgPSB1c2VyLnVzZXJfbWV0YWRhdGEgfHwge307CiAgICBjb25zdCBmYWxsYmFja0VtYWlsTmFtZSA9IHVzZXIuZW1haWw/LnNwbGl0KCdAJylbMF0gfHwgJ0RldGVjdGl2ZSc7CiAgICBjb25zdCBuYW1lID0gU3RyaW5nKAogICAgICAgIG92ZXJyaWRlcy5kaXNwbGF5TmFtZSB8fAogICAgICAgIG1ldGFkYXRhLmRpc3BsYXlfbmFtZSB8fAogICAgICAgIG1ldGFkYXRhLmZ1bGxfbmFtZSB8fAogICAgICAgIGZhbGxiYWNrRW1haWxOYW1lCiAgICApLnRyaW0oKTsKCiAgICBjb25zdCBwYXlsb2FkID0gewogICAgICAgIGlkOiB1c2VyLmlkLAogICAgICAgIHVzZXJuYW1lOiBuYW1lLAogICAgICAgIGRpc3BsYXlfbmFtZTogbmFtZSwKICAgICAgICBlbWFpbDogb3ZlcnJpZGVzLmVtYWlsIHx8IHVzZXIuZW1haWwgfHwgbnVsbAogICAgfTsKCiAgICBjb25zdCB7IGRhdGEsIGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZQogICAgICAgIC5mcm9tKCdwcm9maWxlcycpCiAgICAgICAgLmluc2VydChwYXlsb2FkKQogICAgICAgIC5zZWxlY3QoJyonKQogICAgICAgIC5tYXliZVNpbmdsZSgpOwoKICAgIGlmIChlcnJvcikgewogICAgICAgIC8vIEEgY29uY3VycmVudCBwcm9maWxlIHRyaWdnZXIgY2FuIHdpbiB0aGUgcmFjZS4gUmUtcmVhZCBpbnN0ZWFkIG9mCiAgICAgICAgLy8gY3JlYXRpbmcgYSBkdXBsaWNhdGUgb3IgZmFpbGluZyB0aGUgYXV0aGVudGljYXRpb24gZmxvdyB1bm5lY2Vzc2FyaWx5LgogICAgICAgIGlmIChlcnJvci5jb2RlID09PSAnMjM1MDUnKSB7CiAgICAgICAgICAgIGNvbnN0IHsgZGF0YTogcmFjZWRQcm9maWxlLCBlcnJvcjogcmFjZWRFcnJvciB9ID0gYXdhaXQgc3VwYWJhc2UKICAgICAgICAgICAgICAgIC5mcm9tKCdwcm9maWxlcycpCiAgICAgICAgICAgICAgICAuc2VsZWN0KCcqJykKICAgICAgICAgICAgICAgIC5lcSgnaWQnLCB1c2VyLmlkKQogICAgICAgICAgICAgICAgLm1heWJlU2luZ2xlKCk7CiAgICAgICAgICAgIGlmICghcmFjZWRFcnJvciAmJiByYWNlZFByb2ZpbGUpIHJldHVybiByYWNlZFByb2ZpbGU7CiAgICAgICAgfQogICAgICAgIHRocm93IGVycm9yOwogICAgfQoKICAgIHJldHVybiBkYXRhOwp9CgpleHBvcnQgYXN5bmMgZnVuY3Rpb24gcmVkaXJlY3RBdXRoZW50aWNhdGVkVXNlcihzdXBhYmFzZSA9IGRlZmF1bHRTdXBhYmFzZSkgewogICAgY29uc3QgeyBkYXRhOiB7IHNlc3Npb24gfSB9ID0gYXdhaXQgc3VwYWJhc2UuYXV0aC5nZXRTZXNzaW9uKCk7CiAgICBpZiAoIXNlc3Npb24/LnVzZXIpIHJldHVybiBmYWxzZTsKICAgIGNvbnN0IHJvdXRlID0gYXdhaXQgZ2V0UG9zdEF1dGhSb3V0ZShzdXBhYmFzZSk7CiAgICB3aW5kb3cubG9jYXRpb24ucmVwbGFjZShuZXcgVVJMKHJvdXRlLCB3aW5kb3cubG9jYXRpb24uaHJlZikuaHJlZik7CiAgICByZXR1cm4gdHJ1ZTsKfQo=');
+        if (await isCurrentUserAdmin(supabase)) {
+          window.location.replace(new URL('admin.html#dashboard', window.location.href).href);
+          return;
+        }
+      } catch (error) {
+        console.warn('[Code Detective] Admin routing check unavailable; continuing as a normal user.', error);
+      }
+
+      state.hqLoading = true;
+      renderLearningHub();
+      renderAssignmentWidget();
+      renderAchievementWidget();
+      renderAnalyticsWidget();
+      renderActivityTimeline();
+
+      await clearLegacyLearningCache();
+      await loadAssignmentsFromSupabase();
+      await initAssignmentRealtime();
+      await loadNotificationsFromSupabase();
+      await initNotificationRealtime();
+      initThemeSystem();
+
+      const profile = await loadProfile();
+      await restoreCaseProgress();
+      restoreCurrentCaseFromProfile(profile);
+
+      state.hqLoading = false;
+      if (!state.selectedSubject) {
+        state.selectedSubject = getSubjectData()[0]?.id || '';
+      }
+
+      updateDashboard();
+      renderCriminalDatabase();
+      renderCaseLibrary();
+      renderMasteryBoard();
+      renderCrimeScene();
+    }
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', init);
+    
+  </script>
+
+<script>
+(() => {
+  // Keep the service worker available for the site's existing offline/cache behavior.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          console.log(
+            "[Code Detective PWA] Service worker registered:",
+            registration.scope
+          );
+        })
+        .catch((error) => {
+          console.error(
+            "[Code Detective PWA] Service worker registration failed:",
+            error
+          );
+        });
+      });
+  }
 })();
+</script>
+
+</body>
+
+</html>
