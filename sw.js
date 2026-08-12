@@ -1,4 +1,4 @@
-const CACHE_NAME = "code-detective-v1";
+const CACHE_NAME = "code-detective-v3-navbar-dropdown-fix";
 
 const APP_SHELL = [
   "/",

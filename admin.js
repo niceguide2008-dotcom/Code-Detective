@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 import { isCurrentUserAdmin } from './auth-utils.js';
-import { generateHomework, generateAssignment } from './ai-client.js';
+import { generateHomework, generateAssignment, askAdminLearningInsights } from './ai-client.js';
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value = '') => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -56,7 +56,15 @@ function injectAdminStyles() {
     .ai-generator{display:grid;gap:14px}.ai-generator-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ai-generator input,.ai-generator textarea,.ai-generator select{width:100%;box-sizing:border-box;background:rgba(255,255,255,.035);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit}.ai-generator textarea{min-height:120px;resize:vertical}.ai-result{white-space:pre-wrap;background:rgba(0,0,0,.12);border:1px solid var(--line);border-radius:12px;padding:13px;line-height:1.55}.ai-q{padding:10px 0;border-bottom:1px solid var(--line)}.ai-q:last-child{border-bottom:0}@media(max-width:760px){.ai-generator-grid{grid-template-columns:1fr}}
     .admin-list{display:grid;gap:10px;margin-top:12px}.admin-list-item{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.025)}
     .admin-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.admin-kpi{padding:16px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}.admin-kpi strong{font-size:28px;display:block;margin-top:5px}.admin-kpi small{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-size:10px}
-    .recipient-picker{display:grid;gap:8px;max-height:190px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:11px;background:rgba(0,0,0,.08)}.recipient-row{display:flex;gap:9px;align-items:center;font-size:12px;color:var(--text)}.recipient-row small{color:var(--muted);margin-left:auto}.streak-risk{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.streak-risk strong{display:block}.streak-risk span{font-size:11px;color:var(--muted)}
+    .recipient-picker{display:grid;gap:5px;max-height:230px;overflow:auto;padding:7px;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.08);scroll-behavior:smooth)}
+    .recipient-row{display:grid;grid-template-columns:20px minmax(0,1fr) minmax(0,.9fr);gap:9px;align-items:center;min-height:42px;padding:7px 9px;border:1px solid transparent;border-radius:10px;font-size:12px;color:var(--text);cursor:pointer;transition:transform 150ms ease,background 150ms ease,border-color 150ms ease}
+    .recipient-row:hover{transform:translateX(2px);background:rgba(255,255,255,.04);border-color:var(--line)}
+    .recipient-row:has(input:checked){background:rgba(245,185,66,.08);border-color:rgba(245,185,66,.3)}
+    .recipient-row input{width:16px;height:16px;margin:0;accent-color:var(--amber)}
+    .recipient-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.recipient-row small{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+    .admin-actions button,.admin-btn{transition:transform 180ms ease,box-shadow 180ms ease,border-color 180ms ease,background 180ms ease,opacity 180ms ease}.admin-actions button:hover:not(:disabled),.admin-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.12)}.admin-actions button:active:not(:disabled),.admin-btn:active:not(:disabled){transform:scale(.97)}.admin-actions button:disabled,.admin-btn:disabled{opacity:.55;cursor:not-allowed}
+    .admin-ai-question{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:stretch}.admin-ai-question textarea{min-height:50px;resize:none;background:rgba(255,255,255,.035);color:var(--text);border:1px solid var(--line);border-radius:13px;padding:12px;font:inherit;outline:none;transition:border-color 180ms ease,box-shadow 180ms ease}.admin-ai-question textarea:focus{border-color:rgba(0,243,255,.5);box-shadow:0 0 0 4px rgba(0,243,255,.06)}.admin-ai-question .admin-btn{min-width:105px}.admin-ai-answer{margin-top:14px;padding:16px;border:1px solid rgba(79,169,255,.25);border-radius:14px;background:rgba(79,169,255,.045);white-space:pre-wrap;line-height:1.65;animation:admin-answer-in 260ms ease both}.admin-actions .admin-btn{will-change:auto}@keyframes admin-answer-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.streak-risk{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.streak-risk strong{display:block}.streak-risk span{font-size:11px;color:var(--muted)}
     .admin-muted{color:var(--muted);font-size:12px;line-height:1.6}.admin-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;background:rgba(245,185,66,.1);color:var(--amber);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
     .notes-admin-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:16px}.notes-admin-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(255,255,255,.025)}.notes-admin-card h4{margin:0 0 5px;font-size:14px}.notes-admin-card p{margin:0 0 13px;color:var(--muted);font-size:11px;line-height:1.5}.notes-drop{border:1px dashed rgba(245,185,66,.42);border-radius:13px;padding:18px;background:rgba(245,185,66,.035);text-align:center}.notes-drop strong{display:block;font-size:13px}.notes-drop span{display:block;color:var(--muted);font-size:10px;margin-top:5px}.notes-file{width:100%;padding:12px;border:1px dashed var(--line);border-radius:10px;background:rgba(0,0,0,.08);color:var(--text);margin-top:10px}.notes-file::file-selector-button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-right:9px;cursor:pointer}.notes-admin-list{display:grid;gap:8px;max-height:430px;overflow:auto}.notes-admin-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:11px;background:rgba(255,255,255,.02)}.notes-admin-item strong{display:block;font-size:12px}.notes-admin-item span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.notes-admin-item button{flex:0 0 auto}.notes-admin-status{min-height:18px;color:var(--muted);font-size:11px}.notes-admin-status.success{color:var(--green)}.notes-admin-status.error{color:#ff9aa6}@media(max-width:950px){.notes-admin-grid{grid-template-columns:1fr}}    @media(max-width:950px){.admin-grid-2{grid-template-columns:1fr}.admin-form-grid{grid-template-columns:1fr}}
     @media(max-width:650px){#admin-extensions .admin-panel{padding:15px}.admin-panel-head{flex-direction:column}.streak-risk{grid-template-columns:1fr}.admin-tabs{overflow:auto;flex-wrap:nowrap}.admin-tabs button{white-space:nowrap}} #admin-extensions.catalog-view .admin-tabs{display:none}
@@ -74,6 +82,7 @@ function ensureAdminExtensions() {
       <button data-view="notifications">🔔 Notifications</button>
       <button data-view="assignments">📝 Assignments</button>
       <button data-view="streaks">🔥 Streak Protection</button>
+      <button data-view="ai-insights">🧠 AI Insights</button>
       <button data-view="ai-homework">🤖 AI Homework</button>
       <button data-view="ai-assignment">📝 AI Assignment</button>
     </div>
@@ -114,6 +123,16 @@ function ensureAdminExtensions() {
           <p>These notes appear inside the student's <strong>Available Notes</strong> dropdown.</p>
           <div id="admin-notes-list" class="notes-admin-list"><div class="admin-muted">Loading notes…</div></div>
         </div>
+      </div>
+    </div>
+
+    <div class="admin-panel" data-panel="ai-insights" hidden>
+      <div class="admin-panel-head"><div><h3>🧠 AI Academic Intelligence</h3><p>Ask questions about real Code Detective learning activity. The AI is grounded in live application analytics and will say when the data is insufficient.</p></div><span class="admin-chip">Data grounded</span></div>
+      <div class="admin-ai-insights">
+        <div class="admin-ai-question"><textarea id="admin-ai-question" placeholder="e.g. Which programming topic appears to be causing the most difficulty?"></textarea><button class="admin-btn primary" id="admin-ai-ask" type="button">Ask AI</button></div>
+        <div class="admin-actions"><button class="admin-btn" type="button" data-admin-ai-prompt="What programming topic appears to be causing the most difficulty?">Difficult topics</button><button class="admin-btn" type="button" data-admin-ai-prompt="What are students asking the AI Tutor about most frequently?">Tutor demand</button><button class="admin-btn" type="button" data-admin-ai-prompt="Which notes are being used the most?">Note usage</button><button class="admin-btn" type="button" data-admin-ai-prompt="Which topics should receive additional learning material?">Content gaps</button></div>
+        <div id="admin-ai-status" class="admin-muted"></div>
+        <div id="admin-ai-result" class="admin-ai-answer" hidden></div>
       </div>
     </div>
 
@@ -184,7 +203,7 @@ function ensureAdminExtensions() {
           <div id="assignment-recipient-count" class="admin-muted" style="display:flex;align-items:center">All current students will receive this assignment.</div>
         </div>
         <div id="assignment-recipient-picker" class="recipient-picker" hidden></div>
-        <div class="admin-actions"><button class="admin-btn primary" type="submit">💾 Save assignment</button><button class="admin-btn" type="button" id="cancel-assignment-edit">Cancel edit</button></div>
+        <div class="admin-actions"><button class="admin-btn primary" id="assignment-save-btn" type="submit">💾 Save assignment</button><button class="admin-btn" type="button" id="cancel-assignment-edit">Cancel edit</button></div>
       </form>
       <div id="assignment-list" class="admin-list"></div>
     </div>
@@ -230,6 +249,9 @@ function ensureAdminExtensions() {
   $('#assignment-form')?.addEventListener('submit', e => { e.preventDefault(); saveAssignmentFromForm(); });
   $('#cancel-assignment-edit')?.addEventListener('click', resetAssignmentForm);
   $('#send-streak-reminders')?.addEventListener('click', sendStreakReminders);
+  $('#admin-ai-ask')?.addEventListener('click', askAdminAI);
+  document.querySelectorAll('[data-admin-ai-prompt]').forEach(button => button.addEventListener('click', () => { const input=$('#admin-ai-question'); if(input){ input.value=button.dataset.adminAiPrompt || ''; input.focus(); } }));
+  $('#admin-ai-question')?.addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && e.key === 'Enter') askAdminAI(); });
   $('#ai-generate-homework')?.addEventListener('click', generateHomeworkForAdmin);
   $('#ai-generate-assignment')?.addEventListener('click', generateAssignmentForAdmin);
   $('#ai-use-homework')?.addEventListener('click', useGeneratedHomework);
@@ -240,6 +262,30 @@ function ensureAdminExtensions() {
   renderQuestionBank();
   renderUnitCatalog();
   renderSettings();
+}
+
+async function askAdminAI() {
+  const input = $('#admin-ai-question');
+  const resultEl = $('#admin-ai-result');
+  const status = $('#admin-ai-status');
+  const question = input?.value.trim();
+  if (!question) return;
+  const button = $('#admin-ai-ask');
+  if (button) { button.disabled = true; button.textContent = '⟳ Analyzing…'; }
+  if (status) status.textContent = 'Analyzing live learning data…';
+  if (resultEl) { resultEl.hidden = false; resultEl.innerHTML = 'AI is checking the available evidence…'; }
+  try {
+    const result = await askAdminLearningInsights({ question });
+    const recommendations = Array.isArray(result?.recommendations) ? result.recommendations : [];
+    const evidence = Array.isArray(result?.evidence_used) ? result.evidence_used : [];
+    if (resultEl) resultEl.innerHTML = `<h4>AI assessment</h4><div>${esc(result?.answer || 'No assessment returned.').replace(/\n/g,'<br>')}</div>${recommendations.length ? `<div style="margin-top:12px"><strong style="font-size:11px">Recommended actions</strong><ul class="admin-ai-rec">${recommendations.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}${evidence.length ? `<div class="admin-ai-evidence" style="margin-top:12px">${evidence.map(x => `<span>${esc(x)}</span>`).join('')}</div>` : ''}`;
+    if (status) status.textContent = `Grounded in live data · confidence: ${result?.confidence || 'data-dependent'}`;
+  } catch (error) {
+    if (resultEl) resultEl.innerHTML = `<h4>AI unavailable</h4><div>${esc(error.message || 'Could not analyze the data.')}</div>`;
+    if (status) status.textContent = '';
+  } finally {
+    if (button) { button.disabled = false; button.textContent = 'Ask AI'; }
+  }
 }
 
 function switchPanel(name) {
@@ -255,7 +301,7 @@ function switchPanel(name) {
 }
 
 function setAdminSection(name, { updateHash = true } = {}) {
-  const valid = ['dashboard','users','questions','units','notes','assignments','ai-homework','ai-assignment','analytics','settings'];
+  const valid = ['dashboard','users','questions','units','notes','assignments','ai-insights','ai-homework','ai-assignment','analytics','settings'];
   const section = valid.includes(name) ? name : 'dashboard';
   state.activeSection = section;
 
@@ -276,7 +322,7 @@ function setAdminSection(name, { updateHash = true } = {}) {
 
   extensions.hidden = section === 'users';
 
-  const catalogView = !['dashboard','assignments','ai-homework','ai-assignment'].includes(section);
+  const catalogView = !['dashboard','assignments','ai-insights','ai-homework','ai-assignment'].includes(section);
   extensions.classList.toggle('catalog-view', catalogView);
 
   if (section === 'users') {
@@ -454,13 +500,17 @@ function renderRecipientPickers() {
   if (broadcastPicker) {
     const show = broadcastTarget === 'Selected';
     broadcastPicker.hidden = !show;
-    if (show) broadcastPicker.innerHTML = students.map(u => `<label class="recipient-row"><input type="checkbox" data-broadcast-recipient value="${esc(u.id)}"><span>${esc(getUserName(u))}</span><small>${esc(u.email || '')}</small></label>`).join('') || '<span class="admin-muted">No matching students.</span>';
+    if (show) broadcastPicker.innerHTML = students.map(u => `<label class="recipient-row"><input type="checkbox" data-broadcast-recipient value="${esc(u.id)}"><strong>${esc(getUserName(u))}</strong><small>${esc(u.email || '')}</small></label>`).join('') || '<span class="admin-muted">No matching students.</span>';
   }
   const assignmentPicker = $('#assignment-recipient-picker');
   if (assignmentPicker) {
     const show = assignmentTarget === 'Selected';
     assignmentPicker.hidden = !show;
-    if (show) assignmentPicker.innerHTML = students.map(u => `<label class="recipient-row"><input type="checkbox" data-assignment-recipient value="${esc(u.id)}"><span>${esc(getUserName(u))}</span><small>${esc(u.email || '')}</small></label>`).join('') || '<span class="admin-muted">No matching students.</span>';
+    if (show) assignmentPicker.innerHTML = students.map(u => `<label class="recipient-row"><input type="checkbox" data-assignment-recipient value="${esc(u.id)}"><strong>${esc(getUserName(u))}</strong><small>${esc(u.email || '')}</small></label>`).join('') || '<span class="admin-muted">No matching students.</span>';
+    assignmentPicker.querySelectorAll('[data-assignment-recipient]').forEach(input => input.addEventListener('change', () => {
+      const count = $('#assignment-recipient-count');
+      if (count) count.textContent = `${document.querySelectorAll('[data-assignment-recipient]:checked').length} students selected.`;
+    }));
   }
   const count = $('#assignment-recipient-count');
   if (count) count.textContent = assignmentTarget === 'Selected' ? `${document.querySelectorAll('[data-assignment-recipient]:checked').length} students selected.` : `${getStudentUsers().length} current students will receive this assignment.`;
@@ -677,12 +727,15 @@ function useGeneratedAssignment() {
 }
 
 async function saveAssignmentFromForm() {
+  const saveButton = $('#assignment-save-btn');
+  const originalLabel = saveButton?.textContent || '💾 Save assignment';
   const payload=assignmentPayloadFromForm();
   if(!payload.title||!payload.subject||!payload.due_date||!payload.due_time||payload.max_marks<=0){ alert('Please complete the required assignment fields.'); return; }
   const recipientIds=selectedAssignmentRecipients();
   if(!recipientIds.length){ alert('Select at least one student.'); return; }
   const { data: sessionData }=await supabase.auth.getSession(); const adminId=sessionData?.session?.user?.id; if(!adminId){alert('Admin session expired.');return;}
   let assignmentId=$('#assignment-id')?.value || null;
+  if(saveButton){saveButton.disabled=true;saveButton.textContent='⟳ Saving…';}
   try {
     if(assignmentId){
       const {error}=await supabase.from('assignments').update({...payload,updated_at:new Date().toISOString()}).eq('id',assignmentId); if(error) throw error;
@@ -706,8 +759,10 @@ async function saveAssignmentFromForm() {
       const notifications=recipientIds.map(recipient_id=>({title:'New Assignment',message,type:'assignment',sender_id:adminId,recipient_id,is_read:false,assignment_id:assignmentId}));
       const {error:nError}=await supabase.from('notifications').insert(notifications); if(nError) throw nError;
     }
-    resetAssignmentForm(); await loadAssignments(); renderAdminModules(); alert(assignmentId ? 'Assignment saved successfully.' : 'Assignment created and notifications delivered.');
-  } catch(error){ console.error('[Assignments] Save failed:',error); alert(`Assignment could not be saved. ${error?.message||'Please run FINAL_UPGRADE.sql in Supabase first.'}`); }
+    resetAssignmentForm(); await loadAssignments(); renderAdminModules();
+    if(saveButton){saveButton.textContent='✓ Assignment saved';}
+    setTimeout(()=>{if(saveButton){saveButton.disabled=false;saveButton.textContent=originalLabel;}},900);
+  } catch(error){ console.error('[Assignments] Save failed:',error); if(saveButton){saveButton.disabled=false;saveButton.textContent=originalLabel;} alert(`Assignment could not be saved. ${error?.message||'Please run FINAL_UPGRADE.sql in Supabase first.'}`); }
 }
 
 function resetAssignmentForm(){ state.editingAssignmentId=null; $('#assignment-form')?.reset(); $('#assignment-id').value=''; $('#assignment-target').value='Students'; renderRecipientPickers(); }

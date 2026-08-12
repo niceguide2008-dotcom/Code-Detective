@@ -34,6 +34,54 @@ button,input,textarea,select{font:inherit}
 @media(max-width:1100px){.admin-layout{grid-template-columns:205px minmax(0,1fr)}.user-grid{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:800px){.admin-layout{display:block}.sidebar{position:sticky;height:auto;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line)}.side-brand{padding:3px 6px 10px;border-bottom:0}.side-nav{display:flex;overflow:auto;padding:7px 0 0;gap:5px}.side-nav button{width:auto;white-space:nowrap}.side-footer{display:none}.shell{padding:20px 16px 50px}.admin-catalog-grid{grid-template-columns:1fr}}
 @media(max-width:650px){.user-grid{grid-template-columns:1fr}.hero h2{font-size:31px}.section-head{align-items:stretch;flex-direction:column}.tools,.search{width:100%}.stats{gap:9px}.stat{padding:15px}.admin-id>div{display:none}.card-metrics{gap:8px}.analytics-row{grid-template-columns:70px 1fr 35px}}
+<style>
+
+/* =========================================================
+   ADMIN FORM SELECT / DIFFICULTY DROPDOWN FIX
+   Keeps Easy / Medium / Hard readable in the native dropdown.
+   ========================================================= */
+.admin-form select,
+.ai-generator select,
+select[id$="-difficulty"],
+select[id="broadcast-priority"],
+select[id="broadcast-target"],
+select[id="assignment-target"] {
+  color: var(--text) !important;
+  background-color: #10151d !important;
+  border: 1px solid var(--line) !important;
+  color-scheme: dark !important;
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
+.admin-form select option,
+.ai-generator select option,
+select[id$="-difficulty"] option,
+select[id="broadcast-priority"] option,
+select[id="broadcast-target"] option,
+select[id="assignment-target"] option {
+  background: #10151d !important;
+  color: #f3f5f7 !important;
+}
+
+.admin-form select option:checked,
+.ai-generator select option:checked,
+select[id$="-difficulty"] option:checked {
+  background: #243247 !important;
+  color: #ffffff !important;
+}
+
+.admin-form select:focus,
+.ai-generator select:focus,
+select[id$="-difficulty"]:focus,
+select[id="broadcast-priority"]:focus,
+select[id="broadcast-target"]:focus,
+select[id="assignment-target"]:focus {
+  outline: none !important;
+  border-color: rgba(245,185,66,.55) !important;
+  box-shadow: 0 0 0 3px rgba(245,185,66,.08) !important;
+}
+
 </style>
 </head>
 <body>
@@ -53,6 +101,7 @@ button,input,textarea,select{font:inherit}
       <button type="button" data-admin-route="ai-homework"><span class="nav-icon">🤖</span>AI Homework</button>
       <button type="button" data-admin-route="ai-assignment"><span class="nav-icon">📝</span>AI Assignment</button>
       <button type="button" data-admin-route="analytics"><span class="nav-icon">📈</span>Analytics</button>
+      <button type="button" data-admin-route="ai-insights"><span class="nav-icon">🧠</span>AI Insights</button>
       <button type="button" data-admin-route="settings"><span class="nav-icon">⚙️</span>Settings</button>
     </nav>
     <div class="side-footer">Protected administrator workspace.<br>Role authorization is enforced by Supabase.</div>
