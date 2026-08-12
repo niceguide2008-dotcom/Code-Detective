@@ -4021,42 +4021,7 @@
       -webkit-text-fill-color: transparent;
       letter-spacing: -1px;
     }
-
-    /* =============================================
-   PWA INSTALL BUTTON
-============================================= */
-
-.install-app-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 38px;
-  padding: 8px 13px;
-  border: 1px solid rgba(245, 185, 66, 0.35);
-  border-radius: 10px;
-  color: var(--text-primary);
-  background: rgba(245, 185, 66, 0.10);
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-
-
-.install-app-btn:hover {
-  transform: translateY(-1px);
-  background: rgba(245, 185, 66, 0.18);
-  border-color: rgba(245, 185, 66, 0.60);
-  box-shadow: 0 0 18px rgba(245, 185, 66, 0.16);
-}
-
-.install-app-btn:active {
-  transform: translateY(0);
-}
-    /* =============================================
+/* =============================================
        RESPONSIVE — TABLET (≤900px)
     ============================================= */
     @media (max-width: 900px) {
@@ -4346,21 +4311,7 @@
     .badge-amber { border-color: rgba(255,209,102,.25); }
     .badge-crimson { border-color: rgba(255,93,115,.25); }
     .badge-green { border-color: rgba(56,211,159,.25); }
-    
-
-@media (max-width: 700px) {
-  .install-app-btn {
-    width: 38px;
-    min-width: 38px;
-    padding: 0;
-    border-radius: 10px;
-  }
-
-  .install-app-btn span {
-    display: none;
-  }
-}
-  </style>
+</style>
   <script type="module" crossorigin src="/assets/home-Dz8P3S1H.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/supabase-C0Bv1Tz9.js">
   <link rel="modulepreload" crossorigin href="/assets/ai-client-CDGyBfud.js">
@@ -4372,12 +4323,7 @@
      NAVIGATION
 ============================================= -->
   <nav class="nav" id="main-nav">
-    <a class="nav-logo" href="#" onclick="return false;">
-      <div class="nav-logo-icon">🕵️</div>
-      <div class="nav-logo-text">Code<span>Detective</span></div>
-    </a>
-
-    <div class="nav-tabs" id="nav-tabs">
+<div class="nav-tabs" id="nav-tabs">
       <button class="nav-tab active" data-screen="dashboard" id="tab-dashboard">
         <span class="nav-tab-icon">🏢</span>
         <span class="nav-tab-label">HQ</span>
@@ -4398,21 +4344,10 @@
         <span class="nav-tab-icon">📚</span>
         <span class="nav-tab-label">Notes</span>
       </button>
-      <a class="nav-tab" href="/admin.html" id="tab-admin" title="Open admin console" style="text-decoration:none;">
-        <span class="nav-tab-icon">⚙️</span>
-        <span class="nav-tab-label">Admin</span>
-      </a>
-    </div>
+</div>
 
     <div class="nav-right" style="position: relative;">
-      <a
-        id="install-app-btn"
-        class="install-app-btn"
-        href="/downloads/Code-Detective.apk"
-        download="Code-Detective.apk"
-        title="Download Code Detective Android App"
-      >📲 <span>Download</span></a>
-      <button class="nav-bell" id="nav-bell-btn" type="button" title="Notifications">
+<button class="nav-bell" id="nav-bell-btn" type="button" title="Notifications">
         🔔
         <span class="nav-bell-badge" id="nav-bell-badge">0</span>
       </button>
