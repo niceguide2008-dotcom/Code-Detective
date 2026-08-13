@@ -6095,6 +6095,42 @@
   #main-nav .nav-tab { padding-left: 8px !important; padding-right: 8px !important; }
 }
 </style>
+<style id="navbar-mobile-interaction-final">
+/* Hidden dropdowns must never intercept taps. */
+#notification-panel,
+#profile-dropdown {
+  pointer-events: none !important;
+  visibility: hidden;
+}
+#notification-panel.active,
+#profile-dropdown.active {
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+#nav-bell-btn,
+#nav-avatar-btn,
+#nav-xp-btn {
+  touch-action: manipulation !important;
+  -webkit-user-select: none;
+  user-select: none;
+}
+@media (max-width: 600px) {
+  #nav-notification-control #notification-panel {
+    left: 0 !important;
+    right: auto !important;
+    top: 48px !important;
+    width: min(360px, calc(100vw - 14px)) !important;
+    max-width: calc(100vw - 14px) !important;
+  }
+  #nav-actions-control #profile-dropdown {
+    left: auto !important;
+    right: 0 !important;
+    top: 48px !important;
+    width: min(300px, calc(100vw - 14px)) !important;
+    max-width: calc(100vw - 14px) !important;
+  }
+}
+</style>
 </head>
 <body>
 <!-- =============================================
@@ -8458,21 +8494,13 @@ setupAndroidBackButton();
       profile.classList.toggle('active');
     };
 
-    // onclick replaces any earlier direct onclick assignment without adding duplicates.
+    // Use exactly one activation event. Mobile browsers synthesize a click
+    // after touch/pointer interaction, so combining click + pointerup causes
+    // a single tap to toggle twice (open -> close). These assignments are
+    // idempotent and replace any earlier direct handler.
     bell.onclick = toggleNotificationsMenu;
     avatar.onclick = toggleProfileMenu;
     if (xp) xp.onclick = toggleProfileMenu;
-
-    // Pointer fallback for touch devices and responsive layouts.
-    bell.onpointerup = (event) => {
-      if (event.pointerType !== 'mouse') toggleNotificationsMenu(event);
-    };
-    avatar.onpointerup = (event) => {
-      if (event.pointerType !== 'mouse') toggleProfileMenu(event);
-    };
-    if (xp) xp.onpointerup = (event) => {
-      if (event.pointerType !== 'mouse') toggleProfileMenu(event);
-    };
 
     // Keep keyboard behavior accessible.
     bell.setAttribute('aria-haspopup', 'dialog');
@@ -10502,258 +10530,7 @@ console.log("[DXP DEBUG] Save Error:", error);
   import { initAndroidPushNotifications } from "/push-notifications.js";
   window.addEventListener("load", () => initAndroidPushNotifications());
 </script>
-<script>
-(function () {
-    "use strict";
+<!-- Legacy responsive-navbar controller removed. The single navbar dropdown controller above is authoritative. -->
 
-    function initResponsiveNavbar() {
-
-        const nav = document.getElementById("main-nav");
-
-        if (!nav) {
-            console.warn("[Code Detective] main-nav not found");
-            return;
-        }
-
-        const bell = document.getElementById("nav-notification-btn");
-        const notificationPanel =
-            document.getElementById("nav-notification-panel");
-
-        const avatar = document.getElementById("nav-avatar-btn");
-        const profilePanel =
-            document.getElementById("nav-profile-panel");
-
-        if (!bell || !avatar) {
-            console.warn(
-                "[Code Detective] Responsive navbar buttons not found"
-            );
-            return;
-        }
-
-        function closeNotifications() {
-
-            if (!notificationPanel) return;
-
-            notificationPanel.classList.remove("open");
-
-            notificationPanel.setAttribute(
-                "aria-hidden",
-                "true"
-            );
-
-            bell.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-
-            notificationPanel.style.display = "none";
-        }
-
-        function openNotifications() {
-
-            if (!notificationPanel) return;
-
-            closeProfile();
-
-            notificationPanel.classList.add("open");
-
-            notificationPanel.setAttribute(
-                "aria-hidden",
-                "false"
-            );
-
-            bell.setAttribute(
-                "aria-expanded",
-                "true"
-            );
-
-            notificationPanel.style.display = "block";
-        }
-
-        function closeProfile() {
-
-            if (!profilePanel) return;
-
-            profilePanel.classList.remove("open");
-
-            profilePanel.setAttribute(
-                "aria-hidden",
-                "true"
-            );
-
-            avatar.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-
-            profilePanel.style.display = "none";
-        }
-
-        function openProfile() {
-
-            if (!profilePanel) return;
-
-            closeNotifications();
-
-            profilePanel.classList.add("open");
-
-            profilePanel.setAttribute(
-                "aria-hidden",
-                "false"
-            );
-
-            avatar.setAttribute(
-                "aria-expanded",
-                "true"
-            );
-
-            profilePanel.style.display = "block";
-        }
-
-        function toggleNotifications(event) {
-
-            event.preventDefault();
-            event.stopPropagation();
-
-            const isOpen =
-                bell.getAttribute("aria-expanded") === "true";
-
-            if (isOpen) {
-                closeNotifications();
-            } else {
-                openNotifications();
-            }
-        }
-
-        function toggleProfile(event) {
-
-            event.preventDefault();
-            event.stopPropagation();
-
-            const isOpen =
-                avatar.getAttribute("aria-expanded") === "true";
-
-            if (isOpen) {
-                closeProfile();
-            } else {
-                openProfile();
-            }
-        }
-
-        /*
-         * Pointer events work for:
-         * mouse
-         * touch
-         * pen
-         */
-        bell.addEventListener(
-            "pointerup",
-            toggleNotifications,
-            true
-        );
-
-        avatar.addEventListener(
-            "pointerup",
-            toggleProfile,
-            true
-        );
-
-        /*
-         * Keyboard support
-         */
-        bell.addEventListener("keydown", function (event) {
-
-            if (
-                event.key === "Enter" ||
-                event.key === " "
-            ) {
-                toggleNotifications(event);
-            }
-
-        });
-
-        avatar.addEventListener("keydown", function (event) {
-
-            if (
-                event.key === "Enter" ||
-                event.key === " "
-            ) {
-                toggleProfile(event);
-            }
-
-        });
-
-        /*
-         * Outside click
-         */
-        document.addEventListener(
-            "pointerup",
-            function (event) {
-
-                if (
-                    notificationPanel &&
-                    !bell.contains(event.target) &&
-                    !notificationPanel.contains(event.target)
-                ) {
-                    closeNotifications();
-                }
-
-                if (
-                    profilePanel &&
-                    !avatar.contains(event.target) &&
-                    !profilePanel.contains(event.target)
-                ) {
-                    closeProfile();
-                }
-
-            },
-            true
-        );
-
-        /*
-         * Escape
-         */
-        document.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (event.key !== "Escape") return;
-
-                closeNotifications();
-                closeProfile();
-
-            }
-        );
-
-        /*
-         * Start closed
-         */
-        closeNotifications();
-        closeProfile();
-
-        console.log(
-            "[Code Detective] Responsive navbar initialized"
-        );
-    }
-
-    /*
-     * Wait until the page is ready.
-     */
-    if (document.readyState === "loading") {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            initResponsiveNavbar,
-            { once: true }
-        );
-
-    } else {
-
-        initResponsiveNavbar();
-
-    }
-
-})();
-</script>
 </body>
 </html>
