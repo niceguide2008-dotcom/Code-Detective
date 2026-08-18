@@ -1,0 +1,8 @@
+Playground update:
+- Independent Java variable declarations can be arranged in any dependency-safe order.
+- Correct-solution animation added.
+- In-whiteboard compiler/output panel added.
+- The existing compiler should expose window.CodeDetectiveCompiler.run({ code, challenge }).
+  The uploaded Playground files did not contain the compiler adapter itself, so that adapter
+  was not invented or replaced. Once the existing compiler exposes that adapter, the Run Program
+  button uses it and displays stdout/output inside the whiteboard.

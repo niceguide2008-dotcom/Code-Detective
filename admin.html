@@ -95,6 +95,7 @@ select[id="assignment-target"]:focus {
       <button type="button" data-admin-route="dashboard" class="active"><span class="nav-icon">📊</span>Overview</button>
       <button type="button" data-admin-route="users"><span class="nav-icon">👥</span>Users</button>
       <button type="button" data-admin-route="questions"><span class="nav-icon">🧩</span>Question Bank</button>
+      <button type="button" data-admin-route="playground"><span class="nav-icon">🧪</span>Playground</button>
       <button type="button" data-admin-route="units"><span class="nav-icon">📚</span>Units & Content</button>
       <button type="button" data-admin-route="notes"><span class="nav-icon">📄</span>Notes Library</button>
       <button type="button" data-admin-route="assignments"><span class="nav-icon">📝</span>Assignments</button>
@@ -141,6 +142,42 @@ select[id="assignment-target"]:focus {
 </aside>
 
 <script type="module" src="./question-bank/index.js"></script>
+<!-- FCM / Supabase Edge Function routing fix: keep admin.js unchanged, but route
+     the production push request to the deployed Supabase Edge Function instead of
+     the Vite dev server path (/functions/v1/send-push). -->
+<script>
+(() => {
+  const SUPABASE_PUSH_URL =
+    'https://mbtwdhadyonlirainmxm.supabase.co/functions/v1/send-push';
+  const nativeFetch = window.fetch.bind(window);
+
+  window.fetch = function(input, init) {
+    try {
+      const rawUrl = typeof input === 'string' ? input : input?.url;
+      if (rawUrl) {
+        const url = new URL(rawUrl, window.location.href);
+        const isLocalHost =
+          url.hostname === 'localhost' ||
+          url.hostname === '127.0.0.1' ||
+          url.hostname === '0.0.0.0';
+        const isSendPush = url.pathname.replace(/\/$/, '') === '/functions/v1/send-push';
+
+        if (isLocalHost && isSendPush) {
+          if (input instanceof Request && init == null) {
+            return nativeFetch(new Request(SUPABASE_PUSH_URL, input));
+          }
+          return nativeFetch(SUPABASE_PUSH_URL, init);
+        }
+      }
+    } catch (error) {
+      console.warn('[Notifications] Push URL rewrite failed; using original request.', error);
+    }
+    return nativeFetch(input, init);
+  };
+
+  console.info('[Notifications] Production send-push endpoint configured.');
+})();
+</script>
 <script type="module" src="./admin.js"></script>
 </body>
 </html>

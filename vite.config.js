@@ -20,7 +20,9 @@ export default defineConfig({
       input: {
         login: resolve(__dirname, 'index.html'),
         home: resolve(__dirname, 'home.html'),
-        admin: resolve(__dirname, 'admin.html')
+        admin: resolve(__dirname, 'admin.html'),
+        playground: resolve(__dirname, 'playground.html'),
+        resetPassword: resolve(__dirname, 'reset-password.html')
       }
     }
   }

@@ -219,6 +219,46 @@ function ensureAdminExtensions() {
       <div id="question-bank-admin-content" class="admin-page-panel"><div class="admin-muted">Loading question bank…</div></div>
     </div>
 
+    <div class="admin-panel" data-panel="playground" hidden>
+      <div class="admin-panel-head"><div><h3>🧪 Playground Challenges</h3><p>Manage Java jigsaw challenges. The correct solution is stored separately and is never exposed to normal users.</p></div><span class="admin-chip">Secure validator</span></div>
+      <div class="admin-grid-2">
+        <div class="notes-admin-card">
+          <h4 id="playground-form-title">Add Playground Challenge</h4>
+          <p>Enter the Java components in their <strong>correct order</strong>, one component per line. The student experience will randomize them automatically.</p>
+          <form id="playground-admin-form" class="admin-form">
+            <input type="hidden" id="playground-id">
+            <div class="admin-form-grid">
+              <input id="playground-title" placeholder="Challenge title" required>
+              <input id="playground-number" type="number" min="1" placeholder="Challenge number" required>
+            </div>
+            <textarea id="playground-question" placeholder="Complete Java programming question" required></textarea>
+            <div class="admin-form-grid">
+              <select id="playground-difficulty"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select>
+              <input id="playground-category" value="Basics" placeholder="Category">
+            </div>
+            <div class="admin-form-grid">
+              <input id="playground-language" value="Java" placeholder="Language">
+              <input id="playground-points" type="number" min="0" max="10000" value="50" placeholder="XP reward">
+            </div>
+            <textarea id="playground-components" style="min-height:260px" placeholder="public class Main
+{
+public static void main(String[] args)
+{
+System.out.println("Hello");
+}
+}"></textarea>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text)"><input id="playground-active" type="checkbox" checked> Active challenge</label>
+            <div class="admin-actions"><button class="admin-btn primary" type="submit" id="playground-save">💾 Save Challenge</button><button class="admin-btn" type="button" id="playground-cancel">Clear</button></div>
+            <div id="playground-form-status" class="notes-admin-status"></div>
+          </form>
+        </div>
+        <div class="notes-admin-card">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><h4>Published challenges</h4><p>Activate, edit, deactivate, or permanently delete Playground challenges.</p></div><button class="admin-btn" type="button" id="playground-refresh">↻ Refresh</button></div>
+          <div id="playground-admin-list" class="admin-list"><div class="admin-muted">Loading Playground challenges…</div></div>
+        </div>
+      </div>
+    </div>
+
     <div class="admin-panel" data-panel="units" hidden>
       <div class="admin-panel-head"><div><h3>Units & Academic Content</h3><p>Inspect the current reusable unit structure without altering the student-facing catalog.</p></div><span class="admin-chip">Catalog view</span></div>
       <div id="unit-admin-content" class="admin-page-panel"><div class="admin-muted">Loading academic units…</div></div>
@@ -258,8 +298,12 @@ function ensureAdminExtensions() {
   $('#ai-send-homework')?.addEventListener('click', sendGeneratedHomework);
   $('#ai-use-assignment')?.addEventListener('click', useGeneratedAssignment);
   $('#refresh-analytics')?.addEventListener('click', loadAdminAnalytics);
+  $('#playground-admin-form')?.addEventListener('submit', e => { e.preventDefault(); savePlaygroundChallenge(); });
+  $('#playground-cancel')?.addEventListener('click', resetPlaygroundForm);
+  $('#playground-refresh')?.addEventListener('click', loadPlaygroundChallenges);
 
   renderQuestionBank();
+  loadPlaygroundChallenges();
   renderUnitCatalog();
   renderSettings();
 }
@@ -288,6 +332,123 @@ async function askAdminAI() {
   }
 }
 
+
+async function loadPlaygroundChallenges() {
+  const el = $('#playground-admin-list');
+  if (!el) return;
+  el.innerHTML = '<div class="admin-muted">Loading Playground challenges…</div>';
+  const { data, error } = await supabase.rpc('admin_playground_challenges');
+  if (error) { el.innerHTML = `<div class="admin-list-item admin-muted">Could not load Playground challenges: ${esc(error.message)}</div>`; return; }
+  const rows = data || [];
+  if (!rows.length) { el.innerHTML = '<div class="admin-list-item admin-muted">No Playground challenges yet.</div>'; return; }
+  el.innerHTML = rows.map(row => `
+    <div class="admin-list-item">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+        <div><strong>#${Number(row.challenge_number)} · ${esc(row.title)}</strong><span>${esc(row.category)} · ${esc(row.difficulty)} · +${Number(row.points)} XP · ${row.is_active ? 'Active' : 'Inactive'}</span></div>
+        <span class="admin-chip">${(row.pieces || []).length} pieces</span>
+      </div>
+      <div class="admin-actions" style="margin-top:10px">
+        <button class="admin-btn" data-playground-edit="${esc(row.id)}">Edit</button>
+        <button class="admin-btn" data-playground-toggle="${esc(row.id)}" data-active="${row.is_active}">${row.is_active ? 'Deactivate' : 'Activate'}</button>
+        <button class="admin-btn danger" data-playground-delete="${esc(row.id)}">Delete</button>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('[data-playground-edit]').forEach(b => b.addEventListener('click', () => editPlaygroundChallenge(rows.find(r => r.id === b.dataset.playgroundEdit))));
+  el.querySelectorAll('[data-playground-toggle]').forEach(b => b.addEventListener('click', () => togglePlaygroundChallenge(b.dataset.playgroundToggle, b.dataset.active === 'true')));
+  el.querySelectorAll('[data-playground-delete]').forEach(b => b.addEventListener('click', () => deletePlaygroundChallenge(b.dataset.playgroundDelete)));
+}
+
+function setPlaygroundFormStatus(message, type='') {
+  const el = $('#playground-form-status'); if (!el) return;
+  el.textContent = message; el.className = `notes-admin-status ${type}`;
+}
+
+function resetPlaygroundForm() {
+  $('#playground-admin-form')?.reset();
+  $('#playground-id').value = '';
+  $('#playground-number').value = '';
+  $('#playground-language').value = 'Java';
+  $('#playground-category').value = 'Basics';
+  $('#playground-points').value = '50';
+  $('#playground-active').checked = true;
+  $('#playground-form-title').textContent = 'Add Playground Challenge';
+  $('#playground-save').textContent = '💾 Save Challenge';
+  setPlaygroundFormStatus('');
+}
+
+function editPlaygroundChallenge(row) {
+  if (!row) return;
+  const orderedPieces = Array.isArray(row.correct_order) && row.correct_order.length
+    ? row.correct_order.map(id => (row.pieces || []).find(piece => piece.id === id)).filter(Boolean)
+    : (row.pieces || []);
+  $('#playground-id').value = row.id;
+  $('#playground-title').value = row.title || '';
+  $('#playground-number').value = row.challenge_number || '';
+  $('#playground-question').value = row.question || '';
+  $('#playground-difficulty').value = row.difficulty || 'Beginner';
+  $('#playground-category').value = row.category || 'Basics';
+  $('#playground-language').value = row.language || 'Java';
+  $('#playground-points').value = Number(row.points || 50);
+  $('#playground-components').value = orderedPieces.map(p => p.code || '').join('\n');
+  $('#playground-active').checked = row.is_active !== false;
+  $('#playground-form-title').textContent = `Edit Challenge #${row.challenge_number}`;
+  $('#playground-save').textContent = '💾 Update Challenge';
+  setPlaygroundFormStatus('Editing selected challenge.');
+  document.getElementById('playground-admin-form')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function playgroundPayloadFromForm() {
+  const lines = String($('#playground-components')?.value || '').split(/\r?\n/).map(x => x.trimEnd()).filter(x => x.trim());
+  const pieces = lines.map((code, index) => ({ id: `p${index + 1}`, code }));
+  return {
+    title: $('#playground-title')?.value.trim(), challenge_number: Number($('#playground-number')?.value || 0),
+    question: $('#playground-question')?.value.trim(), difficulty: $('#playground-difficulty')?.value || 'Beginner',
+    category: $('#playground-category')?.value.trim() || 'Basics', language: $('#playground-language')?.value.trim() || 'Java',
+    points: Math.max(0, Number($('#playground-points')?.value || 0)), is_active: Boolean($('#playground-active')?.checked), pieces
+  };
+}
+
+async function savePlaygroundChallenge() {
+  const payload = playgroundPayloadFromForm();
+  if (!payload.title || !payload.question || !payload.challenge_number || payload.pieces.length < 2) {
+    setPlaygroundFormStatus('Add a title, question, challenge number, and at least two components.', 'error'); return;
+  }
+  const id = $('#playground-id')?.value || null;
+  const button = $('#playground-save'); if (button) { button.disabled = true; button.textContent = '⟳ Saving…'; }
+  try {
+    let challengeId = id;
+    if (id) {
+      const { error } = await supabase.from('playground_challenges').update({...payload, updated_at:new Date().toISOString()}).eq('id', id);
+      if (error) throw error;
+    } else {
+      const { data, error } = await supabase.from('playground_challenges').insert(payload).select('id').single();
+      if (error) throw error; challengeId = data.id;
+    }
+    const { error: solutionError } = await supabase.from('playground_solutions').upsert({challenge_id:challengeId, correct_order:payload.pieces.map(p => p.id), updated_at:new Date().toISOString()});
+    if (solutionError) throw solutionError;
+    const successMessage = id ? 'Challenge updated successfully.' : 'Challenge created successfully.';
+    resetPlaygroundForm();
+    setPlaygroundFormStatus(successMessage, 'success');
+    await loadPlaygroundChallenges();
+  } catch (error) {
+    console.error('[Playground Admin] save failed', error);
+    setPlaygroundFormStatus(error.message || 'Could not save challenge.', 'error');
+  } finally { if (button) { button.disabled=false; button.textContent=id?'💾 Update Challenge':'💾 Save Challenge'; } }
+}
+
+async function togglePlaygroundChallenge(id, active) {
+  const { error } = await supabase.from('playground_challenges').update({is_active:!active,updated_at:new Date().toISOString()}).eq('id',id);
+  if (error) { alert(`Could not update challenge: ${error.message}`); return; }
+  await loadPlaygroundChallenges();
+}
+
+async function deletePlaygroundChallenge(id) {
+  if (!confirm('Permanently delete this Playground challenge and its progress?')) return;
+  const { error } = await supabase.from('playground_challenges').delete().eq('id',id);
+  if (error) { alert(`Could not delete challenge: ${error.message}`); return; }
+  await loadPlaygroundChallenges();
+}
+
 function switchPanel(name) {
   document.querySelectorAll('#admin-extensions .admin-tabs button').forEach(b =>
     b.classList.toggle('active', b.dataset.view === name)
@@ -298,10 +459,11 @@ function switchPanel(name) {
   if (name === 'streaks') loadStreakRisk();
   if (name === 'notifications') loadAdminNotifications();
   if (name === 'analytics') loadAdminAnalytics();
+  if (name === 'playground') loadPlaygroundChallenges();
 }
 
 function setAdminSection(name, { updateHash = true } = {}) {
-  const valid = ['dashboard','users','questions','units','notes','assignments','ai-insights','ai-homework','ai-assignment','analytics','settings'];
+  const valid = ['dashboard','users','questions','playground','units','notes','assignments','ai-insights','ai-homework','ai-assignment','analytics','settings'];
   const section = valid.includes(name) ? name : 'dashboard';
   state.activeSection = section;
 
@@ -322,7 +484,7 @@ function setAdminSection(name, { updateHash = true } = {}) {
 
   extensions.hidden = section === 'users';
 
-  const catalogView = !['dashboard','assignments','ai-insights','ai-homework','ai-assignment'].includes(section);
+  const catalogView = !['dashboard','assignments','ai-insights','ai-homework','ai-assignment','playground'].includes(section);
   extensions.classList.toggle('catalog-view', catalogView);
 
   if (section === 'users') {
@@ -789,7 +951,8 @@ async function sendBroadcast(){
     if(error)throw error;
     try {
       const { data: session } = await supabase.auth.getSession();
-      await fetch('/functions/v1/send-push', {
+      await fetch(
+  'https://mbtwdhadyonlirainmxm.supabase.co/functions/v1/send-push', {
         method:'POST',
         headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.session?.access_token || ''}`},
         body:JSON.stringify({title,message,type,recipientIds:recipients})
@@ -822,25 +985,62 @@ async function loadAdminNotifications() {
   }
 
   const rows = data || [];
-  const profileIds = [...new Set(rows.flatMap(row => [row.sender_id, row.recipient_id]).filter(Boolean))];
-  let profileMap = new Map();
+  const profileIds = [...new Set(
+    rows.flatMap(row => [row.sender_id, row.recipient_id]).filter(Boolean)
+  )];
 
-  if (profileIds.length) {
+  // Prefer the already-loaded admin user registry for notification identity.
+  // admin_list_users + role/profile enrichment runs before this function and
+  // already contains the display name, username and email needed here. This
+  // avoids failing the entire name lookup when the profiles table is protected
+  // by RLS for the current admin session.
+  const profileMap = new Map();
+  (state.users || []).forEach(user => {
+    if (user?.id) profileMap.set(user.id, user);
+  });
+
+  // Fill any identities that are not present in the registry. Keep this query
+  // best-effort: notification history must still render even when a profile
+  // cannot be read because of an RLS/schema restriction.
+  const missingProfileIds = profileIds.filter(id => !profileMap.has(id));
+  if (missingProfileIds.length) {
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('id,display_name,username,email')
-      .in('id', profileIds);
+      .in('id', missingProfileIds);
+
     if (!profileError) {
-      profileMap = new Map((profiles || []).map(profile => [profile.id, profile]));
+      (profiles || []).forEach(profile => profileMap.set(profile.id, profile));
     } else {
-      console.warn('[Notifications] Could not resolve notification names:', profileError.message);
+      console.warn(
+        '[Notifications] Profile enrichment unavailable; using registry/session fallback:',
+        profileError.message
+      );
     }
+  }
+
+  // Final fallback for the currently authenticated administrator. This makes
+  // sure the sender is never shown as "Unknown user" merely because their
+  // profile row is hidden by RLS.
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUser = session?.user;
+    if (currentUser?.id && !profileMap.has(currentUser.id)) {
+      const registryUser = (state.users || []).find(user => user.id === currentUser.id);
+      profileMap.set(currentUser.id, {
+        id: currentUser.id,
+        email: currentUser.email || registryUser?.email || '',
+        ...(registryUser || {})
+      });
+    }
+  } catch (sessionError) {
+    console.warn('[Notifications] Could not resolve current admin session:', sessionError?.message || sessionError);
   }
 
   state.notifications = rows.map(row => ({
     ...row,
-    sender: profileMap.get(row.sender_id),
-    recipient: profileMap.get(row.recipient_id)
+    sender: profileMap.get(row.sender_id) || null,
+    recipient: profileMap.get(row.recipient_id) || null
   }));
 
   renderNotificationHistory();

@@ -1,346 +1,589 @@
 import { supabase } from './supabase.js';
-import { ensureUserProfile, getPostAuthRoute } from './auth-utils.js';
 
 console.log('[Auth] Auth module loaded');
 
-const form = document.getElementById('authForm');
-const loginTab = document.getElementById('loginTab');
-const signupTab = document.getElementById('signupTab');
-const nameField = document.getElementById('nameField');
-const displayName = document.getElementById('displayName');
-const email = document.getElementById('email');
-const password = document.getElementById('password');
-const passwordToggle = document.getElementById('passwordToggle');
-const submitBtn = document.getElementById('submitBtn');
-const message = document.getElementById('message');
-const googleBtn = document.getElementById('googleBtn');
-const googleBtnLabel = document.getElementById('googleBtnLabel');
-const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
-const forgotPanel = document.getElementById('forgotPanel');
-const forgotForm = document.getElementById('forgotForm');
-const forgotEmail = document.getElementById('forgotEmail');
-const forgotSubmitBtn = document.getElementById('forgotSubmitBtn');
-const backToLoginBtn = document.getElementById('backToLoginBtn');
+const $ = (id) => document.getElementById(id);
 
-if (!form || !loginTab || !signupTab || !nameField || !displayName || !email ||
-    !password || !passwordToggle || !submitBtn || !message || !googleBtn || !googleBtnLabel ||
-    !forgotPasswordBtn || !forgotPanel || !forgotForm || !forgotEmail ||
-    !forgotSubmitBtn || !backToLoginBtn) {
-    console.error('[Auth] Missing one or more authentication elements on this page.');
-} else {
-    let mode = 'login';
+const form = $('authForm');
+const loginTab = $('loginTab');
+const signupTab = $('signupTab');
+const nameField = $('nameField');
+const displayName = $('displayName');
+const email = $('email');
+const password = $('password');
+const passwordToggle = $('passwordToggle');
+const submitBtn = $('submitBtn');
+const message = $('message');
 
-    function showMessage(text, type) {
-        message.textContent = text;
-        message.className = type;
+const forgotPasswordBtn = $('forgotPasswordBtn');
+const forgotPanel = $('forgotPanel');
+const forgotForm = $('forgotForm');
+const forgotEmail = $('forgotEmail');
+const forgotSubmitBtn = $('forgotSubmitBtn');
+const backToLoginBtn = $('backToLoginBtn');
+const googleBtn = $('googleBtn');
+
+let mode = 'login';
+
+function showMessage(text, type = '') {
+    if (!message) return;
+    message.textContent = text;
+    message.className = type;
+}
+
+function clearMessage() {
+    showMessage('', '');
+}
+
+function setMode(newMode) {
+    mode = newMode;
+    clearMessage();
+
+    const signup = mode === 'signup';
+
+    loginTab?.classList.toggle('active', !signup);
+    signupTab?.classList.toggle('active', signup);
+
+    if (nameField) {
+        nameField.style.display = signup ? 'block' : 'none';
     }
 
-    function clearMessage() {
-        message.textContent = '';
-        message.className = '';
+    if (displayName) {
+        displayName.required = signup;
     }
 
-    function setBusy(button, busy, label) {
-        if (!button) return;
-        button.disabled = busy;
-        if (label) button.textContent = label;
+    if (password) {
+        password.autocomplete =
+            signup ? 'new-password' : 'current-password';
     }
 
-    function togglePasswordVisibility() {
-        const isHidden = password.type === 'password';
-        password.type = isHidden ? 'text' : 'password';
-        passwordToggle.textContent = isHidden ? '🙈' : '👁';
-        passwordToggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    if (submitBtn) {
+        submitBtn.textContent = signup
+            ? 'CREATE DETECTIVE ACCOUNT'
+            : 'ENTER HEADQUARTERS';
     }
 
-    function setMode(newMode) {
-        mode = newMode;
-        clearMessage();
-        loginTab.classList.toggle('active', mode === 'login');
-        signupTab.classList.toggle('active', mode === 'signup');
-        nameField.style.display = mode === 'login' ? 'none' : 'block';
-        displayName.required = mode === 'signup';
-        password.autocomplete = mode === 'login' ? 'current-password' : 'new-password';
-        submitBtn.textContent = mode === 'login' ? 'ENTER HEADQUARTERS' : 'CREATE DETECTIVE ACCOUNT';
-        forgotPasswordBtn.style.display = mode === 'login' ? 'inline-block' : 'none';
-        // The same real Google OAuth integration is available for both
-        // authentication modes. In signup mode, Supabase creates the Auth
-        // account if it does not already exist; existing Google accounts are
-        // simply signed in and reused.
-        googleBtn.style.display = 'flex';
-        googleBtnLabel.textContent = mode === 'signup'
-            ? 'Sign up with Google'
-            : 'Continue with Google';
-        document.querySelector('.auth-divider').style.display = 'flex';
-    }
-
-    function showForgotPanel() {
-        clearMessage();
-        form.style.display = 'none';
-        googleBtn.style.display = 'none';
-        document.querySelector('.auth-divider').style.display = 'none';
-        forgotPasswordBtn.style.display = 'none';
-        forgotPanel.classList.add('active');
-        forgotPanel.setAttribute('aria-hidden', 'false');
-        forgotEmail.value = email.value.trim();
-        forgotEmail.focus();
-    }
-
-    function hideForgotPanel() {
+    if (forgotPanel) {
         forgotPanel.classList.remove('active');
         forgotPanel.setAttribute('aria-hidden', 'true');
-        form.style.display = 'block';
-        setMode('login');
-        forgotEmail.value = '';
-        email.focus();
     }
 
-    function getGoogleAuthErrorMessage(error) {
-        const messageText = String(error?.message || error?.error_description || '').trim();
-        const normalized = messageText.toLowerCase();
+    if (form) form.style.display = '';
+    if (googleBtn) googleBtn.style.display = '';
+}
 
-        if (
-            normalized.includes('popup') &&
-            (normalized.includes('blocked') || normalized.includes('closed'))
-        ) {
-            return 'Google authentication was blocked or closed. Allow the authentication window and try again.';
-        }
-        if (
-            normalized.includes('cancel') ||
-            normalized.includes('denied') ||
-            normalized.includes('access_denied')
-        ) {
-            return 'Google authentication was cancelled. You can try again whenever you are ready.';
-        }
-        if (
-            normalized.includes('provider') ||
-            normalized.includes('oauth') ||
-            normalized.includes('google')
-        ) {
-            return messageText || 'Google authentication could not be completed. Please try again.';
-        }
-        if (
-            normalized.includes('network') ||
-            normalized.includes('fetch') ||
-            normalized.includes('timeout')
-        ) {
-            return 'A network error interrupted Google authentication. Check your connection and try again.';
-        }
+function openForgotPanel() {
+    clearMessage();
 
-        return messageText || 'Google authentication could not be completed. Please try again.';
+    if (form) {
+        form.style.display = 'none';
     }
 
-    function readOAuthCallbackError() {
-        const searchParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-
-        return (
-            searchParams.get('error_description') ||
-            searchParams.get('error') ||
-            hashParams.get('error_description') ||
-            hashParams.get('error')
-        );
+    if (googleBtn) {
+        googleBtn.style.display = 'none';
     }
 
-    async function redirectIfSessionExists() {
-        const oauthError = readOAuthCallbackError();
-        if (oauthError) {
-            console.warn('[Auth] OAuth callback returned an error:', oauthError);
-            showMessage(getGoogleAuthErrorMessage({ message: oauthError }), 'error');
-            window.history.replaceState(
-                {},
-                document.title,
-                window.location.origin
-            );
-            setMode('login');
-            return;
-        }
-
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-            console.error('[Auth] Session check failed:', error);
-            return;
-        }
-        if (!session?.user) return;
-
-        try {
-            // This is the same profile bootstrap used by email/password signup.
-            // A Google-authenticated user receives no role here; admin status
-            // remains exclusively controlled by the existing secure role system.
-            await ensureUserProfile(supabase, session.user);
-            const route = await getPostAuthRoute(supabase);
-            window.location.replace(new URL(route, window.location.href).href);
-        } catch (error) {
-            console.error('[Auth] Existing-session profile bootstrap failed:', error);
-            showMessage(
-                'Authentication succeeded, but your Code Detective profile could not be initialized. Please try again.',
-                'error'
-            );
-            await supabase.auth.signOut().catch(() => {});
-        }
+    if (forgotPanel) {
+        forgotPanel.classList.add('active');
+        forgotPanel.setAttribute('aria-hidden', 'false');
     }
 
-    passwordToggle.addEventListener('click', togglePasswordVisibility);
-    loginTab.addEventListener('click', () => setMode('login'));
-    signupTab.addEventListener('click', () => setMode('signup'));
-    forgotPasswordBtn.addEventListener('click', showForgotPanel);
-    backToLoginBtn.addEventListener('click', hideForgotPanel);
+    if (forgotEmail && email?.value.trim()) {
+        forgotEmail.value = email.value.trim();
+    }
 
-    googleBtn.addEventListener('click', async () => {
-        clearMessage();
-        const label = mode === 'signup' ? 'Sign up with Google' : 'Continue with Google';
-        setBusy(googleBtn, true, 'Connecting to Google…');
+    forgotEmail?.focus();
+}
 
-        try {
-            // Supabase owns the OAuth exchange. No Google credentials or
-            // passwords are handled by Code Detective.
-            const redirectTo = window.location.origin;
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'select_account'
-                    }
-                }
+function closeForgotPanel() {
+    clearMessage();
+
+    if (forgotPanel) {
+        forgotPanel.classList.remove('active');
+        forgotPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    if (form) {
+        form.style.display = '';
+    }
+
+    if (googleBtn) {
+        googleBtn.style.display = '';
+    }
+}
+
+async function redirectHome() {
+    window.location.replace(
+        new URL('home.html', window.location.href).href
+    );
+}
+
+/*
+ * Supabase recovery links can occasionally arrive at the configured
+ * Site URL instead of the requested redirect URL (for example when the
+ * redirect URL is not present in the Supabase allow-list). If the
+ * current URL contains recovery credentials, always hand the complete
+ * URL to reset-password.html instead of allowing normal login routing
+ * to send the user to home.html.
+ */
+function isPasswordRecoveryUrl() {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(
+        window.location.hash.replace(/^#/, '')
+    );
+
+    return (
+        query.get('type') === 'recovery' ||
+        hash.get('type') === 'recovery' ||
+        Boolean(query.get('access_token')) ||
+        Boolean(hash.get('access_token')) ||
+        Boolean(query.get('code'))
+    );
+}
+
+function redirectToPasswordResetIfNeeded() {
+    if (!isPasswordRecoveryUrl()) return false;
+
+    const resetUrl = new URL(
+        'reset-password.html',
+        window.location.href
+    );
+
+    // Preserve Supabase's recovery parameters exactly as received.
+    resetUrl.search = window.location.search;
+    resetUrl.hash = window.location.hash;
+
+    console.info('[Auth] Password recovery detected; opening reset-password.html');
+    window.location.replace(resetUrl.href);
+    return true;
+}
+
+async function createProfile(userId, name, emailAddr) {
+    try {
+        const { error } = await supabase
+            .from('profiles')
+            .upsert({
+                id: userId,
+                username: name,
+                email: emailAddr
             });
 
-            if (error) throw error;
-        } catch (error) {
-            console.error('[Auth] Google authentication failed:', error);
-            showMessage(
-                getGoogleAuthErrorMessage(error),
-                'error'
+        if (error) {
+            console.error(
+                '[Profile] Failed to create/update profile:',
+                error
             );
-            setBusy(googleBtn, false, label);
         }
-    });
+    } catch (error) {
+        console.error(
+            '[Profile] Unexpected error:',
+            error
+        );
+    }
+}
 
-    forgotForm.addEventListener('submit', async (event) => {
+async function checkSession() {
+    try {
+        // Recovery routing must happen before the normal authenticated-user
+        // redirect, otherwise index.html can send the user to home.html.
+        if (redirectToPasswordResetIfNeeded()) {
+            return;
+        }
+
+        const {
+            data: { session },
+            error
+        } = await supabase.auth.getSession();
+
+        if (error) {
+            console.error(
+                '[Auth] Session check failed:',
+                error
+            );
+            return;
+        }
+
+        if (session?.user) {
+            await redirectHome();
+        }
+
+    } catch (error) {
+        console.error(
+            '[Auth] Session check exception:',
+            error
+        );
+    }
+}
+
+
+/* =========================
+   LOGIN / SIGNUP
+========================= */
+
+loginTab?.addEventListener('click', () => {
+    setMode('login');
+});
+
+signupTab?.addEventListener('click', () => {
+    setMode('signup');
+});
+
+
+/* =========================
+   FORGOT PASSWORD
+========================= */
+
+forgotPasswordBtn?.addEventListener(
+    'click',
+    openForgotPanel
+);
+
+backToLoginBtn?.addEventListener(
+    'click',
+    closeForgotPanel
+);
+
+
+/* =========================
+   PASSWORD VISIBILITY
+========================= */
+
+passwordToggle?.addEventListener('click', () => {
+
+    if (!password) return;
+
+    const showing =
+        password.type === 'text';
+
+    password.type =
+        showing ? 'password' : 'text';
+
+    passwordToggle.textContent =
+        showing ? '👁' : '🙈';
+
+    passwordToggle.setAttribute(
+        'aria-label',
+        showing
+            ? 'Show password'
+            : 'Hide password'
+    );
+});
+
+
+/* =========================
+   LOGIN / SIGNUP SUBMIT
+========================= */
+
+form?.addEventListener(
+    'submit',
+    async (event) => {
+
         event.preventDefault();
         clearMessage();
-        const emailValue = forgotEmail.value.trim();
 
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
-            showMessage('Enter a valid email address.', 'error');
-            return;
-        }
+        const emailValue =
+            email?.value.trim() || '';
 
-        setBusy(forgotSubmitBtn, true, 'SENDING RESET LINK…');
-        try {
-            const redirectTo = new URL('reset-password.html', window.location.href).href;
-            const { error } = await supabase.auth.resetPasswordForEmail(emailValue, { redirectTo });
-            if (error) throw error;
+        const passwordValue =
+            password?.value || '';
 
-            // Deliberately use a non-enumerating response so the UI never reveals
-            // whether an email address is registered.
+        if (!emailValue || !passwordValue) {
             showMessage(
-                'If an account exists for that email, a secure reset link has been sent. Check your inbox and spam folder.',
-                'success'
-            );
-        } catch (error) {
-            console.error('[Auth] Password reset request failed:', error);
-            showMessage(
-                error?.message || 'The password reset request could not be completed. Please try again.',
+                'Enter your email and password.',
                 'error'
             );
-        } finally {
-            setBusy(forgotSubmitBtn, false, 'SEND RESET LINK');
-        }
-    });
-
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        clearMessage();
-
-        const emailValue = email.value.trim();
-        const passwordValue = password.value;
-
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
-            showMessage('Enter a valid email address.', 'error');
-            return;
-        }
-        if (!passwordValue) {
-            showMessage('Enter your password.', 'error');
-            return;
-        }
-        if (mode === 'signup' && passwordValue.length < 6) {
-            showMessage('Password must contain at least 6 characters.', 'error');
             return;
         }
 
-        setBusy(submitBtn, true, mode === 'login' ? 'AUTHENTICATING…' : 'CREATING ACCOUNT…');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+
+            submitBtn.textContent =
+                mode === 'signup'
+                    ? 'CREATING ACCOUNT...'
+                    : 'AUTHENTICATING...';
+        }
 
         try {
-            let user;
+
+            /* SIGN UP */
 
             if (mode === 'signup') {
-                const detectiveName = displayName.value.trim();
+
+                const detectiveName =
+                    displayName?.value.trim() || '';
+
                 if (!detectiveName) {
-                    showMessage('Enter your detective name.', 'error');
-                    return;
-                }
-
-                const { data, error } = await supabase.auth.signUp({
-                    email: emailValue,
-                    password: passwordValue,
-                    options: { data: { display_name: detectiveName } }
-                });
-                if (error) throw error;
-
-                user = data?.user || data?.session?.user;
-                if (user) {
-                    await ensureUserProfile(supabase, user, {
-                        displayName: detectiveName,
-                        email: emailValue
-                    });
-                }
-
-                if (!data?.session) {
-                    showMessage(
-                        'Account created. Check your email and confirm your account, then return here and log in.',
-                        'success'
+                    throw new Error(
+                        'Enter your detective name.'
                     );
-                    setMode('login');
+                }
+
+                const { data, error } =
+                    await supabase.auth.signUp({
+
+                        email: emailValue,
+
+                        password: passwordValue,
+
+                        options: {
+                            data: {
+                                display_name:
+                                    detectiveName
+                            }
+                        }
+                    });
+
+                if (error) {
+                    throw error;
+                }
+
+                const user =
+                    data?.user ??
+                    data?.session?.user;
+
+                if (user) {
+
+                    await createProfile(
+                        user.id,
+                        detectiveName,
+                        emailValue
+                    );
+                }
+
+                if (data?.session) {
+
+                    await redirectHome();
                     return;
                 }
-            } else {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: emailValue,
-                    password: passwordValue
-                });
-                if (error) throw error;
-                if (!data?.session?.user) {
-                    throw new Error('Authentication did not create a usable session. Please try again.');
-                }
-                user = data.session.user;
+
+                showMessage(
+                    'Account created. Check your email and confirm your account, then return here and log in.',
+                    'success'
+                );
+
+                setMode('login');
+                return;
             }
 
-            if (!user) throw new Error('Authentication did not return a user account.');
 
-            await ensureUserProfile(supabase, user);
-            const route = await getPostAuthRoute(supabase);
-            window.location.replace(new URL(route, window.location.href).href);
+            /* LOGIN */
+
+            const { data, error } =
+                await supabase.auth
+                    .signInWithPassword({
+
+                        email: emailValue,
+
+                        password: passwordValue
+                    });
+
+            if (error) {
+                throw error;
+            }
+
+            if (!data?.session) {
+
+                throw new Error(
+                    'Login succeeded, but no active session was created. Please try again.'
+                );
+            }
+
+            await redirectHome();
+
         } catch (error) {
-            console.error('[Auth] Authentication error:', error);
-            showMessage(error?.message || 'Authentication failed. Please try again.', 'error');
-        } finally {
-            setBusy(
-                submitBtn,
-                false,
-                mode === 'login' ? 'ENTER HEADQUARTERS' : 'CREATE DETECTIVE ACCOUNT'
+
+            console.error(
+                '[Auth] Authentication error:',
+                error
             );
+
+            showMessage(
+                error.message ||
+                'Authentication failed.',
+                'error'
+            );
+
+        } finally {
+
+            if (submitBtn) {
+
+                submitBtn.disabled = false;
+
+                submitBtn.textContent =
+                    mode === 'signup'
+                        ? 'CREATE DETECTIVE ACCOUNT'
+                        : 'ENTER HEADQUARTERS';
+            }
         }
-    });
-
-    // A successful password reset can return to this page with a message.
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('reset') === 'success') {
-        showMessage('Password updated successfully. You can now sign in.', 'success');
-        window.history.replaceState({}, document.title, new URL('index.html', window.location.href).href);
     }
+);
 
-    await redirectIfSessionExists();
-    setMode('login');
-}
+
+/* =========================
+   PASSWORD RESET REQUEST
+========================= */
+
+forgotForm?.addEventListener(
+    'submit',
+    async (event) => {
+
+        event.preventDefault();
+        clearMessage();
+
+        const emailValue =
+            forgotEmail?.value.trim() || '';
+
+        if (!emailValue) {
+
+            showMessage(
+                'Enter your account email.',
+                'error'
+            );
+
+            return;
+        }
+
+        if (forgotSubmitBtn) {
+
+            forgotSubmitBtn.disabled = true;
+
+            forgotSubmitBtn.textContent =
+                'SENDING...';
+        }
+
+        try {
+
+            /*
+             * This is your EXISTING
+             * reset-password.html page.
+             */
+
+            const resetUrl =
+                new URL(
+                    '/reset-password.html',
+                    window.location.origin
+                ).href;
+
+            const { error } =
+                await supabase.auth
+                    .resetPasswordForEmail(
+                        emailValue,
+                        {
+                            redirectTo:
+                                resetUrl
+                        }
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+            showMessage(
+                'Password reset link sent. Check your email and open the link to set a new password.',
+                'success'
+            );
+
+            if (forgotForm) {
+                forgotForm.reset();
+            }
+
+        } catch (error) {
+
+            console.error(
+                '[Auth] Password reset request failed:',
+                error
+            );
+
+            showMessage(
+                error.message ||
+                'Unable to send the password reset link.',
+                'error'
+            );
+
+        } finally {
+
+            if (forgotSubmitBtn) {
+
+                forgotSubmitBtn.disabled = false;
+
+                forgotSubmitBtn.textContent =
+                    'SEND RESET LINK';
+            }
+        }
+    }
+);
+
+
+/* =========================
+   GOOGLE LOGIN
+========================= */
+
+googleBtn?.addEventListener(
+    'click',
+    async () => {
+
+        clearMessage();
+
+        googleBtn.disabled = true;
+
+        const label =
+            $('googleBtnLabel');
+
+        if (label) {
+            label.textContent =
+                'CONNECTING...';
+        }
+
+        try {
+
+            const { error } =
+                await supabase.auth
+                    .signInWithOAuth({
+
+                        provider: 'google',
+
+                        options: {
+                            redirectTo:
+                                new URL(
+                                    'home.html',
+                                    window.location.href
+                                ).href
+                        }
+                    });
+
+            if (error) {
+                throw error;
+            }
+
+        } catch (error) {
+
+            console.error(
+                '[Auth] Google authentication error:',
+                error
+            );
+
+            showMessage(
+                error.message ||
+                'Google authentication failed.',
+                'error'
+            );
+
+            googleBtn.disabled = false;
+
+            if (label) {
+                label.textContent =
+                    'Continue with Google';
+            }
+        }
+    }
+);
+
+
+/* =========================
+   INITIALIZE
+========================= */
+
+setMode('login');
+
+checkSession(); 

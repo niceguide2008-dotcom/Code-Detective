@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#F5B942">
+<title>Terms & Conditions · Code Detective</title>
+<link rel="icon" href="./favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#F5B942;--gold-dim:#C9921C;--gold-glow:rgba(245,185,66,.15);
+  --blue:#4FA9FF;--green:#38D39F;--red:#FF5D73;
+  --bg:#0E1117;--panel:#1B2230;--panel2:#222B3A;--border:#303B4D;
+  --text:#FFFFFF;--muted:#B6BECF;--subtle:#7B8798;
+  --font:'Inter',sans-serif;--code:'Fira Code','JetBrains Mono',monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(245,185,66,.012) 2px,rgba(245,185,66,.012) 4px);z-index:-1}
+.top{position:sticky;top:0;z-index:20;min-height:68px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:18px;border-bottom:1px solid var(--border);background:rgba(7,11,17,.92);backdrop-filter:blur(18px)}
+.brand{display:flex;align-items:center;gap:11px;color:var(--text);text-decoration:none;font-family:var(--code);font-weight:800;font-size:13px;letter-spacing:.04em}
+.mark{display:grid;place-items:center;width:38px;height:38px;border:1px solid rgba(245,185,66,.35);border-radius:10px;background:linear-gradient(135deg,rgba(245,185,66,.18),rgba(79,169,255,.12));box-shadow:0 0 20px rgba(245,185,66,.08)}
+.brand-accent{color:var(--gold)}
+.back{color:var(--muted);text-decoration:none;font:700 11px var(--code);letter-spacing:.04em;padding:9px 12px;border:1px solid transparent;border-radius:8px;transition:.2s}
+.back:hover{color:var(--gold);border-color:rgba(245,185,66,.25);background:rgba(245,185,66,.05)}
+.wrap{width:min(960px,calc(100% - 32px));margin:46px auto 80px}
+.eyebrow{font:700 11px/1 var(--code);letter-spacing:.18em;color:var(--gold);text-transform:uppercase}
+h1{font-size:clamp(34px,6vw,58px);line-height:1.04;letter-spacing:-.045em;margin:12px 0 16px}
+.lead{color:var(--muted);line-height:1.8;max-width:780px;margin:0}
+.updated{display:inline-flex;margin:22px 0 0;padding:9px 12px;border:1px solid rgba(245,185,66,.18);border-radius:9px;background:rgba(245,185,66,.045);color:var(--muted);font:500 11px var(--code)}
+.card{margin-top:18px;padding:30px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));box-shadow:0 16px 42px rgba(0,0,0,.23)}
+h2{font-size:21px;margin:0 0 10px}
+h3{font-size:15px;margin:26px 0 8px;color:var(--gold)}
+p,li{color:var(--muted);font-size:13px;line-height:1.85}
+ul{padding-left:21px}
+a{color:var(--gold)}
+.notice{padding:14px 16px;border-left:3px solid var(--gold);background:rgba(245,185,66,.055);border-radius:9px;color:var(--muted);font-size:12px;line-height:1.75}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:20px}
+.mini{padding:18px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025)}
+.mini strong{display:block;color:var(--text);font-size:13px;margin-bottom:6px}
+.mini p{margin:0;font-size:12px;line-height:1.7}
+.footer{border-top:1px solid var(--border);padding:22px 28px;text-align:center;color:var(--subtle);font:500 10px var(--code)}
+@media(max-width:600px){
+ .top{padding:0 14px;min-height:62px}.brand{font-size:11px}.mark{width:34px;height:34px}
+ .back{font-size:10px;padding:8px}.wrap{width:min(100% - 20px,960px);margin:28px auto 55px}
+ .card{padding:20px;border-radius:15px}.grid{grid-template-columns:1fr}h1{font-size:38px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="./home.html"><span class="mark">🕵️</span><span>CODE <span class="brand-accent">DETECTIVE</span></span></a>
+  <a class="back" href="./home.html">← BACK TO HQ</a>
+</header>
+<main class="wrap">
+  <div class="eyebrow">LEGAL / TERMS</div>
+  <h1>Terms & Conditions</h1>
+  <p class="lead">The rules and expectations for using the Code Detective learning platform.</p>
+  <div class="updated">Last updated: August 16, 2026</div>
+  <section class="card">
+<div class="notice"><strong>Important:</strong> These are product terms for the current Code Detective learning application, not legal advice. Before public or commercial launch, have them reviewed for the jurisdictions in which the service operates.</div>
+<h3>1. Acceptance of these terms</h3>
+<p>By accessing or using Code Detective, you agree to use the service lawfully and responsibly. If you do not agree with these terms, do not use the service.</p>
+<h3>2. Accounts</h3>
+<p>You are responsible for keeping your account credentials secure and for activity performed through your account. Provide accurate information and notify the project owner if you believe an account has been compromised.</p>
+<h3>3. Educational purpose</h3>
+<p>Code Detective is an educational platform. Challenges, explanations, hints, scores, XP, and automated feedback are provided for learning purposes. Important academic or professional work should be independently verified.</p>
+<h3>4. Acceptable use</h3>
+<ul><li>Do not attempt to disrupt or overload the service.</li><li>Do not bypass authentication, access controls, or administrative features.</li><li>Do not attempt to access another user's account or private data.</li><li>Do not upload or submit unlawful, malicious, abusive, or infringing material.</li></ul>
+<h3>5. Intellectual property</h3>
+<p>Unless explicitly stated otherwise, the Code Detective name, branding, interface, original educational content, software, and visual assets belong to the project owner or their respective licensors. Protected material may not be copied, redistributed, or commercially exploited without permission.</p>
+<h3>6. User-submitted content</h3>
+<p>If the application allows users to submit content, you remain responsible for that content and must have the necessary rights to submit it. Do not submit confidential or sensitive information unless the relevant feature explicitly requires it.</p>
+<h3>7. Availability and changes</h3>
+<p>The service may be updated, modified, temporarily unavailable, or discontinued in whole or in part. Features, challenges, educational content, scoring systems, and other functionality may change as Code Detective develops.</p>
+<h3>8. Disclaimer</h3>
+<p>To the extent permitted by applicable law, Code Detective is provided on an “as available” basis and the project owner does not guarantee uninterrupted service, error-free operation, or that educational content will meet every user's particular requirements.</p>
+<h3>9. Limitation of responsibility</h3>
+<p>To the extent permitted by applicable law, the project owner is not responsible for losses resulting from misuse of the service, reliance on educational content without appropriate verification, or interruptions outside the project's reasonable control.</p>
+<h3>10. Termination</h3>
+<p>Access may be suspended or terminated where necessary to protect the service, its users, or to address violations of these terms or applicable law.</p>
+<h3>11. Changes to these terms</h3>
+<p>These terms may be updated as the service evolves. Continued use of Code Detective after a material update may constitute acceptance of the revised terms where permitted by applicable law.</p>
+<h3>12. Contact</h3>
+<p>For questions about these terms, use the official contact channel published by the Code Detective project owner.</p>
+</section>
+</main>
+<footer class="footer">CODE DETECTIVE · LEARN · INVESTIGATE · DEBUG</footer>
+</body>
+</html>

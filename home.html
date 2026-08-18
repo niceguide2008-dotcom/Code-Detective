@@ -4085,7 +4085,8 @@
         grid-template-columns: 1fr;
       }
       .mastery-sidebar {
-        display: none;
+        display: block;
+        grid-column: 1;
       }
 
       /* Neon title */
@@ -4524,7 +4525,7 @@
       outline: 2px solid rgba(245,185,66,.75);
       outline-offset: 3px;
     }
-    .nav-xp-badge { cursor: pointer; pointer-events: auto; }
+    .nav-xp-badge { cursor: default; pointer-events: auto; }
     .profile-dropdown { z-index: 1400; pointer-events: none; }
     .profile-dropdown.active { pointer-events: auto; }
     .notification-panel { z-index: 1300; }
@@ -5144,6 +5145,41 @@
         padding: 6px 8px !important;
     }
 }
+
+    /* FEATURES 17–22 — achievement presentation */
+    .achievement-card { overflow: hidden; position: relative; }
+    .achievement-panel-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+    .achievement-kicker { color:var(--purple); font-size:10px; text-transform:uppercase; letter-spacing:1.7px; font-family:var(--font-code); }
+    .achievement-title { margin-top:4px; font-size:16px; font-weight:800; }
+    .achievement-motif { width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(168,85,247,.28); border-radius:50%; color:var(--purple); font-family:var(--font-code); font-size:11px; opacity:.72; }
+    .achievement-summary { color:var(--text-muted); font-size:11px; line-height:1.5; margin-bottom:12px; }
+    .achievement-list {
+      display:grid;
+      gap:9px;
+      min-width:0;
+      overflow:visible;
+    }
+    .achievement-card {
+      min-width:0;
+      overflow:visible;
+    }
+    #screen-mastery { overflow:visible; }
+    #screen-mastery .container { overflow:visible; }
+    .achievement-item { border:1px solid var(--border); border-radius:12px; padding:11px; background:rgba(255,255,255,.018); transition:transform .2s ease, border-color .2s ease, opacity .2s ease; }
+    .achievement-item.earned { border-color:rgba(0,255,136,.28); background:rgba(0,255,136,.035); }
+    .achievement-item.master { border-color:rgba(168,85,247,.4); box-shadow:0 0 0 1px rgba(168,85,247,.08), 0 10px 28px rgba(0,0,0,.12); }
+    .achievement-item.locked { opacity:.72; }
+    .achievement-row { display:flex; align-items:center; gap:10px; }
+    .achievement-icon { width:34px; height:34px; flex:0 0 34px; display:grid; place-items:center; border-radius:10px; background:rgba(255,255,255,.045); border:1px solid var(--border); font-size:17px; }
+    .achievement-item.earned .achievement-icon { border-color:rgba(0,255,136,.3); }
+    .achievement-name { font-size:12px; font-weight:800; }
+    .achievement-state { margin-left:auto; font-size:9px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; }
+    .achievement-state.earned { color:var(--green); }
+    .achievement-state.locked { color:var(--text-muted); }
+    .achievement-desc { margin-top:7px; color:var(--text-secondary); font-size:10px; line-height:1.45; }
+    .achievement-progress-track { height:5px; margin-top:8px; overflow:hidden; border-radius:99px; background:rgba(255,255,255,.06); }
+    .achievement-progress-fill { height:100%; border-radius:inherit; background:linear-gradient(90deg,var(--purple),var(--cyan)); transition:width .45s ease; }
+    .achievement-progress-label { margin-top:5px; color:var(--text-muted); font-size:9px; font-family:var(--font-code); }
 </style>
 <style id="navbar-responsive-button-fix">
 /* =========================================================
@@ -5243,7 +5279,23 @@
     height: 32px !important;
     min-width: 32px !important;
   }
-  #main-nav .nav-xp-badge { display: none !important; }
+  #main-nav .nav-xp-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 58px !important;
+    max-width: 72px !important;
+    height: 32px !important;
+    padding: 0 8px !important;
+    gap: 4px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+  #main-nav .nav-xp-badge span:last-child {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
   #main-nav .notification-panel,
   #main-nav .profile-dropdown {
     left: auto !important;
@@ -5796,7 +5848,19 @@
   .nav-external-control { top: 7px !important; }
   #nav-notification-control { left: 7px !important; }
   #nav-actions-control { right: 7px !important; }
-  #nav-actions-control .nav-xp-badge { display: none !important; }
+  #nav-actions-control .nav-xp-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 58px !important;
+    max-width: 72px !important;
+    height: 32px !important;
+    padding: 0 8px !important;
+    gap: 4px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
   #nav-notification-control #nav-bell-btn {
     width: 40px !important;
     height: 40px !important;
@@ -6095,42 +6159,7 @@
   #main-nav .nav-tab { padding-left: 8px !important; padding-right: 8px !important; }
 }
 </style>
-<style id="navbar-mobile-interaction-final">
-/* Hidden dropdowns must never intercept taps. */
-#notification-panel,
-#profile-dropdown {
-  pointer-events: none !important;
-  visibility: hidden;
-}
-#notification-panel.active,
-#profile-dropdown.active {
-  pointer-events: auto !important;
-  visibility: visible !important;
-}
-#nav-bell-btn,
-#nav-avatar-btn,
-#nav-xp-btn {
-  touch-action: manipulation !important;
-  -webkit-user-select: none;
-  user-select: none;
-}
-@media (max-width: 600px) {
-  #nav-notification-control #notification-panel {
-    left: 0 !important;
-    right: auto !important;
-    top: 48px !important;
-    width: min(360px, calc(100vw - 14px)) !important;
-    max-width: calc(100vw - 14px) !important;
-  }
-  #nav-actions-control #profile-dropdown {
-    left: auto !important;
-    right: 0 !important;
-    top: 48px !important;
-    width: min(300px, calc(100vw - 14px)) !important;
-    max-width: calc(100vw - 14px) !important;
-  }
-}
-</style>
+
 </head>
 <body>
 <!-- =============================================
@@ -6157,6 +6186,10 @@
 <span class="nav-tab-icon">📚</span>
 <span class="nav-tab-label">Notes</span>
 </button>
+<button class="nav-tab" data-screen="playground" id="tab-playground" type="button">
+<span class="nav-tab-icon">🧪</span>
+<span class="nav-tab-label">Playground</span>
+</button>
 </div></nav><div class="nav-external-control nav-external-left" id="nav-notification-control"><div class="nav-notification-wrap">
 <button aria-controls="notification-panel" aria-expanded="false" aria-label="Notifications" class="nav-bell" id="nav-bell-btn" title="Notifications" type="button">
 <span aria-hidden="true" class="nav-bell-glyph">🔔</span>
@@ -6165,11 +6198,6 @@
 <!-- EXISTING NOTIFICATION DROPDOWN -->
 <div class="notification-panel" id="notification-panel"></div>
 </div></div><div class="nav-external-control nav-external-right" id="nav-actions-control"><div class="nav-right">
-<!-- XP -->
-<div class="nav-xp-badge" id="nav-xp-btn">
-<span>⚡</span>
-<span id="nav-xp"></span>
-</div>
 <!-- =================================================
              AVATAR
              ================================================= -->
@@ -6680,6 +6708,11 @@
 </div>
 </div>
 </section>
+<section class="screen" id="screen-playground">
+  <div class="section-kicker">PLAYGROUND</div>
+  <h1 class="section-title">Playground</h1>
+</section>
+
 <section class="screen" id="screen-crime-scene">
 <div class="container">
 <!-- Case Navigation -->
@@ -6939,10 +6972,16 @@
 <div class="overall-stat-label">Day Streak</div>
 </div>
 </div>
-<div class="card">
-<div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px;">
-                📈 Recommended</div>
-<div id="recommendations" style="display:flex; flex-direction:column; gap:10px;"></div>
+<div class="card achievement-card" id="achievement-panel" style="margin-top:14px;">
+<div class="achievement-panel-header">
+  <div>
+    <div class="achievement-kicker">Detective Archive</div>
+    <div class="achievement-title">🏅 Achievements</div>
+  </div>
+  <span class="achievement-motif">19</span>
+</div>
+<div id="achievement-summary" class="achievement-summary">Checking your verified field records…</div>
+<div id="achievement-list" class="achievement-list"></div>
 </div>
 <div class="card" style="margin-top:14px;">
 <div style="font-size:13px; font-weight:700; margin-bottom:16px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px;">
@@ -6970,6 +7009,59 @@
   const MASTERY_TOPICS = [{"id": "UNIT_1", "label": "Data Types & Operators", "name": "Data Types & Operators", "division": "Unit I - Basics", "cases": ["U1-01", "U1-02", "U1-03", "U1-04", "U1-05", "U1-06", "U1-07", "U1-08", "U1-09", "U1-10"], "solved": 0}, {"id": "UNIT_2", "label": "OOP - Inheritance & Polymorphism", "name": "OOP - Inheritance & Polymorphism", "division": "Unit II - OOP", "cases": CASES.filter(c => c.unitId === "UNIT_2").map(c => c.id), "solved": 0}, {"id": "UNIT_3", "label": "Exceptions & Threads", "name": "Exceptions & Threads", "division": "Unit III - Exceptions & Threads", "cases": CASES.filter(c => c.unitId === "UNIT_3").map(c => c.id), "solved": 0}, {"id": "UNIT_4", "label": "I/O, Strings & Generics", "name": "I/O, Strings & Generics", "division": "Unit IV - I/O & Generics", "cases": CASES.filter(c => c.unitId === "UNIT_4").map(c => c.id), "solved": 0}, {"id": "UNIT_5", "label": "JavaFX UI", "name": "JavaFX UI", "division": "Unit V - JavaFX", "cases": CASES.filter(c => c.unitId === "UNIT_5").map(c => c.id), "solved": 0}, {"id":"JAVA_OOP_UNIT1","label":"OBJECT ORIENTED PROGRAMMING USING JAVA","name":"Unit I – Introduction to OOP and Java","division":"OBJECT ORIENTED PROGRAMMING USING JAVA — Unit I","cases":(window.JAVA_OOP_UNIT1_CASES || []).map(c => c.id),"solved":0}];
   // New pack is appended so existing investigations, IDs, and saved progress stay intact.
   if (Array.isArray(window.JAVA_OOP_UNIT1_CASES)) CASES.push(...window.JAVA_OOP_UNIT1_CASES);
+
+  // FEATURE 18 — Case #19. Uses the same investigation schema and completion flow as every other case.
+  // The 1913 reference is deliberately buried in the evidence trail rather than exposed in the case card.
+  const CASE_19 = {
+    id: 'CASE-19',
+    unitId: 'UNIT_2',
+    caseNumber: 'Case 19',
+    title: 'The Nineteenth Cipher',
+    description: 'A sealed source file contains one anomaly. Follow the evidence trail and expose the hidden pattern.',
+    difficulty: 'Senior Investigator',
+    difficultyColor: 'crimson',
+    xpReward: 300,
+    filename: 'Cipher_19.java',
+    bannerSnippet: '<span class="text-crimson">evidence[<span class="number">19</span>]</span>;',
+    topic: '19 Special Investigation',
+    division: 'Unit II - OOP',
+    detectorNote: 'The file was indexed correctly. The anomaly is buried deeper than the first line.',
+    criminal: 'Hidden index anomaly',
+    code: [
+      { text: '<span class="keyword">int</span>[] evidence = {<span class="number">7</span>, <span class="number">11</span>, <span class="number">19</span>};', bug: false },
+      { text: '<span class="keyword">int</span> marker = evidence.length;', bug: false },
+      { text: '<span class="keyword">int</span> suspect = evidence[<span class="number">19</span>];', bug: true },
+      { text: '<span class="class-name">System</span>.<span class="variable">out</span>.<span class="method">println</span>(suspect);', bug: false }
+    ],
+    clues: [
+      { text: 'The evidence array contains only three entries, so its valid indexes are 0, 1, and 2.', icon: '🔍' },
+      { text: 'The marker value is the array length. Length and the highest valid index are not the same thing.', icon: '🧩' },
+      { text: 'The evidence log carries the timestamp 19:13. Read it as an investigator would: 19·13, not as a case number.', icon: '🕰️' }
+    ],
+    suspects: [
+      { name: 'Hidden index anomaly', icon: '🎯', correct: true },
+      { name: 'NullPointerException', icon: '💀', correct: false },
+      { name: 'Inheritance failure', icon: '🧬', correct: false },
+      { name: 'Syntax Error', icon: '🚫', correct: false }
+    ],
+    reasons: [
+      { text: 'Index 19 is outside the array because the array has only three elements.', correct: true },
+      { text: 'The array length itself makes every larger index valid.', correct: false },
+      { text: 'The println call creates the invalid index.', correct: false },
+      { text: 'The code fails because Java arrays start at index 1.', correct: false }
+    ],
+    fixes: [
+      { text: 'int suspect = evidence[2];', correct: true },
+      { text: 'int suspect = evidence[19];', correct: false },
+      { text: 'int suspect = evidence.length;', correct: false },
+      { text: 'int suspect = evidence[-1];', correct: false }
+    ],
+    orderIndex: 18,
+    isSpecial19: true
+  };
+  if (!CASES.some(c => c.id === CASE_19.id)) {
+    CASES.push(CASE_19);
+  }
   const CRIMINALS = [{"name": "Numeric overflow", "alias": "Numeric overflow", "exceptionClass": "Numeric overflow", "icon": "🌊", "description": "Java data types and integer overflow.", "attack": "evidence++;", "cause": "The maximum value for a byte is 127. Incrementing past it causes an overflow to its minimum value (-128).", "solvedCount": 0, "unlocked": true}, {"name": "ArrayIndexOutOfBoundsException", "alias": "ArrayIndexOutOfBoundsException", "exceptionClass": "ArrayIndexOutOfBoundsException", "icon": "📊", "description": "Accessing an array out of its bounds.", "attack": "System.out.println(marks[3]);", "cause": "The valid indices for this array are 0, 1, and 2. Index 3 does not exist.", "solvedCount": 0, "unlocked": true}, {"name": "70", "alias": "70", "exceptionClass": "70", "icon": "🎯", "description": "Operator precedence and compound assignment.", "attack": "total_dxp += 10 * 2;", "cause": "First, 10 * 2 is evaluated (20). Then, 20 is added to 50.", "solvedCount": 0, "unlocked": true}, {"name": "Incorrect condition ordering", "alias": "Incorrect condition ordering", "exceptionClass": "Incorrect condition ordering", "icon": "🔀", "description": "Incorrect condition ordering in an if-else chain.", "attack": "if (marks >= 40)", "cause": "Because 85 >= 40 is true, the first block executes and the rest are ignored.", "solvedCount": 0, "unlocked": true}, {"name": "Missing Blueprint (Class structure error)", "alias": "Missing Blueprint (Class structure error)", "exceptionClass": "Missing Blueprint (Class structure error)", "icon": "🏗️", "description": "Code Reconstruction of Classes and Objects.", "attack": "Student s = new Student();", "cause": "The method display() belongs inside the Student class.", "solvedCount": 0, "unlocked": true}, {"name": "Constructor mismatch", "alias": "Constructor mismatch", "exceptionClass": "Constructor mismatch", "icon": "🏗️", "description": "Constructor argument mismatch.", "attack": "Student s = new Student();", "cause": "The instantiation calls new Student(), passing NO arguments.", "solvedCount": 0, "unlocked": true}, {"name": "Missing return statement", "alias": "Missing return statement", "exceptionClass": "Missing return statement", "icon": "📤", "description": "A method promises a return value but fails to deliver.", "attack": "static int add(int a, int b)", "cause": "The method ends without sending anything back to the caller.", "solvedCount": 0, "unlocked": true}, {"name": "Encapsulation Violation", "alias": "Encapsulation Violation", "exceptionClass": "Encapsulation Violation", "icon": "🔒", "description": "Illegal private-member access.", "attack": "System.out.println(account.balance);", "cause": "The main method is trying to access balance directly from outside the class.", "solvedCount": 0, "unlocked": true}, {"name": "3", "alias": "3", "exceptionClass": "3", "icon": "🎯", "description": "Determine the output of a shared static counter.", "attack": "static int count = 0;", "cause": "Static variables are shared among all instances of the class.", "solvedCount": 0, "unlocked": true}, {"name": "Incorrect Comment Format", "alias": "Incorrect Comment Format", "exceptionClass": "Incorrect Comment Format", "icon": "❌", "description": "Identify the correct JavaDoc format.", "attack": "// Calculates the total", "cause": "JavaDoc uses tags like @param and @return to generate API documentation.", "solvedCount": 0, "unlocked": true}, {"name": "Compilation Error (Duplicate Method)", "alias": "Compilation Error (Duplicate Method)", "exceptionClass": "Compilation Error (Duplicate Method)", "icon": "❌", "description": "Invalid method overloading by only changing the return type.", "attack": "int investigate(int evidence)", "cause": "The return types are different, but Java method signatures only care about the name and parameter list.", "solvedCount": 0, "unlocked": true}, {"name": "\"Guilty\"", "alias": "\"Guilty\"", "exceptionClass": "\"Guilty\"", "icon": "😈", "description": "Understanding object references as method parameters.", "attack": "tamperEvidence(suspect);", "cause": "Java passes object references by value. The method gets a copy of the reference pointing to the SAME object in memory.", "solvedCount": 0, "unlocked": true}, {"name": "Missing Return", "alias": "Missing Return", "exceptionClass": "Missing Return", "icon": "📤", "description": "Returning objects from a method.", "attack": "________;", "cause": "The method ends abruptly. It must return the created object to satisfy the contract.", "solvedCount": 0, "unlocked": true}, {"name": "Invalid inner class instantiation", "alias": "Invalid inner class instantiation", "exceptionClass": "Invalid inner class instantiation", "icon": "❌", "description": "Constructing an inner class object.", "attack": "Outer.Inner inner = new Inner();", "cause": "You cannot instantiate Inner directly without going through an Outer object.", "solvedCount": 0, "unlocked": true}, {"name": "Missing inheritance relationship", "alias": "Missing inheritance relationship", "exceptionClass": "Missing inheritance relationship", "icon": "🧬", "description": "Missing inheritance relationship.", "attack": "Dog d = new Dog(); d.eat();", "cause": "A class must use `extends` to inherit methods from another class.", "solvedCount": 0, "unlocked": true}, {"name": "Parent constructor mismatch", "alias": "Parent constructor mismatch", "exceptionClass": "Parent constructor mismatch", "icon": "🧬", "description": "Subclass fails to invoke the parent constructor properly.", "attack": "Student() { // empty }", "cause": "The default parent constructor does not exist, causing an error.", "solvedCount": 0, "unlocked": true}, {"name": "Incorrect method override", "alias": "Incorrect method override", "exceptionClass": "Incorrect method override", "icon": "🔀", "description": "A method override fails silently due to a typo in the method signature.", "attack": "void Sound() { }", "cause": "Java is case-sensitive, so these are treated as completely different methods.", "solvedCount": 0, "unlocked": true}, {"name": "\"Dog\"", "alias": "\"Dog\"", "exceptionClass": "\"Dog\"", "icon": "🐕", "description": "Understanding runtime polymorphism and method dispatch.", "attack": "Animal suspect = new Dog(); suspect.sound();", "cause": "The method execution is determined by the actual object type at runtime.", "solvedCount": 0, "unlocked": true}, {"name": "Abstract Instantiation", "alias": "Abstract Instantiation", "exceptionClass": "Abstract Instantiation", "icon": "👻", "description": "An attempt to instantiate an abstract class.", "attack": "Shape s = new Shape();", "cause": "You cannot instantiate an abstract class directly.", "solvedCount": 0, "unlocked": true}, {"name": "Unimplemented Interface", "alias": "Unimplemented Interface", "exceptionClass": "Unimplemented Interface", "icon": "🤝", "description": "Mini-Boss: Interfaces and Implementations.", "attack": "class Card implements Payment", "cause": "Implementing an interface is a strict contract to provide all its methods.", "solvedCount": 0, "unlocked": true}, {"name": "ArithmeticException", "alias": "ArithmeticException", "exceptionClass": "ArithmeticException", "icon": "➗", "description": "Exception Basics: Division by zero.", "attack": "System.out.println(a / b);", "cause": "The math operation is division (/).", "solvedCount": 0, "unlocked": true}, {"name": "Catch Ordering", "alias": "Catch Ordering", "exceptionClass": "Catch Ordering", "icon": "🔀", "description": "Catch block ordering error.", "attack": "} catch (Exception e) {", "cause": "Java catches exceptions from top to bottom.", "solvedCount": 0, "unlocked": true}, {"name": "Outer Catch", "alias": "Outer Catch", "exceptionClass": "Outer Catch", "icon": "📤", "description": "Determine which catch block handles a nested exception.", "attack": "int[] a = {1}; a[5] = 10;", "cause": "The inner catch block only looks for ArithmeticException.", "solvedCount": 0, "unlocked": true}, {"name": "NullPointerException", "alias": "NullPointerException", "exceptionClass": "NullPointerException", "icon": "💀", "description": "Built-in Exceptions: Using a null reference.", "attack": "witness.length();", "cause": "The code tries to call the length() method on an object that doesn't exist.", "solvedCount": 0, "unlocked": true}, {"name": "Missing 'throws' declaration", "alias": "Missing 'throws' declaration", "exceptionClass": "Missing 'throws' declaration", "icon": "📜", "description": "User-Defined Exception.", "attack": "throw new InvalidAgeException(\"Too young\");", "cause": "Methods that throw checked exceptions must declare them in their signature using 'throws'.", "solvedCount": 0, "unlocked": true}, {"name": "Thread not started correctly", "alias": "Thread not started correctly", "exceptionClass": "Thread not started correctly", "icon": "🌟", "description": "Thread creation and start.", "attack": "Investigation i = new Investigation(); i.run();", "cause": "To actually spawn a NEW thread, a different method must be called.", "solvedCount": 0, "unlocked": true}, {"name": "Race Condition", "alias": "Race Condition", "exceptionClass": "Race Condition", "icon": "🏃", "description": "Multiple threads modifying shared state.", "attack": "balance++; // Accessed by 10 threads", "cause": "Multiple threads are reading the same old balance simultaneously and writing back identical incremented values.", "solvedCount": 0, "unlocked": true}, {"name": "Missing Synchronization", "alias": "Missing Synchronization", "exceptionClass": "Missing Synchronization", "icon": "🔒", "description": "Synchronization solution to a race condition.", "attack": "void deposit() { balance++; }", "cause": "Java provides a specific keyword to lock a method to a single thread.", "solvedCount": 0, "unlocked": true}, {"name": "Missing notify()", "alias": "Missing notify()", "exceptionClass": "Missing notify()", "icon": "🔔", "description": "Inter-thread communication using wait() and notify().", "attack": "Thread 1: wait(); Thread 2: _______;", "cause": "Thread 2 needs a way to wake up Thread 1.", "solvedCount": 0, "unlocked": true}, {"name": "Autoboxing and Unboxing", "alias": "Autoboxing and Unboxing", "exceptionClass": "Autoboxing and Unboxing", "icon": "📦", "description": "Wrappers and Autoboxing.", "attack": "Integer evidence = 100;", "cause": "We are assigning an Object (evidence) directly to a primitive (result).", "solvedCount": 0, "unlocked": true}, {"name": "TypeMismatch", "alias": "TypeMismatch", "exceptionClass": "TypeMismatch", "icon": "🎭", "description": "Console I/O and Type Mismatch.", "attack": "Scanner sc = new Scanner(System.in); int age = sc.nextLine();", "cause": "The Scanner's 'nextLine()' method returns a String, not an int.", "solvedCount": 0, "unlocked": true}, {"name": "FileNotFoundException", "alias": "FileNotFoundException", "exceptionClass": "FileNotFoundException", "icon": "📄", "description": "File I/O and Checked Exceptions.", "attack": "FileReader reader = new FileReader(\"evidence.txt\");", "cause": "Java forces you to handle this possibility with a checked exception.", "solvedCount": 0, "unlocked": true}, {"name": "Resource Leak", "alias": "Resource Leak", "exceptionClass": "Resource Leak", "icon": "🔓", "description": "Resource Handling and Memory Leaks.", "attack": "reader.read(); // Done reading", "cause": "The code finishes without closing the resource, which can cause memory leaks or file locks.", "solvedCount": 0, "unlocked": true}, {"name": "Raw Type Vulnerability", "alias": "Raw Type Vulnerability", "exceptionClass": "Raw Type Vulnerability", "icon": "📦", "description": "The need for Generics for type safety.", "attack": "evidence.add(\"Fingerprint\"); evidence.add(100);", "cause": "This usually leads to ClassCastExceptions later when you retrieve the data.", "solvedCount": 0, "unlocked": true}, {"name": "Generic Type Parameter", "alias": "Generic Type Parameter", "exceptionClass": "Generic Type Parameter", "icon": "🔠", "description": "Constructing Generic Classes.", "attack": "class EvidenceBox&lt;____&gt; {", "cause": "The letter acts as a placeholder for the actual type that will be used later.", "solvedCount": 0, "unlocked": true}, {"name": "Valid Generic Execution", "alias": "Valid Generic Execution", "exceptionClass": "Valid Generic Execution", "icon": "✅", "description": "Generic Methods.", "attack": "static &lt;T&gt; void inspect(T evidence)", "cause": "We are passing a String, an Integer, and a Double to the same method.", "solvedCount": 0, "unlocked": true}, {"name": "Compilation Error", "alias": "Compilation Error", "exceptionClass": "Compilation Error", "icon": "❌", "description": "Bounded Type Parameters.", "attack": "class EvidenceBox&lt;T extends Number&gt;", "cause": "Integer and Double are subclasses of Number. String is not.", "solvedCount": 0, "unlocked": true}, {"name": "Forbidden Generic Instantiation", "alias": "Forbidden Generic Instantiation", "exceptionClass": "Forbidden Generic Instantiation", "icon": "❌", "description": "Generic instantiation restrictions (Type Erasure).", "attack": "T evidence = new T();", "cause": "You cannot instantiate an unknown type.", "solvedCount": 0, "unlocked": true}, {"name": "\"Java\"", "alias": "\"Java\"", "exceptionClass": "\"Java\"", "icon": "☕", "description": "Understanding String Immutability.", "attack": "message.concat(\" Detective\");", "cause": "concat() creates a BRAND NEW string and returns it, but doesn't change the original.", "solvedCount": 0, "unlocked": true}, {"name": "evitceteD avaJ", "alias": "evitceteD avaJ", "exceptionClass": "evitceteD avaJ", "icon": "🔄", "description": "Using mutable String structures.", "attack": "sb.append(\"Detective\");", "cause": "reverse() flips the entire string backward.", "solvedCount": 0, "unlocked": true}, {"name": "Missing Action Handler", "alias": "Missing Action Handler", "exceptionClass": "Missing Action Handler", "icon": "🔌", "description": "Event Handling Basics.", "attack": "Button btn = new Button(\"Scan Evidence\"); // Nothing happens on click", "cause": "However, there is no code telling the application what to do when a click occurs.", "solvedCount": 0, "unlocked": true}, {"name": "Invalid Event Type", "alias": "Invalid Event Type", "exceptionClass": "Invalid Event Type", "icon": "🚫", "description": "Key Event handling.", "attack": "scene.setOnKeyTyped(e -> { ... });", "cause": "Modifier keys like SHIFT, CTRL, and ALT do not produce a typed character.", "solvedCount": 0, "unlocked": true}, {"name": "Incorrect UI Control", "alias": "Incorrect UI Control", "exceptionClass": "Incorrect UI Control", "icon": "🎛️", "description": "Checkbox vs RadioButton mechanics.", "attack": "Has Tattoo: ○ Has Scar: ○ // (Mutually exclusive)", "cause": "RadioButtons in a ToggleGroup enforce mutually exclusive choices (only ONE can be selected).", "solvedCount": 0, "unlocked": true}, {"name": "Missing ToggleGroup", "alias": "Missing ToggleGroup", "exceptionClass": "Missing ToggleGroup", "icon": "🔗", "description": "Radio Buttons missing a ToggleGroup.", "attack": "Difficulty: ◉ Easy ◉ Medium ◉ Hard // Wait, all are selected?!", "cause": "However, they currently act independently, allowing all three to be selected simultaneously.", "solvedCount": 0, "unlocked": true}, {"name": "ComboBox", "alias": "ComboBox", "exceptionClass": "ComboBox", "icon": "🔽", "description": "Control Selection: ListView vs ComboBox.", "attack": "We need to select a criminal from 1,000 records.", "cause": "A ListView displays multiple rows at once.", "solvedCount": 0, "unlocked": true}, {"name": "BorderPane", "alias": "BorderPane", "exceptionClass": "BorderPane", "icon": "🖼️", "description": "Understanding JavaFX Layouts.", "attack": "HBox root = new HBox(topMenu, leftNav, centerContent);", "cause": "The result is the Menu, Navigation, and Content side-by-side in a single line.", "solvedCount": 0, "unlocked": true}, {"name": "Missing ScrollPane", "alias": "Missing ScrollPane", "exceptionClass": "Missing ScrollPane", "icon": "📜", "description": "Scrolling in JavaFX.", "attack": "VBox gallery = new VBox(); // 50 images added", "cause": "Most of the images spill off the bottom of the screen and cannot be reached.", "solvedCount": 0, "unlocked": true}];
   const RANKS = [{"name": "Rookie Detective", "threshold": 0}, {"name": "Code Investigator", "threshold": 1000}, {"name": "Senior Investigator", "threshold": 2000}, {"name": "Master Detective", "threshold": 5000}, {"name": "Chief Detective", "threshold": 7500}];
   const CASE_COMPLETION_XP = {
@@ -7019,7 +7111,8 @@
       notificationsOpen: false,
       profileModalOpen: false,
       notificationFilter: 'all',
-      notificationQuery: ''
+      notificationQuery: '',
+      achievements: { badges: [], progress: { hard_cases_solved: 0, streak_days: 0 }, newlyEarned: [], loading: true, error: null }
     };
 
     // Gameplay economy. Change these two values to rebalance penalties globally.
@@ -8282,9 +8375,14 @@ document.addEventListener('click', event => {
         return false;
       }
 
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from('profiles')
-        .update({ username: normalizedUsername, updated_at: new Date().toISOString() })
+        .update({
+          username: normalizedUsername,
+          display_name: normalizedUsername,
+          updated_at: now
+        })
         .eq('id', session.user.id);
 
       if (error) {
@@ -8293,10 +8391,17 @@ document.addEventListener('click', event => {
         return false;
       }
 
-      const previousDisplay = (state.profileDisplayName || '').trim();
-      const shouldReplaceDisplay = !previousDisplay || previousDisplay.toLowerCase() === (state.profileUsername || '').toLowerCase();
+      // The database is authoritative. Update every existing UI surface from the
+      // same profile value immediately; no logout/login cycle is required.
       state.profileUsername = normalizedUsername;
-      state.profileDisplayName = shouldReplaceDisplay ? normalizedUsername : previousDisplay;
+      state.profileDisplayName = normalizedUsername.charAt(0).toUpperCase() + normalizedUsername.slice(1);
+      setText('profile-name', state.profileDisplayName);
+      setText('dropdown-name', state.profileDisplayName);
+      setText('dropdown-email', state.profileUsername);
+      const welcomeHeading = getEl('welcome-heading');
+      if (welcomeHeading) welcomeHeading.textContent = `Welcome, ${state.profileDisplayName}`;
+      const nextRankLabel = getEl('next-rank-label');
+      if (nextRankLabel) nextRankLabel.textContent = state.profileDisplayName;
       updateDashboard();
       showToast('success', '✅', 'Username updated successfully.');
       return true;
@@ -8311,6 +8416,10 @@ const screenHistory = [];
 
     function showScreen(screenId, isBackNavigation = false)
 {
+  if (screenId === 'playground') {
+    window.location.href = new URL('playground.html', window.location.href).href;
+    return;
+  }
   // Close notification details before navigating
   if (typeof closeNotificationDetails === 'function') {
     closeNotificationDetails();
@@ -8494,13 +8603,26 @@ setupAndroidBackButton();
       profile.classList.toggle('active');
     };
 
-    // Use exactly one activation event. Mobile browsers synthesize a click
-    // after touch/pointer interaction, so combining click + pointerup causes
-    // a single tap to toggle twice (open -> close). These assignments are
-    // idempotent and replace any earlier direct handler.
+    // onclick replaces any earlier direct onclick assignment without adding duplicates.
     bell.onclick = toggleNotificationsMenu;
     avatar.onclick = toggleProfileMenu;
-    if (xp) xp.onclick = toggleProfileMenu;
+
+    // DXP is a compact status indicator, not a profile/dropdown trigger.
+    // It intentionally has no click/touch expansion behavior.
+    if (xp) {
+      xp.onclick = null;
+      xp.onpointerup = null;
+      xp.setAttribute('role', 'status');
+      xp.setAttribute('aria-label', 'Current DXP');
+    }
+
+    // Pointer fallback for touch devices and responsive layouts.
+    bell.onpointerup = (event) => {
+      if (event.pointerType !== 'mouse') toggleNotificationsMenu(event);
+    };
+    avatar.onpointerup = (event) => {
+      if (event.pointerType !== 'mouse') toggleProfileMenu(event);
+    };
 
     // Keep keyboard behavior accessible.
     bell.setAttribute('aria-haspopup', 'dialog');
@@ -8555,7 +8677,7 @@ setupAndroidBackButton();
       closeProfile
     };
 
-    // Navigation tabs: one delegated handler keeps all five tabs responsive
+    // Navigation tabs: one delegated handler keeps all navigation tabs responsive
     // even when the tab strip is horizontally scrollable on small screens.
     const navTabs = document.getElementById('nav-tabs');
     if (navTabs && !navTabs.dataset.bound) {
@@ -8565,6 +8687,10 @@ setupAndroidBackButton();
         if (!tab || !navTabs.contains(tab)) return;
         event.preventDefault();
         const screenId = tab.getAttribute('data-screen');
+        if (screenId === 'playground') {
+          window.location.href = new URL('playground.html', window.location.href).href;
+          return;
+        }
         if (screenId && typeof showScreen === 'function') showScreen(screenId);
       });
     }
@@ -8682,10 +8808,15 @@ setupAndroidBackButton();
         const profile = data || {};
         const emailUsername = session.user.email?.split('@')[0] || '';
         const metadata = session.user?.user_metadata || {};
+        // Username is the single authoritative editable profile name.
+        // Legacy display_name/metadata values remain fallbacks for accounts that
+        // have no username yet, but must not override an existing username.
+        const profileUsername = String(profile.username || '').trim();
+        const legacyDisplayName = String(profile.display_name || '').trim();
         const metadataDisplayName = String(metadata.display_name || '').trim();
-        const displayName = metadataDisplayName
-          || String(profile.display_name || '').trim()
-          || String(profile.username || '').trim()
+        const displayName = profileUsername
+          || legacyDisplayName
+          || metadataDisplayName
           || emailUsername;
         const displayNameCapitalized = displayName ? displayName.charAt(0).toUpperCase() + displayName.slice(1) : '';
         const avatar = String(profile.avatar || metadata.avatar || '🕵️');
@@ -8771,8 +8902,11 @@ if (profile.total_dxp === null && completedCount > 0) {
 
         }
 
-        state.profileDisplayName = displayNameCapitalized;
-        state.profileUsername = (profile.username || '').trim() || emailUsername;
+        state.profileUsername = profileUsername || emailUsername;
+        state.profileDisplayName = (state.profileUsername || displayName || emailUsername).trim();
+        state.profileDisplayName = state.profileDisplayName
+          ? state.profileDisplayName.charAt(0).toUpperCase() + state.profileDisplayName.slice(1)
+          : '';
         state.profileAvatar = avatar;
         state.totalXP = restoredXP;
         state.casesCompleted = restoredCases;
@@ -9476,6 +9610,8 @@ console.log("[DXP DEBUG] Save Error:", error);
       document.getElementById('case-file-reward').textContent = `+${getCaseCompletionXP(c)} DXP`;
       document.getElementById('case-file-diff').innerHTML = `<span class="badge badge-${c.difficultyColor}">${c.difficulty}</span>`;
       document.getElementById('detective-notes').textContent = c.detectorNote;
+    const archiveMotif = document.getElementById('crime-case-id');
+    if (archiveMotif && c.isSpecial19) archiveMotif.innerHTML = `CASE 19 — <span style="opacity:.58">ARCHIVE</span> DIVISION`;
 
       // Code block
       const codeBlock = document.getElementById('code-block');
@@ -10020,6 +10156,7 @@ console.log("[DXP DEBUG] Save Error:", error);
         if (progressSaved) {
           state.streak = await refreshDailyStreak();
           await saveProfileStats();
+          await evaluateAndRenderAchievements(true);
         }
         if (c.story) {
           const s = getPackCaseState(c.id);
@@ -10310,6 +10447,178 @@ console.log("[DXP DEBUG] Save Error:", error);
     }
 
     // =============================================
+    // FEATURES 19–22 — VERIFIED ACHIEVEMENT ENGINE
+    // =============================================
+    function normalizeAchievementProgress(value) {
+      const hard = Number(value?.hard_cases_solved ?? 0) || 0;
+      const streak = Number(value?.streak_days ?? 0) || 0;
+      const total = Number(value?.total_cases_solved ?? 0) || 0;
+      const case19 = Boolean(value?.case_19_solved);
+      return {
+        hard_cases_solved: Math.max(0, hard),
+        streak_days: Math.max(0, streak),
+        total_cases_solved: Math.max(0, total),
+        case_19_solved: case19
+      };
+    }
+
+    function renderAchievementProgress(current, target, label) {
+      if (current === null || !Number.isFinite(target) || target <= 0) return '';
+      const safeCurrent = Math.max(0, Number(current) || 0);
+      const percent = Math.min(100, (safeCurrent / target) * 100);
+      return `
+        <div class="achievement-progress-track" aria-label="${escapeNotificationHtml(label)}">
+          <div class="achievement-progress-fill" style="width:${percent}%"></div>
+        </div>
+        <div class="achievement-progress-label">${escapeNotificationHtml(label)}</div>
+      `;
+    }
+
+    function renderAchievements() {
+      const list = document.getElementById('achievement-list');
+      const summary = document.getElementById('achievement-summary');
+      if (!list || !summary) return;
+
+      const a = state.achievements || {};
+      const progress = normalizeAchievementProgress(a.progress);
+      const badges = Array.isArray(a.badges) ? a.badges : [];
+      const earnedRows = Array.isArray(a.earnedRows) ? a.earnedRows : [];
+      const earnedMap = new Map(earnedRows.map(row => [String(row.badge_id), row]));
+
+      if (a.error) {
+        summary.textContent = 'Achievement records are waiting for the Supabase achievement migration.';
+        list.innerHTML = `<div class="achievement-item locked"><div class="achievement-desc">${escapeNotificationHtml(a.error)}</div></div>`;
+        return;
+      }
+
+      summary.textContent = `${progress.total_cases_solved}/19 investigations · ${progress.hard_cases_solved}/19 hard cases · ${progress.streak_days}/19 consecutive days · verified from your case history`;
+      list.innerHTML = '';
+
+      badges.forEach(badge => {
+        const earnedRow = earnedMap.get(String(badge.id));
+        const earned = Boolean(earnedRow);
+        const isMaster = badge.name === 'Badge Earner';
+        let current = null;
+        let target = null;
+        let label = '';
+
+        switch (badge.name) {
+          case 'Case Lover':
+            current = progress.hard_cases_solved;
+            target = 19;
+            label = `${progress.hard_cases_solved} / 19 Hard Cases Solved`;
+            break;
+          case 'Streak Lover':
+            current = progress.streak_days;
+            target = 19;
+            label = `${progress.streak_days} / 19 Days`;
+            break;
+          case 'First 19':
+            current = progress.total_cases_solved;
+            target = 19;
+            label = `${progress.total_cases_solved} / 19 Cases`;
+            break;
+          case 'Double 19':
+            current = progress.total_cases_solved;
+            target = 38;
+            label = `${progress.total_cases_solved} / 38 Cases`;
+            break;
+          case 'Triple 19':
+            current = progress.total_cases_solved;
+            target = 57;
+            label = `${progress.total_cases_solved} / 57 Cases`;
+            break;
+          case 'Case File 19':
+            current = progress.case_19_solved ? 1 : 0;
+            target = 1;
+            label = progress.case_19_solved ? 'Case #19 solved' : 'Case #19 not yet solved';
+            break;
+        }
+
+        const item = document.createElement('div');
+        item.className = `achievement-item ${earned ? 'earned' : 'locked'} ${isMaster ? 'master' : ''}`;
+        const earnedDate = earnedRow?.earned_at
+          ? new Date(earnedRow.earned_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '';
+        const progressHtml = !earned && current !== null && target !== null
+          ? renderAchievementProgress(current, target, label)
+          : '';
+        const earnedMeta = earned && earnedDate
+          ? `<div class="achievement-progress-label">Earned ${escapeNotificationHtml(earnedDate)}</div>`
+          : '';
+        const masterMeta = isMaster && !earned
+          ? '<div class="achievement-progress-label">Requires: Case Lover + Streak Lover</div>'
+          : '';
+
+        item.innerHTML = `
+          <div class="achievement-row">
+            <div class="achievement-icon">${earned ? escapeNotificationHtml(badge.icon || '🏅') : '🔒'}</div>
+            <div style="min-width:0; flex:1;">
+              <div class="achievement-name">${escapeNotificationHtml(badge.name)}</div>
+            </div>
+            <div class="achievement-state ${earned ? 'earned' : 'locked'}">${earned ? 'Earned' : 'Locked'}</div>
+          </div>
+          <div class="achievement-desc">${escapeNotificationHtml(badge.description)}</div>
+          ${progressHtml}
+          ${earnedMeta}
+          ${masterMeta}
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    async function evaluateAndRenderAchievements(showUnlockToast = false) {
+      const list = document.getElementById('achievement-list');
+      const summary = document.getElementById('achievement-summary');
+      if (!list || !summary) return null;
+
+      state.achievements.loading = true;
+      state.achievements.error = null;
+      try {
+        const supabase = await sharedSupabasePromise;
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (sessionError || !userId) throw new Error('No authenticated detective session.');
+
+        const { data: evaluation, error: evaluationError } = await supabase.rpc('evaluate_user_achievements', { target_user_id: userId });
+        if (evaluationError) throw evaluationError;
+
+        const { data: badges, error: badgesError } = await supabase
+          .from('badges')
+          .select('id,name,description,icon,category,requirement,created_at')
+          .order('created_at', { ascending: true });
+        if (badgesError) throw badgesError;
+
+        const { data: userBadges, error: userBadgesError } = await supabase
+          .from('user_badges')
+          .select('badge_id,earned_at,metadata')
+          .eq('user_id', userId);
+        if (userBadgesError) throw userBadgesError;
+
+        state.achievements.progress = normalizeAchievementProgress(evaluation);
+        state.achievements.badges = Array.isArray(badges) ? badges : [];
+        state.achievements.earnedRows = Array.isArray(userBadges) ? userBadges : [];
+        state.achievements.earnedBadgeIds = state.achievements.earnedRows.map(row => row.badge_id);
+        state.achievements.newlyEarned = Array.isArray(evaluation?.newly_earned) ? evaluation.newly_earned : [];
+        state.achievements.loading = false;
+        renderAchievements();
+
+        if (showUnlockToast && state.achievements.newlyEarned.length) {
+          state.achievements.newlyEarned.forEach((name, index) => {
+            setTimeout(() => showToast('success', name === 'Badge Earner' ? '🏆' : '🏅', `${name} unlocked!`), index * 450);
+          });
+        }
+        return evaluation;
+      } catch (error) {
+        console.error('[Code Detective] Achievement evaluation failed:', error);
+        state.achievements.loading = false;
+        state.achievements.error = error?.message || 'Unable to load verified achievement records.';
+        renderAchievements();
+        return null;
+      }
+    }
+
+    // =============================================
     // MASTERY BOARD
     // =============================================
     function renderMasteryBoard() {
@@ -10368,34 +10677,6 @@ console.log("[DXP DEBUG] Save Error:", error);
           }, 50);
         });
         list.appendChild(row);
-      });
-
-      // Recommendations — highlight topics with 0% progress
-      const recList = document.getElementById('recommendations');
-      recList.innerHTML = '';
-      MASTERY_TOPICS.filter(t => (t.solved || 0) === 0).slice(0, 3).forEach(t => {
-        const icon = divisionIcons[t.division] || '🔍';
-        const color = divisionColors[t.division] || 'var(--cyan)';
-        const div = document.createElement('div');
-        div.innerHTML = `
-      <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.02); border-radius:var(--radius-md); border:1px solid var(--border); cursor:pointer;" onclick="showScreen('crime-scene')">
-        <span style="font-size:18px;">${icon}</span>
-        <div>
-          <div style="font-size:13px; font-weight:600;">${t.label || t.id}</div>
-          <div style="font-size:11px; color:var(--text-muted);">0% mastery · Start investigating!</div>
-        </div>
-        <span style="margin-left:auto; color:${color}; font-size:12px;">→</span>
-      </div>
-    `;
-        div.style.cursor = 'pointer';
-        div.addEventListener('click', () => {
-          showScreen('criminal-db');
-          setTimeout(() => {
-            const target = document.getElementById('division-' + t.division.replace(/\W+/g, '-'));
-            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 50);
-        });
-        recList.appendChild(div);
       });
 
       // Rank progression
@@ -10484,6 +10765,7 @@ console.log("[DXP DEBUG] Save Error:", error);
       const profile = await loadProfile();
       await loadHQLeaderboard();
       await restoreCaseProgress();
+      await evaluateAndRenderAchievements(false);
       restoreCurrentCaseFromProfile(profile);
 
       state.hqLoading = false;
@@ -10530,7 +10812,258 @@ console.log("[DXP DEBUG] Save Error:", error);
   import { initAndroidPushNotifications } from "/push-notifications.js";
   window.addEventListener("load", () => initAndroidPushNotifications());
 </script>
-<!-- Legacy responsive-navbar controller removed. The single navbar dropdown controller above is authoritative. -->
+<script>
+(function () {
+    "use strict";
 
+    function initResponsiveNavbar() {
+
+        const nav = document.getElementById("main-nav");
+
+        if (!nav) {
+            console.warn("[Code Detective] main-nav not found");
+            return;
+        }
+
+        const bell = document.getElementById("nav-notification-btn");
+        const notificationPanel =
+            document.getElementById("nav-notification-panel");
+
+        const avatar = document.getElementById("nav-avatar-btn");
+        const profilePanel =
+            document.getElementById("nav-profile-panel");
+
+        if (!bell || !avatar) {
+            console.warn(
+                "[Code Detective] Responsive navbar buttons not found"
+            );
+            return;
+        }
+
+        function closeNotifications() {
+
+            if (!notificationPanel) return;
+
+            notificationPanel.classList.remove("open");
+
+            notificationPanel.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            bell.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+            notificationPanel.style.display = "none";
+        }
+
+        function openNotifications() {
+
+            if (!notificationPanel) return;
+
+            closeProfile();
+
+            notificationPanel.classList.add("open");
+
+            notificationPanel.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            bell.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+            notificationPanel.style.display = "block";
+        }
+
+        function closeProfile() {
+
+            if (!profilePanel) return;
+
+            profilePanel.classList.remove("open");
+
+            profilePanel.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            avatar.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+            profilePanel.style.display = "none";
+        }
+
+        function openProfile() {
+
+            if (!profilePanel) return;
+
+            closeNotifications();
+
+            profilePanel.classList.add("open");
+
+            profilePanel.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            avatar.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+            profilePanel.style.display = "block";
+        }
+
+        function toggleNotifications(event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const isOpen =
+                bell.getAttribute("aria-expanded") === "true";
+
+            if (isOpen) {
+                closeNotifications();
+            } else {
+                openNotifications();
+            }
+        }
+
+        function toggleProfile(event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const isOpen =
+                avatar.getAttribute("aria-expanded") === "true";
+
+            if (isOpen) {
+                closeProfile();
+            } else {
+                openProfile();
+            }
+        }
+
+        /*
+         * Pointer events work for:
+         * mouse
+         * touch
+         * pen
+         */
+        bell.addEventListener(
+            "pointerup",
+            toggleNotifications,
+            true
+        );
+
+        avatar.addEventListener(
+            "pointerup",
+            toggleProfile,
+            true
+        );
+
+        /*
+         * Keyboard support
+         */
+        bell.addEventListener("keydown", function (event) {
+
+            if (
+                event.key === "Enter" ||
+                event.key === " "
+            ) {
+                toggleNotifications(event);
+            }
+
+        });
+
+        avatar.addEventListener("keydown", function (event) {
+
+            if (
+                event.key === "Enter" ||
+                event.key === " "
+            ) {
+                toggleProfile(event);
+            }
+
+        });
+
+        /*
+         * Outside click
+         */
+        document.addEventListener(
+            "pointerup",
+            function (event) {
+
+                if (
+                    notificationPanel &&
+                    !bell.contains(event.target) &&
+                    !notificationPanel.contains(event.target)
+                ) {
+                    closeNotifications();
+                }
+
+                if (
+                    profilePanel &&
+                    !avatar.contains(event.target) &&
+                    !profilePanel.contains(event.target)
+                ) {
+                    closeProfile();
+                }
+
+            },
+            true
+        );
+
+        /*
+         * Escape
+         */
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (event.key !== "Escape") return;
+
+                closeNotifications();
+                closeProfile();
+
+            }
+        );
+
+        /*
+         * Start closed
+         */
+        closeNotifications();
+        closeProfile();
+
+        console.log(
+            "[Code Detective] Responsive navbar initialized"
+        );
+    }
+
+    /*
+     * Wait until the page is ready.
+     */
+    if (document.readyState === "loading") {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            initResponsiveNavbar,
+            { once: true }
+        );
+
+    } else {
+
+        initResponsiveNavbar();
+
+    }
+
+})();
+</script>
 </body>
 </html>
